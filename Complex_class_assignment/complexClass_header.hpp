@@ -7,6 +7,7 @@ class Complex
     public:
         Complex();
         Complex(float r, float i);
+        void input();
         void display();
         float getReal();
         float getImag();

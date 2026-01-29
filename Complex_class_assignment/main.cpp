@@ -4,10 +4,13 @@ using namespace std;
 
 int main()
 {
-    Complex c1(3.0, 4.0); 
-    Complex c2(1.0, 2.0);
+    Complex c1(2.3, 4.5);
+    Complex c2;
 
-    cout << "First Complex Number: ";
+    cout << "\nEnter second complex number:\n";
+    c2.input();
+
+    cout << "\nFirst Complex Number: ";
     c1.display();
 
     cout << "Second Complex Number: ";

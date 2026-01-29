@@ -14,10 +14,23 @@ Complex::Complex(float r, float i)
         imag = i;
     }
 
+// Input function
+void Complex::input()
+    {
+        std::cout << "Krupiya saccha part enter kijiye: ";
+        std::cin >> real;
+        std::cout << "Krupiya khayali enter kijiye: ";
+        std::cin >> imag;
+    }
+
 // Display function
 void Complex::display()
     {
-        std::cout << real << " + " << imag << "i" << std::endl;
+        std::cout << real;
+        if (imag >= 0)
+            std::cout << " + " << imag << "i" << std::endl;
+        else
+            std::cout << " - " << -imag << "i" << std::endl;
     }
 
 // Getter for real part
