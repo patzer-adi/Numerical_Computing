@@ -1,37 +1,21 @@
 #include "include/RootHunter.hpp"
-#include "utils/DisplayUtils.hpp"
 #include "utils/InputUtils.hpp"
+#include "utils/DisplayUtils.hpp"
 #include <iostream>
-using namespace std;
 
 int main() {
-    DisplayUtils::printWelcomeBanner();
-    
-    DisplayUtils::printMenu();
-    
-    int choice = InputUtils::getMenuChoice();
-    
-    RootHunter* detective;
-    
-    if (choice == 1) {
-        cout << "\n🚀 Initiating Quick Investigation Mode..." << endl;
-        detective = new RootHunter();
+    double start = readDouble("Enter starting value: ");
+    double step  = readDouble("Enter step size: ");
+    double tol   = readDouble("Enter tolerance: ");
+
+    RootHunter solver(tol);
+
+    if (solver.findInterval(start, step, 50)) {
+        solver.solve();
+        printResult(solver.getRoot(), solver.getIterations());
     } else {
-        double customPatience = InputUtils::getTolerance();
-        detective = new RootHunter(customPatience);
+        std::cout << "Program ended: no root in given range.\n";
     }
-    
-    DisplayUtils::printInvestigationStart();
-    
-    detective->huntForCrimeScene();
-    
-    detective->solveTheMystery();
-    
-    detective->presentEvidenceReport();
-    
-    delete detective;
-    
-    DisplayUtils::printGoodbye();
-    
+
     return 0;
 }
