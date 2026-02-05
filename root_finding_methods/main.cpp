@@ -2,7 +2,7 @@
 #include "utils/InputUtils.hpp"
 #include "utils/DisplayUtils.hpp"
 #include <iostream>
-
+using namespace std;
 int main() {
     double start = readDouble("Enter starting value: ");
     double step  = readDouble("Enter step size: ");
@@ -14,7 +14,7 @@ int main() {
         solver.solve();
         printResult(solver.getRoot(), solver.getIterations());
     } else {
-        std::cout << "Program ended: no root in given range.\n";
+        cout << "Program ended: no root in given range.\n";
     }
 
     return 0;

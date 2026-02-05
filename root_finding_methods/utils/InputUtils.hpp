@@ -1,2 +1,2 @@
 
-double readDouble(const char* prompt);
+double readDouble(const char* val);
