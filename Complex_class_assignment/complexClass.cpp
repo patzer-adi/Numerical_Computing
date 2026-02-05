@@ -55,12 +55,22 @@ Complex Complex::add(Complex obj)
     }
 
 // Subtraction
-Complex Complex::subtract(Complex obj)
+// Complex Complex::subtract(Complex obj)
+//     {
+//         Complex temp;
+//         temp.real = real - obj.real;
+//         temp.imag = imag - obj.imag;
+//         return temp;
+//     }
+
+Complex Complex::subtract(Complex c)
     {
-        Complex temp;
-        temp.real = real - obj.real;
-        temp.imag = imag - obj.imag;
-        return temp;
+        return Complex(real - c.real, imag - c.imag);
+    }
+
+void Complex::display()
+    {
+        std::cout<< real << " + " << (imag < 0 ? -imag : imag) << "i" << std::endl;
     }
 
 // Multiplication

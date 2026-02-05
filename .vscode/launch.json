@@ -1,0 +1,13 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "C/C++ Runner: Debug Session",
+      "type": "lldb",
+      "request": "launch",
+      "args": [],
+      "cwd": "/Users/adityagowari/Programs/Numerical_Computing_codes/Numerical_Computing/Complex_class_assignment",
+      "program": "/Users/adityagowari/Programs/Numerical_Computing_codes/Numerical_Computing/Complex_class_assignment/build/Debug/outDebug"
+    }
+  ]
+}

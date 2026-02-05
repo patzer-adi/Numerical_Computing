@@ -6,6 +6,7 @@ int main()
 {
     Complex c1(2.3, 4.5);
     Complex c2;
+    cout << "\nFirst Complex part as Parameterized Constructor:\n";
 
     cout << "\nEnter second complex number:\n";
     c2.input();
