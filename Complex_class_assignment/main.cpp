@@ -51,5 +51,17 @@ int main()
     cout << "Norm of First Complex Number: " << c1.Norm() << endl;
     cout << "Norm of Second Complex Number: " << c2.Norm() << endl;
 
+    Complex sum1 = c1 + c2;
+    sum.display();
+    Complex difference1 = c1 - c2;
+    difference1.display();
+
+    Complex prod1 = c1 * c2;
+    prod1.display();
+
+    Complex quotient1 = c1 / c2;
+    quotient1.display();
+
+
     return 0;
 }

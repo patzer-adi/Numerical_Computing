@@ -1,5 +1,7 @@
 #include "complexClass_header.hpp"
 #include <iostream>
+#include <cmath>   // Needed for sqrt
+#include <ostream>
 
 Complex::Complex()
 {
@@ -7,14 +9,12 @@ Complex::Complex()
     imag = 0;
 }
 
-// Parameterized Constructor
 Complex::Complex(float r, float i)
     {
         real = r;
         imag = i;
     }
 
-// Input function
 void Complex::input()
     {
         std::cout << "Krupiya saccha part enter kijiye: ";
@@ -23,7 +23,6 @@ void Complex::input()
         std::cin >> imag;
     }
 
-// Display function
 void Complex::display()
     {
         std::cout << real;
@@ -33,19 +32,16 @@ void Complex::display()
             std::cout << " - " << -imag << "i" << std::endl;
     }
 
-// Getter for real part
 float Complex::getReal()
     {
         return real;
     }
 
-// Getter for imaginary part
 float Complex::getImag()
     {
         return imag;
     }
 
-// Addition
 Complex Complex::add(Complex obj)
     {
         Complex temp;
@@ -54,24 +50,27 @@ Complex Complex::add(Complex obj)
         return temp;
     }
 
-// Subtraction
-// Complex Complex::subtract(Complex obj)
-//     {
-//         Complex temp;
-//         temp.real = real - obj.real;
-//         temp.imag = imag - obj.imag;
-//         return temp;
-//     }
+    Complex Complex::operator+(const Complex& obj)
+    {
+        return Complex(real + obj.real, imag + obj.imag);
+    }
+
 
 Complex Complex::subtract(Complex c)
     {
         return Complex(real - c.real, imag - c.imag);
     }
 
-void Complex::display()
+    Complex Complex::operator-(const Complex& obj)
     {
-        std::cout<< real << " + " << (imag < 0 ? -imag : imag) << "i" << std::endl;
+        return Complex(real - obj.real, imag - obj.imag);
     }
+
+
+// void Complex::display()
+//     {
+//         std::cout<< real << " + " << (imag < 0 ? -imag : imag) << "i" << std::endl;
+//     }
 
 // Multiplication
 Complex Complex::multiply(Complex obj)
@@ -82,6 +81,14 @@ Complex Complex::multiply(Complex obj)
         return temp;
     }
 
+    Complex Complex::operator*(const Complex& obj)
+    {
+        float r = (real * obj.real) - (imag * obj.imag);
+        float i = (real * obj.imag) + (imag * obj.real);
+        return Complex(r, i);
+    }
+
+
 // Division
 Complex Complex::divide(Complex obj)
     {
@@ -91,6 +98,27 @@ Complex Complex::divide(Complex obj)
         temp.imag = ((imag * obj.real) - (real * obj.imag)) / denominator;
         return temp;
     }
+
+    Complex Complex::operator/(const Complex& obj)
+    {
+        float denominator = (obj.real * obj.real) + (obj.imag * obj.imag);
+
+        float r = ((real * obj.real) + (imag * obj.imag)) / denominator;
+        float i = ((imag * obj.real) - (real * obj.imag)) / denominator;
+
+        return Complex(r, i);
+    }
+/*
+    std::ostream& operator<<(std::ostream& out, const Complex& c)
+    {
+        out << c.real;
+        if (c.imag >= 0)ostream
+            out << " + " << c.imag << "i";
+        else
+            out << " - " ostream<< -c.imag << "i";
+        return out;
+    }*/
+
 
 // Conjugate
 Complex Complex::conjugate()
