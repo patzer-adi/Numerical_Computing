@@ -3,9 +3,8 @@
 using namespace std;
 
 
-// Constructor — make a rows x cols grid, fill with 0
 Matrix::Matrix(int r, int c) {
-    this->rows = r;    // this-> used in constructor
+    this->rows = r;
     this->cols = c;
 
     data = new int*[rows];
@@ -17,11 +16,8 @@ Matrix::Matrix(int r, int c) {
     }
 }
 
-
-// Copy constructor — called when we do  Matrix b = a;
-// Makes its own fresh memory so changes to b don't affect a
 Matrix::Matrix(const Matrix& other) {
-    this->rows = other.rows;   // this-> used in constructor
+    this->rows = other.rows;
     this->cols = other.cols;
 
     data = new int*[rows];
@@ -34,7 +30,6 @@ Matrix::Matrix(const Matrix& other) {
 }
 
 
-// Destructor — free memory when object goes out of scope
 Matrix::~Matrix() {
     for (int i = 0; i < rows; i++) {
         delete[] data[i];
@@ -43,19 +38,16 @@ Matrix::~Matrix() {
 }
 
 
-// Assignment operator — called when we do  a = b;  (both already exist)
 Matrix& Matrix::operator=(const Matrix& other) {
-    if (this == &other) {   // don't copy yourself
+    if (this == &other) {
         return *this;
     }
 
-    // free old memory first
     for (int i = 0; i < rows; i++) {
         delete[] data[i];
     }
     delete[] data;
 
-    // copy new size and data
     rows = other.rows;
     cols = other.cols;
 
@@ -71,8 +63,7 @@ Matrix& Matrix::operator=(const Matrix& other) {
 }
 
 
-// display() — overrides the pure virtual from Shape
-// Prints the matrix with border pipes
+
 void Matrix::display() {
     for (int i = 0; i < rows; i++) {
         cout << "| ";

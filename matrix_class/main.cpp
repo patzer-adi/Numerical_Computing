@@ -7,12 +7,7 @@ using namespace std;
 
 int main() {
 
-    cout << "\n===============================" << endl;
-    cout << "     MATRIX OPERATIONS MENU    " << endl;
-    cout << "===============================\n" << endl;
 
-
-    // --- Matrix Addition and Subtraction ---
     int rows, cols;
     cout << "Enter rows: ";    cin >> rows;
     cout << "Enter cols: ";    cin >> cols;
@@ -29,9 +24,8 @@ int main() {
     showMatrix("Matrix 1", mat1);
     showMatrix("Matrix 2", mat2);
 
-
     // Addition
-    cout << "\n--- ADDITION ---" << endl;
+    cout << "\nADDITION:" << endl;
     try {
         Matrix added = mat1 + mat2;
         showMatrix("mat1 + mat2", added);
@@ -42,7 +36,7 @@ int main() {
 
 
     // Subtraction
-    cout << "\n--- SUBTRACTION ---" << endl;
+    cout << "\nSUBTRACTION:" << endl;
     try {
         Matrix subbed = mat1 - mat2;
         showMatrix("mat1 - mat2", subbed);
@@ -51,18 +45,15 @@ int main() {
         cout << "Error: " << e.what() << endl;
     }
 
-
-    // Assignment operator demo
-    cout << "\n--- ASSIGNMENT (mat3 = mat1) ---" << endl;
+    cout << "\nASSIGNMENT (mat3 = mat1):" << endl;
     Matrix mat3(rows, cols);
     mat3 = mat1;
     showMatrix("mat3 (copy of mat1)", mat3);
 
 
-    // --- Gaussian Elimination ---
-    cout << "\n--- GAUSSIAN ELIMINATION ---" << endl;
+    cout << "\nGAUSSIAN ELIMINATION:" << endl;
     int n;
-    cout << "How many equations? ";
+    cout << "Enter n: ";
     cin >> n;
 
     GaussianElimination gauss(n);

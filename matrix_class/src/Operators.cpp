@@ -1,8 +1,5 @@
 #include "../include/Matrix.hpp"
 
-
-// operator+ — lets us write  c = a + b;
-// Throws MatrixError if sizes don't match
 Matrix Matrix::operator+(const Matrix& other) {
 
     if (rows != other.rows || cols != other.cols) {
@@ -21,8 +18,6 @@ Matrix Matrix::operator+(const Matrix& other) {
 }
 
 
-// operator- — lets us write  c = a - b;
-// Throws MatrixError if sizes don't match
 Matrix Matrix::operator-(const Matrix& other) {
 
     if (rows != other.rows || cols != other.cols) {
