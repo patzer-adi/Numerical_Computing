@@ -1,2 +1,3 @@
 
-void printResult(double root, int iterations);
+#include<string>
+void displayResult(std::string method, double root, int iterations);

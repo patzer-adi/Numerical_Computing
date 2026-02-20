@@ -1,8 +1,9 @@
 #include "DisplayUtils.hpp"
 #include <iostream>
+using namespace std;
 
-void printResult(double root, int iterations) {
-    std::cout << "\nFinal Result:\n";
-    std::cout << "Root = " << root << "\n";
-    std::cout << "Iterations = " << iterations << "\n";
+void displayResult(std::string method, double root, int iterations) {
+    cout << "\n--- " << method << " Result ---\n";
+    cout << "Root: " << root << "\n";
+    cout << "Iterations: " << iterations << "\n";
 }

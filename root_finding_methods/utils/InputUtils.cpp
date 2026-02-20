@@ -1,9 +1,10 @@
 #include "InputUtils.hpp"
 #include <iostream>
+using namespace std;
 
-double readDouble(const char* val) {
-    double value;
-    std::cout << val;
-    std::cin >> value;
-    return value;
+double getTolerance() {
+    double tol;
+    cout << "Enter tolerance: ";
+    cin >> tol;
+    return tol;
 }

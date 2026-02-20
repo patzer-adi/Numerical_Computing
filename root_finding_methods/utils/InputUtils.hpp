@@ -1,2 +1,3 @@
 
-double readDouble(const char* val);
+double getTolerance();
+

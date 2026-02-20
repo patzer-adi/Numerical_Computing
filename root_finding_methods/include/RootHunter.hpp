@@ -1,67 +1,33 @@
+#ifndef ROOTHUNTER_HPP
+#define ROOTHUNTER_HPP
+
+#include <iostream>
+#include <cmath>
 
 class RootHunter {
-private:
-    double left;
-    double right;
-    double tolerance;
+protected:
+    double left, right;
     double root;
+    double tolerance;
     int iterations;
 
     double f(double x);
 
+   // double df(double x);
+
 public:
     RootHunter(double tol);
+    virtual ~RootHunter() {}
 
-    bool findInterval(double start, double step, int maxSteps);
-    void solve();
+    virtual void input() = 0;
+    virtual void solve() = 0;
 
-    double getRoot() ;
-    int getIterations() ;
+    double getRoot() const;
+    int getIterations() const;
 };
 
-/*
- * class RootHunter {
- *
- * private:
- * double start;
- * double f(double x);
- *  double root;
- * int iterations;
- *
- *  double getRoot();
- int getIterations();
-
- public:
-     void solve();
-
-     };
-
- *
- * class bisection_method : public RootHunter
- * {
- * private:
- double left;
- double right;
- double tolerance;
+#endif
 
 
- public:
-     bisection_method(double tol);
-
-     bool findInterval(double start, double step, int maxSteps);
-     void solve();
 
 
- * }
- *
- * class Newton_Raphson : public RootHunter
- * {
- private:
-     double f_dash(double x);
-
-    public:
-        void solve;
- *
- * }
- *
- */
