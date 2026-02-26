@@ -23,7 +23,7 @@ void readMatrixFromFile(string filename, double **&data, int &rows, int &cols) {
   ifstream fin(filename);
   if (!fin) {
     throw MatrixException("can't open file '" + filename +
-                          "'... did you spell it right? 🤦");
+                          "'... did you spell it right? ");
   }
 
   // try reading first line to see if it has dimensions
