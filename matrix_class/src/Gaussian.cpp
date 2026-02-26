@@ -45,7 +45,7 @@ void GaussianElimination::compute() {
         for (int col = 0; col < n; col++) {
 
             if (fabs(mat[col][col]) < 0.000000000000001) {
-                throw MatrixError("Zero on diagonal — system can't be solved this way.");
+                throw MatrixError("Haiyaa!! Doing Divide by Zero");
             }
 
             for (int row = col + 1; row < n; row++) {
@@ -69,7 +69,7 @@ void GaussianElimination::compute() {
 
     }
     catch (MatrixError& e) {
-        cout << "Error during Gaussian Elimination: " << e.what() << endl;
+        cout << "Error: " << e.what() << endl;
     }
 }
 

@@ -1,10 +1,16 @@
-#ifndef INPUT_HPP
-#define INPUT_HPP
+#pragma once
 
+#include <string>
 #include "../include/Matrix.hpp"
 
-void takeMatrixInput(Matrix& m);
+namespace Input {
 
-void takeGaussInput(double** mat, int n);
+    Matrix readMatrixFromConsole();
 
-#endif
+    Matrix readMatrixFromFile(const std::string& filename);
+
+    Matrix readAugmentedFromFile(const std::string& filename);
+
+    Matrix readFromLeftRightFiles(const std::string& leftFile,
+                                  const std::string& rightFile);
+}

@@ -8,23 +8,27 @@ using namespace std;
 int main() {
 
 
-    int rows, cols;
-    cout << "Enter rows: ";    cin >> rows;
-    cout << "Enter cols: ";    cin >> cols;
+    int rows1, cols1, rows2, cols2;
+    cout << "Enter rows: ";    cin >> rows1;
+    cout << "Enter cols: ";    cin >> cols1;
 
-    Matrix mat1(rows, cols);
-    Matrix mat2(rows, cols);
-
-    cout << "\nMatrix 1 —" << endl;
+    Matrix mat1(rows1, cols1);
+    cout << "\nMatrix 1:"<< endl;
     takeMatrixInput(mat1);
 
-    cout << "\nMatrix 2 —" << endl;
+    cout << "Enter values for Matrix 2"<<endl;
+    cout << "Enter rows: ";    cin >> rows2;
+    cout << "Enter cols: ";    cin >> cols2;
+    Matrix mat2(rows2, cols2);
+
+
+
+    cout << "\nMatrix 2:" << endl;
     takeMatrixInput(mat2);
 
-    showMatrix("Matrix 1", mat1);
-    showMatrix("Matrix 2", mat2);
+    showMatrix("Matrix 1:", mat1);
+    showMatrix("Matrix 2:", mat2);
 
-    // Addition
     cout << "\nADDITION:" << endl;
     try {
         Matrix added = mat1 + mat2;
@@ -34,8 +38,6 @@ int main() {
         cout << "Error: " << e.what() << endl;
     }
 
-
-    // Subtraction
     cout << "\nSUBTRACTION:" << endl;
     try {
         Matrix subbed = mat1 - mat2;
@@ -45,23 +47,25 @@ int main() {
         cout << "Error: " << e.what() << endl;
     }
 
-    cout << "\nASSIGNMENT (mat3 = mat1):" << endl;
-    Matrix mat3(rows, cols);
+    cout << "\nASSIGNMENT:" << endl;
+    Matrix mat3(rows1, cols1);
     mat3 = mat1;
-    showMatrix("mat3 (copy of mat1)", mat3);
+    showMatrix("mat3", mat3);
 
+    cout << "\nCOPY:" << endl;
+    Matrix mat4(mat2);
+    showMatrix("mat4:", mat4);
 
     cout << "\nGAUSSIAN ELIMINATION:" << endl;
     int n;
     cout << "Enter n: ";
     cin >> n;
 
-    GaussianElimination gauss(n);
-    gauss.takeInput();
-    gauss.compute();
-    gauss.showSolution();
+    GaussianElimination gauss_ji(n);
+    gauss_ji.takeInput();
+    gauss_ji.compute();
+    gauss_ji.showSolution();
 
 
-    cout << "\n=== Done! ===\n" << endl;
     return 0;
 }

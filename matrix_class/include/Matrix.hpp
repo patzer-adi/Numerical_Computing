@@ -1,70 +1,42 @@
-#ifndef MATRIX_HPP
-#define MATRIX_HPP
+#pragma once
 
-#include <iostream>
+#include <vector>
 #include <string>
-using namespace std;
+#include <iostream>
+#include "MatrixException.hpp"
 
-
-class MatrixError {
-    string msg;
-public:
-    MatrixError(string m) {
-        this->msg = m;
-    }
-    string what() { return msg; }
-};
-
-
-
-class Shape {
-public:
-    virtual void display() = 0;
-    virtual ~Shape() {}
-};
-
-
-
-class Matrix : public Shape {
+class Matrix {
+protected:
     int rows;
     int cols;
-    int** data;
+    std::vector<std::vector<double>> data;
+
+    void checkSameSize(const Matrix& other) const;
+    void checkMultiplicationSize(const Matrix& other) const;
+    void checkSquare() const;
 
 public:
+    Matrix();
     Matrix(int r, int c);
+    Matrix(const std::vector<std::vector<double>>& values);
+    virtual ~Matrix();
 
-    Matrix(const Matrix& other);
+    int getRows() const;
+    int getCols() const;
 
-    ~Matrix();
+    double& operator()(int i, int j);
+    double operator()(int i, int j) const;
 
-    Matrix& operator=(const Matrix& other);
+    Matrix add(const Matrix& other) const;
+    Matrix subtract(const Matrix& other) const;
+    Matrix multiply(const Matrix& other) const;
 
-    Matrix operator+(const Matrix& other);
+    Matrix operator+(const Matrix& other) const;
+    Matrix operator-(const Matrix& other) const;
+    Matrix operator*(const Matrix& other) const;
 
-    Matrix operator-(const Matrix& other);
+    double determinantRecursive() const;
+    double determinantGaussian() const;
 
-    int getRows() { return rows; }
-    int getCols() { return cols; }
-    int** getData() { return data; }
-
-    void display() override;
+    virtual void print(std::ostream& os = std::cout) const;
 };
-
-
-
-class GaussianElimination {
-    int n;
-    double** mat;
-    double* solution;
-
-public:
-    GaussianElimination(int size);
-    ~GaussianElimination();
-
-    void takeInput();
-    void compute();
-    void showSolution();
-};
-
-
-#endif

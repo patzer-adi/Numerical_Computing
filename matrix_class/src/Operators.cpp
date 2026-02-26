@@ -3,7 +3,7 @@
 Matrix Matrix::operator+(const Matrix& other) {
 
     if (rows != other.rows || cols != other.cols) {
-        throw MatrixError("Addition failed! Matrices must be the same size.");
+        throw MatrixError("Haiyaa!! Addition Failure dimensions should be same");
     }
 
     Matrix result(rows, cols);
@@ -21,7 +21,7 @@ Matrix Matrix::operator+(const Matrix& other) {
 Matrix Matrix::operator-(const Matrix& other) {
 
     if (rows != other.rows || cols != other.cols) {
-        throw MatrixError("Subtraction failed! Matrices must be the same size.");
+        throw MatrixError("Haiyaa!! Substraction Failure dimensions should be same");
     }
 
     Matrix result(rows, cols);
