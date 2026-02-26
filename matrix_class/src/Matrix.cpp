@@ -88,7 +88,7 @@ void Matrix::copyFrom(Matrix &other) {
 Matrix Matrix::add(Matrix other) {
   if (rows != other.rows || cols != other.cols)
     throw MatrixException(
-        "can't add these matrices... they don't even match bro 😂");
+        "can't add these matrices... they don't even match bro");
   Matrix result(rows, cols);
   for (int i = 0; i < rows; i++)
     for (int j = 0; j < cols; j++)
@@ -102,7 +102,7 @@ Matrix Matrix::operator+(Matrix &other) { return add(other); }
 Matrix Matrix::subtract(Matrix other) {
   if (rows != other.rows || cols != other.cols)
     throw MatrixException(
-        "subtraction needs same size matrices... this ain't it chief 🫠");
+        "subtraction needs same size matrices... this ain't it chief");
   Matrix result(rows, cols);
   for (int i = 0; i < rows; i++)
     for (int j = 0; j < cols; j++)
@@ -131,7 +131,7 @@ Matrix Matrix::operator*(Matrix &other) { return multiply(other); }
 double Matrix::determinant() {
   if (rows != cols)
     throw MatrixException(
-        "determinant only works on square matrices... you knew that right? 🤔");
+        "determinant only works on square matrices... you knew that right?");
 
   int n = rows;
 

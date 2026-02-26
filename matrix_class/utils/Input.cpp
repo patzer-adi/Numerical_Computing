@@ -84,7 +84,7 @@ void readRHSFromFile(string filename, double *&b, int &n) {
   ifstream fin(filename);
   if (!fin) {
     throw MatrixException("can't open RHS file '" + filename +
-                          "'... file said bye bye 👋");
+                          "'... file said bye bye");
   }
 
   vector<double> values;
@@ -175,7 +175,7 @@ void getMatrixInput(double **&data, int &rows, int &cols) {
     cout << "Loaded " << rows << "x" << cols << " matrix from " << filename
          << endl;
   } else {
-    throw MatrixException("invalid choice bruh... it was literally 1 or 2 💀");
+    throw MatrixException("invalid choice bruh... it was literally 1 or 2");
   }
 }
 
@@ -234,7 +234,7 @@ void getSystemInput(double **&A, double *&b, int &n) {
       readRHSFromFile(rightFile, b, bSize);
       if (bSize != n)
         throw MatrixException(
-            "RHS size doesn't match matrix size... they broke up 💔");
+            "RHS size doesn't match matrix size... they broke up");
     } else {
       n = tempRows;
       A = new double *[n];
@@ -246,7 +246,7 @@ void getSystemInput(double **&A, double *&b, int &n) {
       int bSize;
       readRHSFromFile(rightFile, b, bSize);
       if (bSize != n)
-        throw MatrixException("Matrix and RHS sizes don't match... awkward 😅");
+        throw MatrixException("Matrix and RHS sizes don't match... awkward");
     }
 
     // cleanup temp
@@ -256,6 +256,6 @@ void getSystemInput(double **&A, double *&b, int &n) {
 
     cout << "Loaded " << n << "x" << n << " system\n";
   } else {
-    throw MatrixException("bro that wasn't even an option 😐");
+    throw MatrixException("bro that wasn't even an option");
   }
 }

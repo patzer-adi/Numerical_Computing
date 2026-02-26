@@ -11,7 +11,7 @@
 #   gnuplot -e "datafile='../solution_225.txt'; gridsize=15" plot_solution.gp
 
 # === Input file ===
-if (!exists("datafile")) datafile = "../solution_49.txt"
+if (!exists("datafile")) datafile = "../solution_right.txt"
 
 # === Plot 1: x vs y (index vs solution value) ===
 
@@ -28,7 +28,7 @@ plot datafile using ($0):1 title "y = f(x)" \
      with linespoints pt 7 ps 0.6 lw 1.5 lc rgb "#0066CC"
 
 set output
-print "Saved: solution_plot.png"
+print "Saved: solution_plot_225.png"
 
 
 # === Plot 2: Heatmap (for grid-based solutions) ===
@@ -53,5 +53,5 @@ plot datafile using (int($0) % gridsize):(int($0) / gridsize):1 \
      with points pt 5 ps 3 palette
 
 set output
-print "Saved: solution_heatmap.png"
+print "Saved: solution_heatmap_225.png"
 print "Done!"

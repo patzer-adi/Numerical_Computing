@@ -225,21 +225,21 @@ int main() {
 
       case 7:
         cout << "\nDoolittle LU Decomposition - not implemented yet, coming "
-                "soon! 🚧\n";
+                "soon!\n";
         break;
 
       case 8:
         cout << "\nCrout LU Decomposition - not implemented yet, coming soon! "
-                "🚧\n";
+                "\n";
         break;
 
       case 9:
         cout << "\nCholesky LU Decomposition - not implemented yet, coming "
-                "soon! 🚧\n";
+                "soon!\n";
         break;
 
       case 10:
-        cout << "\nbye bye! 👋\n";
+        cout << "\nbye bye!\n";
         running = false;
         break;
 

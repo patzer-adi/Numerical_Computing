@@ -13,6 +13,6 @@ Cholesky::Cholesky(int r, int c) : LUDecomposition(r, c) {}
 // sub)
 double *Cholesky::solve(double *b, int n) {
   throw MatrixException(
-      "Cholesky not implemented yet... SPD matrices can wait 😤");
+      "Cholesky not implemented yet... SPD matrices can wait ");
   return nullptr;
 }

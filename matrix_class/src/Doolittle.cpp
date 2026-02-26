@@ -11,6 +11,6 @@ Doolittle::Doolittle(int r, int c) : LUDecomposition(r, c) {}
 // Decompose A into L*U, then solve Ly = b (forward sub), then Ux = y (back sub)
 double *Doolittle::solve(double *b, int n) {
   throw MatrixException(
-      "Doolittle LU not implemented yet... its on the to-do list 📝");
+      "Doolittle LU not implemented yet... its on the to-do list");
   return nullptr;
 }

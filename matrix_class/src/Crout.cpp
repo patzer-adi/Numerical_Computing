@@ -11,6 +11,6 @@ Crout::Crout(int r, int c) : LUDecomposition(r, c) {}
 // Decompose A into L*U, then solve Ly = b (forward sub), then Ux = y (back sub)
 double *Crout::solve(double *b, int n) {
   throw MatrixException(
-      "Crout LU not implemented yet... patience is a virtue 🧘");
+      "Crout LU not implemented yet... patience is a virtue ");
   return nullptr;
 }

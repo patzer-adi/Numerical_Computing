@@ -10,7 +10,7 @@ GaussianElimination::GaussianElimination(int r, int c) : Matrix(r, c) {}
 double *GaussianElimination::solveWithPivoting(double *b, int n) {
   if (rows != cols || rows != n)
     throw MatrixException(
-        "matrix dimensions are sus for gaussian elimination 🧐");
+        "matrix dimensions are sus for gaussian elimination ");
 
   // make copies so we dont destroy original
   double **A = new double *[n];
@@ -38,7 +38,7 @@ double *GaussianElimination::solveWithPivoting(double *b, int n) {
 
     if (maxVal < 1e-12)
       throw MatrixException("matrix is singular... it has no solution, just "
-                            "like my love life 💔");
+                            "like my love life");
 
     // swap rows
     if (maxRow != k) {
@@ -85,7 +85,7 @@ double *GaussianElimination::solveWithPivoting(double *b, int n) {
 double *GaussianElimination::solveWithoutPivoting(double *b, int n) {
   if (rows != cols || rows != n)
     throw MatrixException(
-        "matrix dimensions are sus for gaussian elimination 🧐");
+        "matrix dimensions are sus for gaussian elimination ");
 
   // make copies
   double **A = new double *[n];
@@ -103,7 +103,7 @@ double *GaussianElimination::solveWithoutPivoting(double *b, int n) {
   for (int k = 0; k < n; k++) {
     if (fabs(A[k][k]) < 1e-12)
       throw MatrixException(
-          "zero pivot found without pivoting... shoulda used pivoting bro 😬");
+          "zero pivot found without pivoting... shoulda used pivoting bro");
 
     for (int i = k + 1; i < n; i++) {
       double factor = A[i][k] / A[k][k];
@@ -120,7 +120,7 @@ double *GaussianElimination::solveWithoutPivoting(double *b, int n) {
     for (int j = i + 1; j < n; j++)
       sum -= A[i][j] * x[j];
     if (fabs(A[i][i]) < 1e-12)
-      throw MatrixException("zero diagonal in back sub without pivoting 😵");
+      throw MatrixException("zero diagonal in back sub without pivoting");
     x[i] = sum / A[i][i];
   }
 
