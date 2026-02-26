@@ -1,217 +1,284 @@
-# Understanding the Matrix Data Files 📂
+# Understanding the Matrix Data Files
 
-This explains the test matrix files in the `49/` and `225/` directories — what they are, how they're structured, how to use them, and where students commonly make mistakes.
+## The Big Picture
+
+In numerical computing, we often need to solve systems of linear equations. These look like:
+
+```
+2x + 3y = 8
+4x + 1y = 6
+```
+
+When you have 2 equations it's easy. But what about **49 equations with 49 unknowns**? Or **225 equations with 225 unknowns**? You can't do that by hand — that's where this program comes in.
+
+We write the system in matrix form:
+
+```
+A · x = b
+
+where:
+  A = the matrix of coefficients (the numbers multiplying the unknowns)
+  x = the vector of unknowns (what we want to find)
+  b = the vector of constants (the right-hand side values)
+```
+
+For the small example above:
+
+```
+A = [2  3]      x = [x]      b = [8]
+    [4  1]          [y]          [6]
+```
+
+The files in the `49/` and `225/` folders store **A** and **b** for much larger systems.
 
 ---
 
-## What Are These Files?
+## What's in Each Folder
 
-These are **systems of linear equations** in the form **Ax = b**, stored as text files:
+### The 49×49 System (`49/` folder)
 
-| System | Matrix A (left) | Vector b (right) | Size |
-|--------|----------------|-------------------|------|
-| 49×49  | `49/49l.txt`   | `49/49r.txt`      | 49 unknowns |
-| 225×225| `225/225left.txt`| `225/225right.txt`| 225 unknowns |
+| File | What it stores | Size |
+|------|---------------|------|
+| `49l.txt` | The 49×49 coefficient matrix **A** | 49 rows, each with 49 numbers |
+| `49r.txt` | The RHS vector **b** | 49 numbers, one per line |
 
-The goal is to **solve for x** — find the 49 (or 225) unknown values that satisfy all equations simultaneously.
+### The 225×225 System (`225/` folder)
+
+| File | What it stores | Size |
+|------|---------------|------|
+| `225left.txt` | The 225×225 coefficient matrix **A** | 225 rows, each with 225 numbers |
+| `225right.txt` | The RHS vector **b** | 225 numbers, one per line |
 
 ---
 
 ## Why "Left" and "Right"?
 
-From the equation **Ax = b**:
+Look at the equation again:
 
 ```
-[    A    ] [x] = [b]
- ↑ LEFT        ↑ RIGHT
- (matrix)      (vector)
+A    ·    x    =    b
+↑                   ↑
+LEFT side           RIGHT side
+of the equation     of the equation
 ```
 
-- **Left file** = The coefficient matrix **A** (the left-hand side)
-- **Right file** = The RHS vector **b** (the right-hand side)
+- **Left file** = matrix **A** — the coefficients on the **left** side of the equals sign
+- **Right file** = vector **b** — the constants on the **right** side of the equals sign
 
-This naming comes from how they appear in the equation. Your professor or textbook might also call them the **coefficient matrix** and the **constant vector**.
+That's it. The naming literally comes from which side of the `=` sign they sit on.
+
+Some professors call them:
+- **Coefficient matrix** and **load vector**
+- **Stiffness matrix** and **force vector** (in engineering)
+- **LHS** and **RHS**
+
+They all mean the same thing: A and b.
 
 ---
 
-## File Format Details
+## File Format — Explained Line by Line
 
-### Left Files (Coefficient Matrix A)
+### Left File (49l.txt)
 
-```
-49 50           ← header line: "49 rows, 50 columns"
--3.800e+002  7.166e+001  -1.848e+001 ...   ← row 1 (49 values)
- 3.603e+001 -2.360e+002   2.336e+001 ...   ← row 2
-...                                         ← 49 rows total
-```
-
-**Important quirk:** The header says `49 50` (not `49 49`). This means the file was originally exported as a 49×50 matrix — it may include an extra column. The `Input.cpp` code handles this by checking:
-- If the first line has exactly 2 numbers and the remaining rows are wider → it's a dimension header
-- The reader then uses `rows` and `cols` from the header
-
-For the 225 file, the header says `225 226`.
-
-> **What's that extra column?** It could be an augmented format `[A|b]` where the last column IS the RHS vector. But since you have separate right-hand side files, you typically **load A from the left file** and **b from the right file** (option 3 in the menu). The program will figure out the correct dimensions.
-
-### Right Files (RHS Vector b)
+Open `49l.txt` and you'll see:
 
 ```
--4.8924480e+002    ← b[0]
--1.7704529e+002    ← b[1]
--1.5400009e+002    ← b[2]
-...                ← one value per line
+49 50
+-3.8004877e+002  7.1664431e+001  -1.8485281e+001  ...  0.0000000e+000
+ 3.6037916e+001 -2.3602439e+002   2.3361444e+001  ...  0.0000000e+000
+...
 ```
 
-Much simpler — just one number per line, one for each equation.
+**Line 1: `49 50`** — This is a **header line**. It tells you the matrix has 49 rows. The "50" is because the file was exported with one extra column (possibly including b as the last column in augmented form). Our program reads this header and knows to expect 49 rows of data after it.
 
-### Number Format
+**Lines 2 onwards** — Each line is one row of the matrix. Row 1 has 49 numbers (or 50, with the extra column that the program handles). Row 2 has 49 numbers. And so on, for 49 rows.
 
-All values use **scientific notation** (also called exponential notation):
+**The numbers themselves** — They're in scientific notation:
 
 ```
--3.8004877e+002  means  -3.8004877 × 10² = -380.04877
- 1.0704565e+003  means   1.0704565 × 10³ =  1070.4565
- 0.0000000e+000  means   0.0
+-3.8004877e+002  means  -3.8004877 × 10^2  =  -380.04877
+ 7.1664431e+001  means   7.1664431 × 10^1  =   71.664431
+ 0.0000000e+000  means   0.0               =   0.0
+-1.7704529e+002  means  -1.7704529 × 10^2  =  -177.04529
 ```
 
-C++ reads this automatically with `cin >>` or `ifstream >>` — no special parsing needed.
+The `e+002` part means "move the decimal point 2 places right." The `e+000` means "don't move it" (so the number is just what you see before the e).
+
+C++ reads scientific notation automatically — `cin >> val` or `fin >> val` parses it correctly.
+
+### Right File (49r.txt)
+
+```
+-4.8924480e+002
+-1.7704529e+002
+-1.5400009e+002
+-1.2534672e+002
+...
+```
+
+Much simpler — just **one number per line**, 49 lines total. Each number is one element of vector b.
+
+`b[0] = -489.24480`, `b[1] = -177.04529`, etc.
+
+### Spaces vs Commas vs Tabs
+
+The left files use **spaces** to separate values. Not commas, not tabs, not semicolons. This is important if you ever create your own files — use spaces.
 
 ---
 
-## What Kind of Matrices Are These?
+## Where Do These Matrices Come From?
 
-These are **sparse, banded, diagonally-dominant matrices** — typical of numerical methods in engineering and science. Key characteristics:
+These are **stiffness matrices** from a numerical method called **finite differences** (or possibly finite elements). Here's the idea:
 
-### Sparsity (mostly zeros)
-Look at any row of the 49×49 matrix: most entries are `0.0000000e+000`. Only ~14 entries per row are nonzero. The matrix is **~85% zeros**.
+1. You have a physical problem — maybe a plate being bent, or heat spreading across a surface
+2. You lay a **grid** over the surface
+3. At each grid point, you write an equation relating that point to its neighbors
+4. You end up with one equation per grid point
 
-### Band Structure
-The nonzero entries cluster around the diagonal and appear at regular offsets (every 7 positions for the 49×49, every 15 for the 225×225). This is the hallmark of a **stencil-based discretization**.
+For the 49×49 system:
+- The grid is **7 × 7** (7 rows × 7 columns = 49 points)
+- Each grid point gives one equation → 49 equations
+- Each equation has 49 unknowns (one per grid point) → 49×49 matrix
 
-### Block Structure
-- **49 = 7 × 7** → a 7×7 grid of unknowns
-- **225 = 15 × 15** → a 15×15 grid of unknowns
+For the 225×225 system:
+- The grid is **15 × 15** (15 × 15 = 225 points)
+- Finer grid = more accuracy = bigger matrix
 
-The matrices come from discretizing a **2D problem** (like a plate bending equation or biharmonic equation) on a regular grid. Each grid point interacts with its neighbors, producing the banded pattern.
+### Why are most entries zero?
 
-### Diagonal Dominance
-The diagonal entries are large and negative (e.g., `-380`, `-3009`), which means Gaussian elimination works well on these systems — especially with pivoting.
+Each grid point only talks to its **nearby neighbors** (not to points far away). So most entries in each row are zero. If point #25 only interacts with ~14 neighbors, then row 25 has only ~14 nonzero entries and ~35 zeros. This makes the matrix **sparse** (mostly zeros).
+
+### Why is the diagonal so large?
+
+The diagonal entry `A[i][i]` represents the "self-interaction" of point i. It's always the largest entry in its row (in absolute value). This property is called **diagonal dominance** — it means Gaussian elimination will work well on this matrix.
+
+### The repeating block pattern
+
+If you look carefully, you'll see a block structure. In the 49×49 matrix, there are 7×7 = 49 entries arranged in 7 blocks of 7. This comes from the 2D grid — one block per row of grid points, and the blocks interact diagonally (because grid rows are neighbors of each other).
 
 ---
 
-## How to Load and Solve These in the Program
+## How to Compute the Solution
 
-### Option 1: Load A and b separately (Recommended)
+### Step 1: Load the data
+
+In the program, choose option 5 (Gaussian elimination with pivoting):
 
 ```
-Enter choice: 5  (Gaussian elimination with pivoting)
+Enter choice: 5
 
 How do you want to input the system Ax = b?
 3. Load A from left file and b from right file
 
 Enter matrix (left) file: 49/49l.txt
 Enter RHS (right) file: 49/49r.txt
+Loaded 49x49 system
 ```
 
-### Option 2: Save the solution
+### Step 2: The program solves it
+
+Behind the scenes, Gaussian elimination does:
+
+1. **Forward elimination** — converts the matrix to upper triangular form (zeros below the diagonal)
+2. **Pivoting** — swaps rows to put the largest value on the diagonal at each step (prevents dividing by tiny numbers)
+3. **Back substitution** — solves from the bottom equation up, plugging answers back in
+
+### Step 3: Read the solution
+
+```
+--- Solution ---
+x[0] = ...
+x[1] = ...
+x[2] = ...
+...
+x[48] = ...
+```
+
+Each `x[i]` is the value at one grid point. For the 7×7 grid, you can picture it as:
+
+```
+Row 0: x[0]  x[1]  x[2]  x[3]  x[4]  x[5]  x[6]
+Row 1: x[7]  x[8]  x[9]  x[10] x[11] x[12] x[13]
+Row 2: x[14] x[15] x[16] x[17] x[18] x[19] x[20]
+Row 3: x[21] x[22] x[23] x[24] x[25] x[26] x[27]
+Row 4: x[28] x[29] x[30] x[31] x[32] x[33] x[34]
+Row 5: x[35] x[36] x[37] x[38] x[39] x[40] x[41]
+Row 6: x[42] x[43] x[44] x[45] x[46] x[47] x[48]
+```
+
+If this is a plate bending problem, these values are the **deflection** at each point. If it's a heat problem, they're the **temperature** at each point.
+
+### Step 4: Save to file
 
 ```
 Save solution to file? (1=yes, 0=no): 1
 Enter output filename: solution_49.txt
+Solution written to solution_49.txt
 ```
-
-### Interpreting the Solution
-
-The output `x[0], x[1], ..., x[48]` are the **values at each grid point**. For the 49×49 system (7×7 grid), you can reshape them into a 7×7 grid:
-
-```
-x[0]  x[1]  x[2]  x[3]  x[4]  x[5]  x[6]
-x[7]  x[8]  x[9]  x[10] x[11] x[12] x[13]
-...
-x[42] x[43] x[44] x[45] x[46] x[47] x[48]
-```
-
-These values represent the physical quantity (e.g., deflection, temperature) at each point on the grid.
 
 ---
 
-## How to Verify Your Solution
+## How to Verify Your Answer
 
-After finding **x**, compute **Ax** and compare with **b**. The residual should be tiny:
+After solving, you should check: does `A × x` actually equal `b`?
 
-```
-residual = ||Ax - b|| ≈ 0  (should be ~1e-8 or smaller)
-```
+The **residual** is the difference: `r = b - Ax`. If your solution is correct, every entry of r should be nearly zero (maybe ~1e-10 due to floating point rounding).
 
-In code:
+You can check this by hand for small systems, or write a quick loop:
+
 ```cpp
-// After solving, verify
 for (int i = 0; i < n; i++) {
     double Ax_i = 0;
     for (int j = 0; j < n; j++)
         Ax_i += A[i][j] * x[j];
-    double error = fabs(Ax_i - b[i]);
-    // error should be very small for each row
+    cout << "residual[" << i << "] = " << fabs(b[i] - Ax_i) << endl;
 }
 ```
 
+If the residuals are small (< 1e-6), your answer is good. If they're large, something went wrong.
+
 ---
 
-## Common Mistakes Students Make
+## Common Mistakes and How to Avoid Them
 
-### 1. Confusing "49 50" header with actual matrix dimensions
-The first line `49 50` is NOT row 1 of the matrix — it's a header saying "49 rows, 50 columns." If you read it as data, you'll have a 50×50 matrix with wrong values. The `Input.cpp` code handles this, but if you're writing your own reader, watch out.
-
-### 2. Mismatched A and b sizes
-If A is 49×49 but you load a b with 48 or 50 entries, the solve will either crash or give garbage. Always check `A.rows == length(b)`.
-
-### 3. Not using pivoting
-These matrices work fine with pivoting. Without pivoting, you might encounter a zero (or near-zero) pivot and get `inf` or `nan` in your solution. **Always use partial pivoting** (option 5) unless you have a specific reason not to.
-
-### 4. File path issues
-If you run the program from the wrong directory, it can't find `49/49l.txt`. Always run from the `matrix_class/` directory:
+### 1. Wrong working directory
+**Problem:** `can't open file '49/49l.txt'`
+**Fix:** Make sure you run the program from the `matrix_class/` folder:
 ```bash
 cd matrix_class
 ./matrix_program
 ```
 
-### 5. Forgetting the file is space-separated, not comma-separated
-The values are separated by spaces. If you ever convert these files or create your own, make sure to use spaces (not commas, tabs, or semicolons).
+### 2. Confusing the header line with data
+**Problem:** The first line of `49l.txt` is `49 50` — if your code reads this as the first row of data, everything shifts by one row and the solution is garbage.
+**Fix:** Our `Input.cpp` handles this automatically. If you write your own reader, check if the first line has only 2 numbers — if so, it's a header.
 
-### 6. Precision loss with `float` vs `double`
-These files have 7-8 significant digits. Using `float` (7 digits) will lose precision. The program uses `double` (15-16 digits) — don't change this.
+### 3. Swapping left and right files
+**Problem:** You accidentally give the RHS file as the matrix or vice versa.
+**Fix:** The left/matrix file is always the BIGGER file. `49l.txt` is 38 KB. `49r.txt` is only 763 bytes.
 
-### 7. Index confusion (0-based vs 1-based)
-The program uses **0-based indexing** (`x[0]` through `x[48]`). Your textbook or professor might use 1-based indexing (`x₁` through `x₄₉`). Don't mix them up.
+### 4. Not using pivoting
+**Problem:** You use option 6 (without pivoting) and get `nan` or `inf` in the solution.
+**Why:** Without pivoting, if a zero (or near-zero) value lands on the diagonal, the program divides by it → infinity.
+**Fix:** Always use option 5 (with pivoting) unless your professor specifically asks for without.
 
-### 8. Trying to print a 225×225 matrix to the terminal
-It's 225 columns wide. It'll wrap horribly and be unreadable. Use file output instead, or only print the solution vector.
+### 5. Using float instead of double
+**Problem:** You changed the code to use `float` and the solution is inaccurate.
+**Why:** `float` has only ~7 digits of precision. These matrices have values like `-3.8004877e+002` (8 significant digits). With `float`, you lose the last digit at every step, and after 49 steps of elimination, the error accumulates.
+**Fix:** Always use `double` (15-16 digits of precision).
 
----
+### 6. Index confusion (0-based vs 1-based)
+**Problem:** Your textbook says "solve for x₁ through x₄₉" but the program prints `x[0]` through `x[48]`.
+**Why:** C++ arrays start at 0.
+**Fix:** Just remember: `x[0]` in the program = x₁ in the textbook.
 
-## Creating Your Own Test Files
+### 7. Trying to print the whole 225×225 matrix
+**Problem:** You call `display()` on a 225×225 matrix and the terminal becomes unreadable.
+**Fix:** Only display small matrices (< 10×10). For large systems, just print the solution vector, or save to a file.
 
-If you want to test with a smaller system, create files in the same format:
-
-**my_matrix.txt** (3×3 system):
-```
-2  1  0
-1  3  1
-0  1  2
-```
-
-**my_rhs.txt**:
-```
-1
-2
-3
-```
-
-Then load them:
-```
-Enter matrix (left) file: my_matrix.txt
-Enter RHS (right) file: my_rhs.txt
-```
+### 8. Mismatched dimensions
+**Problem:** You load a 49×49 matrix but a b vector with 50 entries (or 48).
+**Fix:** The program checks this and throws an error. But if you're creating your own files, always make sure `rows of A == length of b`.
 
 ---
 
@@ -219,11 +286,12 @@ Enter RHS (right) file: my_rhs.txt
 
 | Detail | 49×49 System | 225×225 System |
 |--------|-------------|---------------|
-| Grid | 7×7 | 15×15 |
+| Grid size | 7 × 7 | 15 × 15 |
+| Number of unknowns | 49 | 225 |
 | Matrix file | `49/49l.txt` | `225/225left.txt` |
 | RHS file | `49/49r.txt` | `225/225right.txt` |
-| Header line | `49 50` | `225 226` |
+| Header in matrix file | `49 50` | `225 226` |
 | Nonzeros per row | ~14 | ~30 |
 | Matrix file size | ~38 KB | ~810 KB |
 | RHS file size | ~763 B | ~3.5 KB |
-| Use pivoting? | Yes | Yes |
+| Recommended solver | Option 5 (pivoting) | Option 5 (pivoting) |
