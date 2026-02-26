@@ -1,42 +1,48 @@
-#pragma once
+#ifndef MATRIX_HPP
+#define MATRIX_HPP
 
-#include <vector>
-#include <string>
-#include <iostream>
 #include "MatrixException.hpp"
+#include <cmath>
+#include <fstream>
+#include <iostream>
 
 class Matrix {
 protected:
-    int rows;
-    int cols;
-    std::vector<std::vector<double>> data;
-
-    void checkSameSize(const Matrix& other) const;
-    void checkMultiplicationSize(const Matrix& other) const;
-    void checkSquare() const;
+  double **data;
+  int rows;
+  int cols;
 
 public:
-    Matrix();
-    Matrix(int r, int c);
-    Matrix(const std::vector<std::vector<double>>& values);
-    virtual ~Matrix();
+  // Constructors
+  Matrix();
+  Matrix(int r, int c);
+  Matrix(const Matrix &other);
+  virtual ~Matrix();
 
-    int getRows() const;
-    int getCols() const;
+  // Getters
+  int getRows();
+  int getCols();
+  double getData(int i, int j);
+  void setData(int i, int j, double val);
 
-    double& operator()(int i, int j);
-    double operator()(int i, int j) const;
+  // basic operations
+  Matrix add(Matrix other);
+  Matrix subtract(Matrix other);
+  Matrix multiply(Matrix other);
 
-    Matrix add(const Matrix& other) const;
-    Matrix subtract(const Matrix& other) const;
-    Matrix multiply(const Matrix& other) const;
+  // operator overloading
+  Matrix operator+(Matrix &other);
+  Matrix operator-(Matrix &other);
+  Matrix operator*(Matrix &other);
 
-    Matrix operator+(const Matrix& other) const;
-    Matrix operator-(const Matrix& other) const;
-    Matrix operator*(const Matrix& other) const;
+  // determinant
+  double determinant();
 
-    double determinantRecursive() const;
-    double determinantGaussian() const;
+  // display
+  void display();
 
-    virtual void print(std::ostream& os = std::cout) const;
+  // assignment
+  void copyFrom(Matrix &other);
 };
+
+#endif

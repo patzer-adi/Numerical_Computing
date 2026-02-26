@@ -1,18 +1,17 @@
-#pragma once
+#ifndef DISPLAY_HPP
+#define DISPLAY_HPP
 
-#include <iostream>
-#include <vector>
-#include "../include/Matrix.hpp"
+#include <string>
 
-namespace Display {
+using namespace std;
 
-    void printMatrix(const Matrix& m, std::ostream& os = std::cout);
+// display a matrix nicely
+void displayMatrix(double **data, int rows, int cols);
 
-    void printVector(const std::vector<double>& v,
-                     std::ostream& os = std::cout);
+// display a solution vector
+void displaySolution(double *x, int n);
 
-    void printLU(const Matrix& L, const Matrix& U,
-                 std::ostream& os = std::cout);
+// write solution to a file
+void writeSolutionToFile(double *x, int n, string filename);
 
-    void printLine(std::ostream& os = std::cout);
-}
+#endif

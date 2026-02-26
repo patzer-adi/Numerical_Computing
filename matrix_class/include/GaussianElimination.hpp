@@ -1,16 +1,17 @@
-#pragma once
+#ifndef GAUSSIANELIMINATION_HPP
+#define GAUSSIANELIMINATION_HPP
 
 #include "Matrix.hpp"
 #include <vector>
 
 class GaussianElimination : public Matrix {
 public:
-    GaussianElimination(const Matrix& m);
+  GaussianElimination();
+  GaussianElimination(int r, int c);
 
-    Matrix eliminateWithoutPivot();
-    Matrix eliminateWithPivot();
-
-    std::vector<double> backSubstitution() const;
-
-    void print(std::ostream& os = std::cout) const override;
+  // solve Ax = b
+  double *solveWithPivoting(double *b, int n);
+  double *solveWithoutPivoting(double *b, int n);
 };
+
+#endif

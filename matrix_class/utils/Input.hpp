@@ -1,16 +1,31 @@
-#pragma once
+#ifndef INPUT_HPP
+#define INPUT_HPP
 
 #include <string>
-#include "../include/Matrix.hpp"
 
-namespace Input {
+using namespace std;
 
-    Matrix readMatrixFromConsole();
+// read matrix from console - user types row by row
+void readMatrixFromConsole(double **data, int rows, int cols);
 
-    Matrix readMatrixFromFile(const std::string& filename);
+// read matrix from a file (space separated values)
+// first line can have "rows cols" or just data directly
+void readMatrixFromFile(string filename, double **&data, int &rows, int &cols);
 
-    Matrix readAugmentedFromFile(const std::string& filename);
+// read RHS vector from file (one value per line)
+void readRHSFromFile(string filename, double *&b, int &n);
 
-    Matrix readFromLeftRightFiles(const std::string& leftFile,
-                                  const std::string& rightFile);
-}
+// read augmented matrix and split into A and b
+void readAugmentedFromFile(string filename, double **&A, double *&b, int &n);
+
+// figure out if the file is left(matrix) or right(vector) based on name
+// returns 'l' for left, 'r' for right, 'a' for augmented
+char guessFileType(string filename);
+
+// get matrix input (asks user: console or file)
+void getMatrixInput(double **&data, int &rows, int &cols);
+
+// get system input (matrix A and vector b) for solving
+void getSystemInput(double **&A, double *&b, int &n);
+
+#endif

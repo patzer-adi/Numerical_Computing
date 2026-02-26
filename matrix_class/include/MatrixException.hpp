@@ -1,12 +1,20 @@
-#pragma once
-#include <exception>
-#include <string>
+#ifndef MATRIXEXCEPTION_HPP
+#define MATRIXEXCEPTION_HPP
 
-class MatrixException : public std::exception {
+#include <iostream>
+#include <string>
+using namespace std;
+
+class MatrixException {
 private:
-    std::string message;
+  string message;
 
 public:
-    MatrixException(const std::string& msg);
-    const char* what() const noexcept override;
+  MatrixException(string msg) { message = msg; }
+
+  string getMessage() { return message; }
+
+  void printError() { cout << "Error: " << message << endl; }
 };
+
+#endif
