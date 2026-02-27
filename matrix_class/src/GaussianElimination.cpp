@@ -1,6 +1,5 @@
 #include "../include/GaussianElimination.hpp"
 #include <cmath>
-#include <iostream>
 using namespace std;
 
 GaussianElimination::GaussianElimination() : Matrix() {}
@@ -10,7 +9,7 @@ GaussianElimination::GaussianElimination(int r, int c) : Matrix(r, c) {}
 double *GaussianElimination::solveWithPivoting(double *b, int n) {
   if (rows != cols || rows != n)
     throw MatrixException(
-        "matrix dimensions are sus for gaussian elimination ");
+        "matrix dimensions are sus for gaussian elimination");
 
   // make copies so we dont destroy original
   double **A = new double *[n];
@@ -85,9 +84,8 @@ double *GaussianElimination::solveWithPivoting(double *b, int n) {
 double *GaussianElimination::solveWithoutPivoting(double *b, int n) {
   if (rows != cols || rows != n)
     throw MatrixException(
-        "matrix dimensions are sus for gaussian elimination ");
+        "matrix dimensions are sus for gaussian elimination");
 
-  // make copies
   double **A = new double *[n];
   for (int i = 0; i < n; i++) {
     A[i] = new double[n];
@@ -124,7 +122,6 @@ double *GaussianElimination::solveWithoutPivoting(double *b, int n) {
     x[i] = sum / A[i][i];
   }
 
-  // cleanup
   for (int i = 0; i < n; i++)
     delete[] A[i];
   delete[] A;

@@ -1,9 +1,12 @@
 #ifndef INPUT_HPP
 #define INPUT_HPP
 
+#include "../include/Matrix.hpp"
 #include <string>
 
 using namespace std;
+
+// === Low-level read functions ===
 
 // read matrix from console - user types row by row
 void readMatrixFromConsole(double **data, int rows, int cols);
@@ -19,13 +22,22 @@ void readRHSFromFile(string filename, double *&b, int &n);
 void readAugmentedFromFile(string filename, double **&A, double *&b, int &n);
 
 // figure out if the file is left(matrix) or right(vector) based on name
-// returns 'l' for left, 'r' for right, 'a' for augmented
 char guessFileType(string filename);
 
-// get matrix input (asks user: console or file)
-void getMatrixInput(double **&data, int &rows, int &cols);
+// === High-level class-based functions (used by GE, LU, main) ===
 
-// get system input (matrix A and vector b) for solving
-void getSystemInput(double **&A, double *&b, int &n);
+// asks user "manual or file?" and populates a Matrix object
+void getMatrixInput(Matrix &mat);
+
+// asks user how to input Ax=b, populates Matrix A and vector b
+// allocates b internally — caller must delete[] b when done
+void getSystemInput(Matrix &A, double *&b, int &n);
+
+// load A from matrix file, b from rhs file, into Matrix object
+void loadSystemFromFiles(Matrix &A, double *&b, int &n, string matrixFile,
+                         string rhsFile);
+
+// load augmented [A|b] from one file into Matrix object
+void loadSystemAugmented(Matrix &A, double *&b, int &n, string filename);
 
 #endif

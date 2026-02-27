@@ -1,8 +1,11 @@
 #include "../include/Matrix.hpp"
 #include <cmath>
 #include <cstring>
+#include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <sstream>
+#include <vector>
 using namespace std;
 
 // default constructor
@@ -23,6 +26,14 @@ Matrix::Matrix(int r, int c) {
       data[i][j] = 0.0;
     }
   }
+}
+
+// file constructor — reads matrix from a file
+Matrix::Matrix(string filename) {
+  data = nullptr;
+  rows = 0;
+  cols = 0;
+  readFromFile(filename);
 }
 
 // copy constructor
@@ -55,20 +66,163 @@ int Matrix::getCols() { return cols; }
 double Matrix::getData(int i, int j) {
   if (i < 0 || i >= rows || j < 0 || j >= cols)
     throw MatrixException(
-        "bruh you went out of bounds... matrix ain't that big 💀");
+        "bruh you went out of bounds... matrix ain't that big");
   return data[i][j];
 }
 
 void Matrix::setData(int i, int j, double val) {
   if (i < 0 || i >= rows || j < 0 || j >= cols)
     throw MatrixException(
-        "you're trying to set data outside the matrix... nice try 🤡");
+        "you're trying to set data outside the matrix... nice try");
   data[i][j] = val;
 }
 
+// ===== I/O METHODS =====
+
+// read matrix from console — ask for size, then row by row
+void Matrix::readFromConsole() {
+  // clean up old data if any
+  if (data != nullptr) {
+    for (int i = 0; i < rows; i++)
+      delete[] data[i];
+    delete[] data;
+  }
+
+  cout << "Enter rows: ";
+  cin >> rows;
+  cout << "Enter cols: ";
+  cin >> cols;
+
+  data = new double *[rows];
+  for (int i = 0; i < rows; i++)
+    data[i] = new double[cols];
+
+  cout << "Enter matrix elements row by row:\n";
+  for (int i = 0; i < rows; i++) {
+    cout << "Row " << i + 1 << ": ";
+    for (int j = 0; j < cols; j++) {
+      cin >> data[i][j];
+    }
+  }
+}
+
+// read matrix from a file (auto detects header vs no header)
+void Matrix::readFromFile(string filename) {
+  // clean up old data if any
+  if (data != nullptr) {
+    for (int i = 0; i < rows; i++)
+      delete[] data[i];
+    delete[] data;
+    data = nullptr;
+  }
+
+  ifstream fin(filename);
+  if (!fin) {
+    throw MatrixException("can't open file '" + filename +
+                          "'... did you spell it right?");
+  }
+
+  // read first line to check if its a header
+  string firstLine;
+  getline(fin, firstLine);
+  istringstream iss(firstLine);
+
+  vector<double> firstRow;
+  double val;
+  while (iss >> val) {
+    firstRow.push_back(val);
+  }
+
+  // read remaining lines
+  vector<vector<double>> allRows;
+  string line;
+  while (getline(fin, line)) {
+    if (line.empty())
+      continue;
+    istringstream lineStream(line);
+    vector<double> row;
+    double v;
+    while (lineStream >> v) {
+      row.push_back(v);
+    }
+    if (!row.empty())
+      allRows.push_back(row);
+  }
+  fin.close();
+
+  // check if first line was "rows cols" header
+  if (firstRow.size() == 2 && !allRows.empty() && allRows[0].size() > 2) {
+    rows = (int)firstRow[0];
+    cols = (int)firstRow[1];
+  } else {
+    allRows.insert(allRows.begin(), firstRow);
+    rows = allRows.size();
+    cols = allRows[0].size();
+  }
+
+  // allocate and fill
+  data = new double *[rows];
+  for (int i = 0; i < rows; i++) {
+    data[i] = new double[cols];
+    for (int j = 0; j < cols; j++) {
+      if (i < (int)allRows.size() && j < (int)allRows[i].size())
+        data[i][j] = allRows[i][j];
+      else
+        data[i][j] = 0.0;
+    }
+  }
+
+  cout << "Loaded " << rows << "x" << cols << " matrix from " << filename
+       << endl;
+}
+
+// write matrix to a file
+void Matrix::saveToFile(string filename) {
+  ofstream fout(filename);
+  if (!fout) {
+    throw MatrixException("can't write to file '" + filename + "'");
+  }
+  fout << fixed << setprecision(7);
+  for (int i = 0; i < rows; i++) {
+    for (int j = 0; j < cols; j++) {
+      if (j > 0)
+        fout << "  ";
+      fout << data[i][j];
+    }
+    fout << "\n";
+  }
+  fout.close();
+  cout << "Matrix written to " << filename << endl;
+}
+
+// static helper — asks user "manual or file?" and returns a Matrix
+Matrix Matrix::inputMatrix(string label) {
+  cout << "\n--- " << label << " ---\n";
+  int choice;
+  cout << "How do you want to enter the matrix?\n";
+  cout << "1. Enter manually\n";
+  cout << "2. Load from file\n";
+  cout << "Enter choice: ";
+  cin >> choice;
+
+  Matrix m;
+  if (choice == 1) {
+    m.readFromConsole();
+  } else if (choice == 2) {
+    string filename;
+    cout << "Enter filename: ";
+    cin >> filename;
+    m.readFromFile(filename);
+  } else {
+    throw MatrixException("invalid choice bruh... it was literally 1 or 2");
+  }
+  return m;
+}
+
+// ===== OPERATIONS =====
+
 // copy from another matrix
 void Matrix::copyFrom(Matrix &other) {
-  // clean up old data if any
   if (data != nullptr) {
     for (int i = 0; i < rows; i++)
       delete[] data[i];
@@ -82,6 +236,26 @@ void Matrix::copyFrom(Matrix &other) {
     for (int j = 0; j < cols; j++)
       data[i][j] = other.data[i][j];
   }
+}
+
+// assignment operator (deep copy)
+Matrix &Matrix::operator=(const Matrix &other) {
+  if (this == &other)
+    return *this;
+  if (data != nullptr) {
+    for (int i = 0; i < rows; i++)
+      delete[] data[i];
+    delete[] data;
+  }
+  rows = other.rows;
+  cols = other.cols;
+  data = new double *[rows];
+  for (int i = 0; i < rows; i++) {
+    data[i] = new double[cols];
+    for (int j = 0; j < cols; j++)
+      data[i][j] = other.data[i][j];
+  }
+  return *this;
 }
 
 // addition
@@ -116,7 +290,7 @@ Matrix Matrix::operator-(Matrix &other) { return subtract(other); }
 Matrix Matrix::multiply(Matrix other) {
   if (cols != other.rows)
     throw MatrixException("matrix multiplication dimensions don't work... go "
-                          "back to math class 📐");
+                          "back to math class");
   Matrix result(rows, other.cols);
   for (int i = 0; i < rows; i++)
     for (int j = 0; j < other.cols; j++)
@@ -156,7 +330,6 @@ double Matrix::determinant() {
     }
 
     if (maxVal < 1e-12) {
-      // basically zero, matrix is singular
       for (int i = 0; i < n; i++)
         delete[] temp[i];
       delete[] temp;
@@ -168,7 +341,7 @@ double Matrix::determinant() {
       double *tempRow = temp[k];
       temp[k] = temp[maxRow];
       temp[maxRow] = tempRow;
-      det *= -1; // swapping changes sign
+      det *= -1;
     }
 
     det *= temp[k][k];

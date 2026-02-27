@@ -7,6 +7,8 @@
 #include <vector>
 using namespace std;
 
+// === Low-level functions (unchanged) ===
+
 // read matrix from console
 void readMatrixFromConsole(double **data, int rows, int cols) {
   cout << "Enter matrix elements row by row:\n";
@@ -23,10 +25,9 @@ void readMatrixFromFile(string filename, double **&data, int &rows, int &cols) {
   ifstream fin(filename);
   if (!fin) {
     throw MatrixException("can't open file '" + filename +
-                          "'... did you spell it right? ");
+                          "'... did you spell it right?");
   }
 
-  // try reading first line to see if it has dimensions
   string firstLine;
   getline(fin, firstLine);
   istringstream iss(firstLine);
@@ -37,7 +38,6 @@ void readMatrixFromFile(string filename, double **&data, int &rows, int &cols) {
     firstRow.push_back(val);
   }
 
-  // now read rest of file
   vector<vector<double>> allRows;
   string line;
   while (getline(fin, line)) {
@@ -54,19 +54,15 @@ void readMatrixFromFile(string filename, double **&data, int &rows, int &cols) {
   }
   fin.close();
 
-  // check if first line was "rows cols" header
   if (firstRow.size() == 2 && !allRows.empty() && allRows[0].size() > 2) {
-    // first line is dimensions header
     rows = (int)firstRow[0];
     cols = (int)firstRow[1];
   } else {
-    // first line is actual data
     allRows.insert(allRows.begin(), firstRow);
     rows = allRows.size();
     cols = allRows[0].size();
   }
 
-  // allocate and fill
   data = new double *[rows];
   for (int i = 0; i < rows; i++) {
     data[i] = new double[cols];
@@ -79,7 +75,7 @@ void readMatrixFromFile(string filename, double **&data, int &rows, int &cols) {
   }
 }
 
-// read RHS vector from file (one value per line)
+// read RHS vector from file
 void readRHSFromFile(string filename, double *&b, int &n) {
   ifstream fin(filename);
   if (!fin) {
@@ -101,16 +97,15 @@ void readRHSFromFile(string filename, double *&b, int &n) {
   }
 }
 
-// read augmented matrix [A|b] from file, split into A and b
+// read augmented [A|b] from file
 void readAugmentedFromFile(string filename, double **&A, double *&b, int &n) {
   double **augmented = nullptr;
   int augRows, augCols;
   readMatrixFromFile(filename, augmented, augRows, augCols);
 
   n = augRows;
-  int aCols = augCols - 1; // last column is b
+  int aCols = augCols - 1;
 
-  // allocate A
   A = new double *[n];
   for (int i = 0; i < n; i++) {
     A[i] = new double[aCols];
@@ -118,22 +113,18 @@ void readAugmentedFromFile(string filename, double **&A, double *&b, int &n) {
       A[i][j] = augmented[i][j];
   }
 
-  // last column is b
   b = new double[n];
   for (int i = 0; i < n; i++) {
     b[i] = augmented[i][augCols - 1];
   }
 
-  // cleanup augmented
   for (int i = 0; i < augRows; i++)
     delete[] augmented[i];
   delete[] augmented;
 }
 
 // guess file type from name
-// looks for 'l', 'left' = matrix, 'r', 'right' = vector
 char guessFileType(string filename) {
-  // just check the filename for hints
   string lower = filename;
   for (int i = 0; i < (int)lower.size(); i++) {
     if (lower[i] >= 'A' && lower[i] <= 'Z')
@@ -145,12 +136,13 @@ char guessFileType(string filename) {
   if (lower.find("left") != string::npos || lower.find("l.") != string::npos)
     return 'l';
 
-  // default: try to guess from dimensions - if cols = rows+1 its augmented
-  return 'a'; // assume augmented
+  return 'a';
 }
 
-// interactive: get matrix input from user
-void getMatrixInput(double **&data, int &rows, int &cols) {
+// === High-level class-based functions ===
+
+// asks user "manual or file?" and populates a Matrix object
+void getMatrixInput(Matrix &mat) {
   int choice;
   cout << "\nHow do you want to enter the matrix?\n";
   cout << "1. Enter manually\n";
@@ -159,28 +151,19 @@ void getMatrixInput(double **&data, int &rows, int &cols) {
   cin >> choice;
 
   if (choice == 1) {
-    cout << "Enter rows: ";
-    cin >> rows;
-    cout << "Enter cols: ";
-    cin >> cols;
-    data = new double *[rows];
-    for (int i = 0; i < rows; i++)
-      data[i] = new double[cols];
-    readMatrixFromConsole(data, rows, cols);
+    mat.readFromConsole();
   } else if (choice == 2) {
     string filename;
     cout << "Enter filename: ";
     cin >> filename;
-    readMatrixFromFile(filename, data, rows, cols);
-    cout << "Loaded " << rows << "x" << cols << " matrix from " << filename
-         << endl;
+    mat.readFromFile(filename);
   } else {
     throw MatrixException("invalid choice bruh... it was literally 1 or 2");
   }
 }
 
-// interactive: get system of equations (A and b)
-void getSystemInput(double **&A, double *&b, int &n) {
+// asks user how to input Ax=b, populates Matrix A and vector b
+void getSystemInput(Matrix &A, double *&b, int &n) {
   int choice;
   cout << "\nHow do you want to input the system Ax = b?\n";
   cout << "1. Enter A and b manually\n";
@@ -190,72 +173,95 @@ void getSystemInput(double **&A, double *&b, int &n) {
   cin >> choice;
 
   if (choice == 1) {
+    // manual input
     cout << "Enter size n (nxn matrix): ";
     cin >> n;
-    A = new double *[n];
-    for (int i = 0; i < n; i++)
-      A[i] = new double[n];
+
+    // read matrix A
+    A = Matrix(n, n);
     cout << "\n--- Enter matrix A ---\n";
-    readMatrixFromConsole(A, n, n);
+    cout << "Enter matrix elements row by row:\n";
+    for (int i = 0; i < n; i++) {
+      cout << "Row " << i + 1 << ": ";
+      for (int j = 0; j < n; j++) {
+        double val;
+        cin >> val;
+        A.setData(i, j, val);
+      }
+    }
+
+    // read vector b
     b = new double[n];
     cout << "\n--- Enter vector b ---\n";
     cout << "Enter " << n << " values: ";
     for (int i = 0; i < n; i++)
       cin >> b[i];
+
   } else if (choice == 2) {
+    // augmented file
     string filename;
     cout << "Enter augmented matrix file: ";
     cin >> filename;
-    readAugmentedFromFile(filename, A, b, n);
-    cout << "Loaded " << n << "x" << n << " system from " << filename << endl;
+    loadSystemAugmented(A, b, n, filename);
+
   } else if (choice == 3) {
+    // separate files
     string leftFile, rightFile;
     cout << "Enter matrix (left) file: ";
     cin >> leftFile;
     cout << "Enter RHS (right) file: ";
     cin >> rightFile;
+    loadSystemFromFiles(A, b, n, leftFile, rightFile);
 
-    double **tempData = nullptr;
-    int tempRows, tempCols;
-    readMatrixFromFile(leftFile, tempData, tempRows, tempCols);
-
-    // figure out if this file is augmented or just A
-    if (tempCols == tempRows + 1) {
-      // its augmented, extract A and b
-      n = tempRows;
-      A = new double *[n];
-      for (int i = 0; i < n; i++) {
-        A[i] = new double[n];
-        for (int j = 0; j < n; j++)
-          A[i][j] = tempData[i][j];
-      }
-      // but user also gave right file, so use that for b
-      int bSize;
-      readRHSFromFile(rightFile, b, bSize);
-      if (bSize != n)
-        throw MatrixException(
-            "RHS size doesn't match matrix size... they broke up");
-    } else {
-      n = tempRows;
-      A = new double *[n];
-      for (int i = 0; i < n; i++) {
-        A[i] = new double[n];
-        for (int j = 0; j < n; j++)
-          A[i][j] = tempData[i][j];
-      }
-      int bSize;
-      readRHSFromFile(rightFile, b, bSize);
-      if (bSize != n)
-        throw MatrixException("Matrix and RHS sizes don't match... awkward");
-    }
-
-    // cleanup temp
-    for (int i = 0; i < tempRows; i++)
-      delete[] tempData[i];
-    delete[] tempData;
-
-    cout << "Loaded " << n << "x" << n << " system\n";
   } else {
     throw MatrixException("bro that wasn't even an option");
   }
+}
+
+// load A from matrix file, b from rhs file
+void loadSystemFromFiles(Matrix &A, double *&b, int &n, string matrixFile,
+                         string rhsFile) {
+  // read matrix into A
+  A.readFromFile(matrixFile);
+
+  n = A.getRows();
+
+  // if file had extra column (NxN+1), trim to square
+  if (A.getCols() == n + 1) {
+    Matrix trimmed(n, n);
+    for (int i = 0; i < n; i++)
+      for (int j = 0; j < n; j++)
+        trimmed.setData(i, j, A.getData(i, j));
+    A = trimmed;
+  }
+
+  // read b from file
+  int bSize;
+  readRHSFromFile(rhsFile, b, bSize);
+  if (bSize != n)
+    throw MatrixException(
+        "RHS size doesn't match matrix size... they broke up");
+
+  cout << "Loaded " << n << "x" << n << " system\n";
+}
+
+// load augmented [A|b] from one file
+void loadSystemAugmented(Matrix &A, double *&b, int &n, string filename) {
+  // read the full file into a temp matrix
+  Matrix full;
+  full.readFromFile(filename);
+
+  n = full.getRows();
+  int totalCols = full.getCols();
+
+  // extract A (first n columns) and b (last column)
+  A = Matrix(n, n);
+  b = new double[n];
+  for (int i = 0; i < n; i++) {
+    for (int j = 0; j < n; j++)
+      A.setData(i, j, full.getData(i, j));
+    b[i] = full.getData(i, totalCols - 1);
+  }
+
+  cout << "Loaded " << n << "x" << n << " system from " << filename << endl;
 }
