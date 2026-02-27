@@ -10,6 +10,7 @@ public:
   LUDecomposition(int r, int c);
   virtual ~LUDecomposition() {}
 
+  // solve Ax = b — each subclass implements this
   virtual double *solve(double *b, int n) = 0;
 };
 
