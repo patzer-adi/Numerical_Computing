@@ -16,7 +16,7 @@ void displayMatrix(double **data, int rows, int cols) {
 }
 
 void displaySolution(double *x, int n) {
-  cout << "\n--- Solution ---\n";
+  cout << "\n--- Solution ---" << endl;
   cout << fixed << setprecision(6);
   for (int i = 0; i < n; i++)
     cout << "x[" << i << "] = " << x[i] << endl;
@@ -26,7 +26,7 @@ void displaySolution(double *x, int n) {
 void writeSolutionToFile(double *x, int n, string filename) {
   ofstream fout(filename);
   if (!fout) {
-    cout << "could not open file for writing... oh well\n";
+    cout << "could not open file for writing... oh well" << endl;
     return;
   }
   fout << fixed << setprecision(6);
@@ -71,6 +71,21 @@ void solveGaussian(GaussianElimination &ge, bool withPivoting) {
 
 // handles: input -> solve -> display -> save -> cleanup
 void solveLU(LUDecomposition &solver) {
+  double *b = nullptr;
+  int n;
+  getSystemInput(solver, b, n);
+
+  double *x = solver.solve(b, n);
+
+  displaySolution(x, n);
+  askToSaveSolution(x, n);
+
+  delete[] x;
+  delete[] b;
+}
+
+// handles: input -> solve -> display -> save -> cleanup
+void solveIterative(GaussJacobi &solver) {
   double *b = nullptr;
   int n;
   getSystemInput(solver, b, n);

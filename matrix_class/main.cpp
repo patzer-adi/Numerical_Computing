@@ -1,3 +1,4 @@
+#include "include/GaussJacobi.hpp"
 #include "include/GaussianElimination.hpp"
 #include "include/LUDecomposition.hpp"
 #include "include/Matrix.hpp"
@@ -7,23 +8,32 @@
 using namespace std;
 
 int main() {
-  cout << "\n=== Matrix Operations Program ===\n\n";
+  cout << "\n=== Matrix Operations Program ===" << endl;
+  cout << "=== CPU Backend Active ===" << endl;
+  cout << endl;
 
   int choice;
   bool running = true;
 
   while (running) {
-    cout << "\n=== Menu ===\n";
-    cout << "1.  Add (A + B)\n";
-    cout << "2.  Subtract (A - B)\n";
-    cout << "3.  Multiply (A * B)\n";
-    cout << "4.  Determinant\n";
-    cout << "5.  Gaussian elimination (with pivoting)\n";
-    cout << "6.  Gaussian elimination (without pivoting)\n";
-    cout << "7.  LU - Doolittle\n";
-    cout << "8.  LU - Crout\n";
-    cout << "9.  LU - Cholesky\n";
-    cout << "10. Exit\n";
+    cout << "\n=== Menu ===" << endl;
+    cout << "1.  Add (A + B)" << endl;
+    cout << "2.  Subtract (A - B)" << endl;
+    cout << "3.  Multiply (A * B)" << endl;
+    cout << "4.  Determinant" << endl;
+    cout << "5.  Gaussian elimination (with pivoting)" << endl;
+    cout << "6.  Gaussian elimination (without pivoting)" << endl;
+    cout << "7.  LU - Doolittle" << endl;
+    cout << "8.  LU - Crout" << endl;
+    cout << "9.  LU - Cholesky" << endl;
+    cout << "10. Gauss-Jacobi (iterative)" << endl;
+    cout << "11. Transpose" << endl;
+    cout << "12. Scalar Multiply" << endl;
+    cout << "13. Inverse" << endl;
+    cout << "14. Minor Matrix" << endl;
+    cout << "15. Cofactor" << endl;
+    cout << "16. Adjoint" << endl;
+    cout << "17. Exit" << endl;
     cout << "Enter choice: ";
     cin >> choice;
 
@@ -31,52 +41,52 @@ int main() {
       switch (choice) {
 
       case 1: {
-        cout << "\n--- Matrix A ---\n";
+        cout << "\n--- Matrix A ---" << endl;
         Matrix A;
         getMatrixInput(A);
 
-        cout << "\n--- Matrix B ---\n";
+        cout << "\n--- Matrix B ---" << endl;
         Matrix B;
         getMatrixInput(B);
 
         Matrix C = A + B;
-        cout << "\nResult (A + B):\n";
+        cout << "\nResult (A + B):" << endl;
         C.display();
         break;
       }
 
       case 2: {
-        cout << "\n--- Matrix A ---\n";
+        cout << "\n--- Matrix A ---" << endl;
         Matrix A;
         getMatrixInput(A);
 
-        cout << "\n--- Matrix B ---\n";
+        cout << "\n--- Matrix B ---" << endl;
         Matrix B;
         getMatrixInput(B);
 
         Matrix C = A - B;
-        cout << "\nResult (A - B):\n";
+        cout << "\nResult (A - B):" << endl;
         C.display();
         break;
       }
 
       case 3: {
-        cout << "\n--- Matrix A ---\n";
+        cout << "\n--- Matrix A ---" << endl;
         Matrix A;
         getMatrixInput(A);
 
-        cout << "\n--- Matrix B ---\n";
+        cout << "\n--- Matrix B ---" << endl;
         Matrix B;
         getMatrixInput(B);
 
         Matrix C = A * B;
-        cout << "\nResult (A * B):\n";
+        cout << "\nResult (A * B):" << endl;
         C.display();
         break;
       }
 
       case 4: {
-        cout << "\n--- Enter square matrix ---\n";
+        cout << "\n--- Enter square matrix ---" << endl;
         Matrix A;
         getMatrixInput(A);
         cout << "\nDeterminant = " << A.determinant() << endl;
@@ -113,13 +123,101 @@ int main() {
         break;
       }
 
-      case 10:
-        cout << "\nbye bye!\n";
+      case 10: {
+        GaussJacobi gj;
+        solveIterative(gj);
+        break;
+      }
+
+      case 11: {
+        cout << "\n--- Enter matrix to transpose ---" << endl;
+        Matrix A;
+        getMatrixInput(A);
+
+        Matrix T = A.transpose();
+        cout << "\nTranspose:" << endl;
+        T.display();
+        break;
+      }
+
+      case 12: {
+        cout << "\n--- Enter matrix ---" << endl;
+        Matrix A;
+        getMatrixInput(A);
+
+        double scalar;
+        cout << "Enter scalar value: ";
+        cin >> scalar;
+
+        Matrix S = A * scalar;
+        cout << "\nResult (A * " << scalar << "):" << endl;
+        S.display();
+        break;
+      }
+
+      case 13: {
+        cout << "\n--- Enter square matrix ---" << endl;
+        Matrix A;
+        getMatrixInput(A);
+
+        Matrix inv = A.inverse();
+        cout << "\nInverse:" << endl;
+        inv.display();
+        break;
+      }
+
+      case 14: {
+        cout << "\n--- Enter square matrix ---" << endl;
+        Matrix A;
+        getMatrixInput(A);
+
+        int r, c;
+        cout << "Enter row to remove (0-indexed): ";
+        cin >> r;
+        cout << "Enter col to remove (0-indexed): ";
+        cin >> c;
+
+        Matrix M = A.minorMatrix(r, c);
+        cout << "\nMinor Matrix (removed row " << r << ", col " << c
+             << "):" << endl;
+        M.display();
+        break;
+      }
+
+      case 15: {
+        cout << "\n--- Enter square matrix ---" << endl;
+        Matrix A;
+        getMatrixInput(A);
+
+        int r, c;
+        cout << "Enter row (0-indexed): ";
+        cin >> r;
+        cout << "Enter col (0-indexed): ";
+        cin >> c;
+
+        double cof = A.cofactor(r, c);
+        cout << "\nCofactor(" << r << ", " << c << ") = " << cof << endl;
+        break;
+      }
+
+      case 16: {
+        cout << "\n--- Enter square matrix ---" << endl;
+        Matrix A;
+        getMatrixInput(A);
+
+        Matrix adj = A.adjoint();
+        cout << "\nAdjoint:" << endl;
+        adj.display();
+        break;
+      }
+
+      case 17:
+        cout << "\nbye bye!" << endl;
         running = false;
         break;
 
       default:
-        cout << "\ninvalid choice... try again\n";
+        cout << "\ninvalid choice... try again" << endl;
         break;
       }
     } catch (MatrixException &e) {

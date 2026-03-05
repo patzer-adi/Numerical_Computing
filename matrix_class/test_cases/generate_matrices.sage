@@ -147,6 +147,57 @@ def generate_test_system(n, name, folder=".", matrix_type="random", augmented=Fa
     print(f"  Done!")
 
 
+def generate_symmetric_tests():
+    """
+    Generate symmetric positive definite test cases in the parent directory,
+    in the same format as the existing 49/ and 225/ test folders.
+    Creates: symmetric_N/Nl.txt, symmetric_N/Nr.txt, symmetric_N/N_true_solution.txt
+    """
+    print("\n=== Symmetric Matrix Generator (for Cholesky testing) ===\n")
+
+    sizes_input = input("Enter sizes separated by spaces (e.g., '5 10 49'): ").strip()
+    sizes = [int(s) for s in sizes_input.split()]
+
+    parent = ".."  # the matrix_class/ directory
+
+    for n in sizes:
+        print(f"\nGenerating {n}x{n} symmetric positive definite system...")
+
+        A = generate_symmetric_positive_definite(n)
+        b = generate_rhs_vector(n)
+
+        # create folder like symmetric_5/, symmetric_49/ etc
+        folder = os.path.join(parent, f"symmetric_{n}")
+        os.makedirs(folder, exist_ok=True)
+
+        # save as Nl.txt and Nr.txt (matching existing 49/49l.txt format)
+        save_matrix(A, os.path.join(folder, f"{n}l.txt"), include_header=False)
+        save_vector(b, os.path.join(folder, f"{n}r.txt"))
+
+        # compute and save true solution
+        try:
+            x = A.solve_right(b)
+            save_vector(x, os.path.join(folder, f"{n}_true_solution.txt"))
+            print(f"  True solution saved to {folder}/{n}_true_solution.txt")
+        except Exception as e:
+            print(f"  Warning: could not compute true solution ({e})")
+
+        # verify symmetry
+        is_sym = all(abs(A[i,j] - A[j,i]) < 1e-10
+                     for i in range(n) for j in range(i+1, n))
+        print(f"  Symmetry check: {'PASSED ✅' if is_sym else 'FAILED ⚠️'}")
+
+        # verify positive definiteness (all eigenvalues > 0)
+        eigenvalues = A.eigenvalues()
+        min_eig = min(v.real() for v in eigenvalues)
+        print(f"  Min eigenvalue: {min_eig:.6f} ({'positive ✅' if min_eig > 0 else 'NOT positive ⚠️'})")
+
+    print(f"\nDone! Test folders created in {os.path.abspath(parent)}/")
+    print("Usage in the C++ program:")
+    for n in sizes:
+        print(f"  Option 9 → Load from files: symmetric_{n}/{n}l.txt and symmetric_{n}/{n}r.txt")
+
+
 def interactive_mode():
     """Run the generator interactively, asking the user what they want."""
 
@@ -162,7 +213,8 @@ def interactive_mode():
         print("3. Large test (100x100+)")
         print("4. Custom size")
         print("5. Generate a batch of all sizes")
-        print("6. Quit")
+        print("6. Generate symmetric tests for Cholesky")
+        print("7. Quit")
         print()
 
         choice = input("Enter choice: ").strip()
@@ -179,6 +231,9 @@ def interactive_mode():
             generate_batch()
             continue
         elif choice == "6":
+            generate_symmetric_tests()
+            continue
+        elif choice == "7":
             print("Bye!")
             return
         else:

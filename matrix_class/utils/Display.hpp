@@ -1,6 +1,7 @@
 #ifndef DISPLAY_HPP
 #define DISPLAY_HPP
 
+#include "../include/GaussJacobi.hpp"
 #include "../include/GaussianElimination.hpp"
 #include "../include/LUDecomposition.hpp"
 #include <string>
@@ -26,5 +27,8 @@ void solveGaussian(GaussianElimination &ge, bool withPivoting);
 
 // solve using LU decomposition — handles input, solve, display, save
 void solveLU(LUDecomposition &solver);
+
+// solve using iterative method — handles input, solve, display, save
+void solveIterative(GaussJacobi &solver);
 
 #endif

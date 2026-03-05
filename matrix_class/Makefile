@@ -1,95 +1,66 @@
 # ============================================
-# Makefile Template for Matrix Operations
+# Makefile for Matrix Operations Library
 # ============================================
-# YOUR TASK: Fill in the blanks marked with ???
-# 
-# Hints:
-#   - CXX is the compiler (g++ or clang++)
-#   - CXXFLAGS are flags passed to every compile step
-#   - Each .cpp file gets compiled into a .o (object) file
-#   - The final binary links all .o files together
-#   - $< means "the first dependency" (the .cpp file)
-#   - $@ means "the target" (the .o or binary name)
-#
-# Quick reference:
-#   Compile only:  $(CXX) $(CXXFLAGS) -c source.cpp -o source.o
-#   Link all:      $(CXX) $(CXXFLAGS) -o binaryname obj1.o obj2.o ...
+# Two build modes:
+#   make cpu    — build CPU-only version (default)
+#   make gpu    — build with CUDA GPU support
+#   make clean  — remove all build artifacts
 # ============================================
 
-# --- Step 1: Set the compiler and flags ---
-CXX = ???
-CXXFLAGS = ???
+CXX = g++
+CXXFLAGS = -std=c++11 -Wall
+TARGET = matrix_program
 
-# --- Step 2: Name your output binary ---
-TARGET = ???
-
-# --- Step 3: List ALL your .cpp source files ---
-# (one from main, some from src/, some from utils/)
+# CPU source files
 SRCS = main.cpp \
-       ???
+       src/Matrix.cpp \
+       src/MatrixException.cpp \
+       src/SystemOfLinearEquationSolver.cpp \
+       src/GaussianElimination.cpp \
+       src/LUDecomposition.cpp \
+       src/Doolittle.cpp \
+       src/Crout.cpp \
+       src/Cholesky.cpp \
+       src/GaussJacobi.cpp \
+       src/MatrixOperations.cpp \
+       utils/Input.cpp \
+       utils/Display.cpp
 
-# --- Step 4: Generate object file names from source files ---
-# This magic line turns every .cpp in SRCS into a .o
-# Example: main.cpp -> main.o, src/Matrix.cpp -> src/Matrix.o
 OBJS = $(SRCS:.cpp=.o)
 
 # ============================================
-# RULES
+# CPU-only build (default)
 # ============================================
+cpu: $(TARGET)
 
-# --- Step 5: The default target ---
-# "all" depends on $(TARGET), which is your binary
-all: $(TARGET)
-
-# --- Step 6: Link all .o files into the final binary ---
-# Fill in: how to combine all OBJS into TARGET
 $(TARGET): $(OBJS)
-	???
+	$(CXX) $(CXXFLAGS) -o $@ $(OBJS)
 
-# --- Step 7: Pattern rule to compile any .cpp into .o ---
-# The % wildcard matches any filename
-# $< = the .cpp file, $@ = the .o file
 %.o: %.cpp
-	???
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-# --- Step 8: Clean up generated files ---
+# ============================================
+# GPU build (requires nvcc and CUDA toolkit)
+# ============================================
+NVCC = nvcc
+NVCCFLAGS = -std=c++11 -arch=sm_50 -Icuda/include
+CUDA_SRCS = cuda/src/gpu_kernels.cu cuda/src/gpu_dispatch.cu
+CUDA_OBJS = cuda/src/gpu_kernels.o cuda/src/gpu_dispatch.o
+GPU_TARGET = matrix_program_gpu
+
+gpu: CXXFLAGS += -DUSE_CUDA
+gpu: $(GPU_TARGET)
+
+$(GPU_TARGET): $(OBJS) $(CUDA_OBJS)
+	$(NVCC) $(NVCCFLAGS) -o $@ $(OBJS) $(CUDA_OBJS)
+
+cuda/src/%.o: cuda/src/%.cu
+	$(NVCC) $(NVCCFLAGS) -c $< -o $@
+
+# ============================================
+# Cleanup
+# ============================================
 clean:
-	???
+	rm -f $(OBJS) $(CUDA_OBJS) $(TARGET) $(GPU_TARGET)
 
-# This tells make that "all" and "clean" aren't real files
-.PHONY: all clean
-
-# ============================================
-# ANSWER KEY (don't peek until you've tried!)
-# ============================================
-# Uncomment below to check your answers:
-#
-# CXX = g++
-# CXXFLAGS = -std=c++11 -Wall
-# TARGET = matrix_program
-#
-# SRCS = main.cpp \
-#        src/Matrix.cpp \
-#        src/MatrixException.cpp \
-#        src/GaussianElimination.cpp \
-#        src/LUDecomposition.cpp \
-#        src/Doolittle.cpp \
-#        src/Crout.cpp \
-#        src/Cholesky.cpp \
-#        utils/Input.cpp \
-#        utils/Display.cpp
-#
-# OBJS = $(SRCS:.cpp=.o)
-#
-# all: $(TARGET)
-#
-# $(TARGET): $(OBJS)
-# 	$(CXX) $(CXXFLAGS) -o $@ $(OBJS)
-#
-# %.o: %.cpp
-# 	$(CXX) $(CXXFLAGS) -c $< -o $@
-#
-# clean:
-# 	rm -f $(OBJS) $(TARGET)
-#
-# .PHONY: all clean
+.PHONY: cpu gpu clean

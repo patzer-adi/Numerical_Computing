@@ -20,6 +20,20 @@ Follow the menu. It can generate:
 - **Random** matrices (may be singular)
 - **Diagonally dominant** matrices (always solvable — use this for testing)
 - **Symmetric positive definite** matrices (needed for Cholesky)
+- **Quick symmetric tests** (option 6) — creates ready-to-use folders like `symmetric_49/49l.txt`
+
+### Quick Cholesky Test Generation (Option 6)
+
+Choose option 6 from the menu, then enter sizes like `5 10 49`. It will:
+1. Create folders `symmetric_5/`, `symmetric_10/`, `symmetric_49/` in the `matrix_class/` directory
+2. Each folder gets `Nl.txt` (matrix A), `Nr.txt` (vector b), `N_true_solution.txt` (correct answer)
+3. Verify symmetry and positive definiteness (checks eigenvalues)
+4. Print usage instructions
+
+Then in the C++ program:
+```
+Option 9 (Cholesky) → Load files: symmetric_49/49l.txt and symmetric_49/49r.txt
+```
 
 Output files: `name_left.txt` (matrix A), `name_right.txt` (vector b), `name_true_solution.txt` (correct answer to check against).
 

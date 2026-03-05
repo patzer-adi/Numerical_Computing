@@ -2,14 +2,19 @@
 #include <cmath>
 using namespace std;
 
-GaussianElimination::GaussianElimination() : Matrix() {}
-GaussianElimination::GaussianElimination(int r, int c) : Matrix(r, c) {}
+GaussianElimination::GaussianElimination() : SystemOfLinearEquationSolver() {}
+GaussianElimination::GaussianElimination(int r, int c)
+    : SystemOfLinearEquationSolver(r, c) {}
+
+// default solve — uses pivoting
+double *GaussianElimination::solve(double *b, int n) {
+  return solveWithPivoting(b, n);
+}
 
 // gaussian elimination WITH partial pivoting
 double *GaussianElimination::solveWithPivoting(double *b, int n) {
   if (rows != cols || rows != n)
-    throw MatrixException(
-        "matrix dimensions are sus for gaussian elimination");
+    throw MatrixException("matrix dimensions are sus for gaussian elimination");
 
   // make copies so we dont destroy original
   double **A = new double *[n];
@@ -83,8 +88,7 @@ double *GaussianElimination::solveWithPivoting(double *b, int n) {
 // gaussian elimination WITHOUT pivoting
 double *GaussianElimination::solveWithoutPivoting(double *b, int n) {
   if (rows != cols || rows != n)
-    throw MatrixException(
-        "matrix dimensions are sus for gaussian elimination");
+    throw MatrixException("matrix dimensions are sus for gaussian elimination");
 
   double **A = new double *[n];
   for (int i = 0; i < n; i++) {

@@ -1,10 +1,10 @@
 #ifndef LUDECOMPOSITION_HPP
 #define LUDECOMPOSITION_HPP
 
-#include "Matrix.hpp"
+#include "SystemOfLinearEquationSolver.hpp"
 
 // abstract base class for LU methods
-class LUDecomposition : public Matrix {
+class LUDecomposition : public SystemOfLinearEquationSolver {
 public:
   LUDecomposition();
   LUDecomposition(int r, int c);

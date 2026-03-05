@@ -42,12 +42,28 @@ public:
   Matrix multiply(Matrix other);
 
   // operator overloading
-  Matrix operator+(Matrix &other);
-  Matrix operator-(Matrix &other);
-  Matrix operator*(Matrix &other);
+  Matrix operator+(const Matrix &other);
+  Matrix operator-(const Matrix &other);
+  Matrix operator*(const Matrix &other);
+  Matrix operator*(double scalar);
+
+  // transpose
+  Matrix transpose();
 
   // determinant
   double determinant();
+
+  // inverse and related
+  Matrix minorMatrix(int r, int c);
+  double cofactor(int r, int c);
+  Matrix adjoint();
+  Matrix inverse();
+
+  // check if matrix is symmetric (needed for Cholesky)
+  bool isSymmetric();
+
+  // get raw pointer to a row (for CUDA memory transfers)
+  double *getRowPointer(int i);
 
   // display
   void display();
