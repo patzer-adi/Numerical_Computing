@@ -5,11 +5,23 @@
 #include "utils/Display.hpp"
 #include "utils/Input.hpp"
 #include <iostream>
+
+#ifdef USE_CUDA
+#include "cuda/include/gpu_backend.cuh"
+#include "cuda/include/gpu_dispatch.cuh"
+#endif
+
 using namespace std;
 
 int main() {
   cout << "\n=== Matrix Operations Program ===" << endl;
+
+#ifdef USE_CUDA
+  BackendDispatcher::printBackendInfo();
+#else
   cout << "=== CPU Backend Active ===" << endl;
+#endif
+
   cout << endl;
 
   int choice;

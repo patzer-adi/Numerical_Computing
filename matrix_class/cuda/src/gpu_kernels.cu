@@ -1,7 +1,39 @@
 #include "../include/gpu_backend.cuh"
 #include <cmath>
 #include <cstdio>
+#include <cstdlib>
 #include <cuda_runtime.h>
+
+// ============================================
+// CUDA Error Checking Macros
+// ============================================
+// only used here in .cu files (compiled by nvcc)
+
+#define CUDA_CHECK(call)                                                       \
+  do {                                                                         \
+    cudaError_t err = (call);                                                  \
+    if (err != cudaSuccess) {                                                  \
+      fprintf(stderr, "CUDA error in %s at line %d: %s\n", __FILE__, __LINE__, \
+              cudaGetErrorString(err));                                        \
+      exit(EXIT_FAILURE);                                                      \
+    }                                                                          \
+  } while (0)
+
+#define CUDA_CHECK_KERNEL()                                                    \
+  do {                                                                         \
+    cudaError_t err = cudaGetLastError();                                      \
+    if (err != cudaSuccess) {                                                  \
+      fprintf(stderr, "CUDA kernel launch error in %s at line %d: %s\n",       \
+              __FILE__, __LINE__, cudaGetErrorString(err));                    \
+      exit(EXIT_FAILURE);                                                      \
+    }                                                                          \
+    err = cudaDeviceSynchronize();                                             \
+    if (err != cudaSuccess) {                                                  \
+      fprintf(stderr, "CUDA kernel sync error in %s at line %d: %s\n",         \
+              __FILE__, __LINE__, cudaGetErrorString(err));                    \
+      exit(EXIT_FAILURE);                                                      \
+    }                                                                          \
+  } while (0)
 
 // ============================================
 // GPU Detection
@@ -46,25 +78,26 @@ __global__ void addKernel(double *A, double *B, double *C, int total) {
 
 void gpuMatAdd(double *A, double *B, double *C, int rows, int cols) {
   int total = rows * cols;
-  int bytes = total * sizeof(double);
+  size_t bytes = total * sizeof(double);
 
   double *d_A, *d_B, *d_C;
-  cudaMalloc(&d_A, bytes);
-  cudaMalloc(&d_B, bytes);
-  cudaMalloc(&d_C, bytes);
+  CUDA_CHECK(cudaMalloc(&d_A, bytes));
+  CUDA_CHECK(cudaMalloc(&d_B, bytes));
+  CUDA_CHECK(cudaMalloc(&d_C, bytes));
 
-  cudaMemcpy(d_A, A, bytes, cudaMemcpyHostToDevice);
-  cudaMemcpy(d_B, B, bytes, cudaMemcpyHostToDevice);
+  CUDA_CHECK(cudaMemcpy(d_A, A, bytes, cudaMemcpyHostToDevice));
+  CUDA_CHECK(cudaMemcpy(d_B, B, bytes, cudaMemcpyHostToDevice));
 
   int blockSize = 256;
   int numBlocks = (total + blockSize - 1) / blockSize;
   addKernel<<<numBlocks, blockSize>>>(d_A, d_B, d_C, total);
+  CUDA_CHECK_KERNEL();
 
-  cudaMemcpy(C, d_C, bytes, cudaMemcpyDeviceToHost);
+  CUDA_CHECK(cudaMemcpy(C, d_C, bytes, cudaMemcpyDeviceToHost));
 
-  cudaFree(d_A);
-  cudaFree(d_B);
-  cudaFree(d_C);
+  CUDA_CHECK(cudaFree(d_A));
+  CUDA_CHECK(cudaFree(d_B));
+  CUDA_CHECK(cudaFree(d_C));
 }
 
 // ============================================
@@ -80,25 +113,26 @@ __global__ void subKernel(double *A, double *B, double *C, int total) {
 
 void gpuMatSub(double *A, double *B, double *C, int rows, int cols) {
   int total = rows * cols;
-  int bytes = total * sizeof(double);
+  size_t bytes = total * sizeof(double);
 
   double *d_A, *d_B, *d_C;
-  cudaMalloc(&d_A, bytes);
-  cudaMalloc(&d_B, bytes);
-  cudaMalloc(&d_C, bytes);
+  CUDA_CHECK(cudaMalloc(&d_A, bytes));
+  CUDA_CHECK(cudaMalloc(&d_B, bytes));
+  CUDA_CHECK(cudaMalloc(&d_C, bytes));
 
-  cudaMemcpy(d_A, A, bytes, cudaMemcpyHostToDevice);
-  cudaMemcpy(d_B, B, bytes, cudaMemcpyHostToDevice);
+  CUDA_CHECK(cudaMemcpy(d_A, A, bytes, cudaMemcpyHostToDevice));
+  CUDA_CHECK(cudaMemcpy(d_B, B, bytes, cudaMemcpyHostToDevice));
 
   int blockSize = 256;
   int numBlocks = (total + blockSize - 1) / blockSize;
   subKernel<<<numBlocks, blockSize>>>(d_A, d_B, d_C, total);
+  CUDA_CHECK_KERNEL();
 
-  cudaMemcpy(C, d_C, bytes, cudaMemcpyDeviceToHost);
+  CUDA_CHECK(cudaMemcpy(C, d_C, bytes, cudaMemcpyDeviceToHost));
 
-  cudaFree(d_A);
-  cudaFree(d_B);
-  cudaFree(d_C);
+  CUDA_CHECK(cudaFree(d_A));
+  CUDA_CHECK(cudaFree(d_B));
+  CUDA_CHECK(cudaFree(d_C));
 }
 
 // ============================================
@@ -115,22 +149,23 @@ __global__ void scalarMulKernel(double *A, double *B, double scalar,
 
 void gpuScalarMul(double *A, double *B, double scalar, int rows, int cols) {
   int total = rows * cols;
-  int bytes = total * sizeof(double);
+  size_t bytes = total * sizeof(double);
 
   double *d_A, *d_B;
-  cudaMalloc(&d_A, bytes);
-  cudaMalloc(&d_B, bytes);
+  CUDA_CHECK(cudaMalloc(&d_A, bytes));
+  CUDA_CHECK(cudaMalloc(&d_B, bytes));
 
-  cudaMemcpy(d_A, A, bytes, cudaMemcpyHostToDevice);
+  CUDA_CHECK(cudaMemcpy(d_A, A, bytes, cudaMemcpyHostToDevice));
 
   int blockSize = 256;
   int numBlocks = (total + blockSize - 1) / blockSize;
   scalarMulKernel<<<numBlocks, blockSize>>>(d_A, d_B, scalar, total);
+  CUDA_CHECK_KERNEL();
 
-  cudaMemcpy(B, d_B, bytes, cudaMemcpyDeviceToHost);
+  CUDA_CHECK(cudaMemcpy(B, d_B, bytes, cudaMemcpyDeviceToHost));
 
-  cudaFree(d_A);
-  cudaFree(d_B);
+  CUDA_CHECK(cudaFree(d_A));
+  CUDA_CHECK(cudaFree(d_B));
 }
 
 // ============================================
@@ -148,26 +183,27 @@ __global__ void transposeKernel(double *A, double *B, int rows, int cols) {
 
 void gpuTranspose(double *A, double *B, int rows, int cols) {
   int total = rows * cols;
-  int bytes = total * sizeof(double);
+  size_t bytes = total * sizeof(double);
 
   double *d_A, *d_B;
-  cudaMalloc(&d_A, bytes);
-  cudaMalloc(&d_B, bytes);
+  CUDA_CHECK(cudaMalloc(&d_A, bytes));
+  CUDA_CHECK(cudaMalloc(&d_B, bytes));
 
-  cudaMemcpy(d_A, A, bytes, cudaMemcpyHostToDevice);
+  CUDA_CHECK(cudaMemcpy(d_A, A, bytes, cudaMemcpyHostToDevice));
 
   int blockSize = 256;
   int numBlocks = (total + blockSize - 1) / blockSize;
   transposeKernel<<<numBlocks, blockSize>>>(d_A, d_B, rows, cols);
+  CUDA_CHECK_KERNEL();
 
-  cudaMemcpy(B, d_B, bytes, cudaMemcpyDeviceToHost);
+  CUDA_CHECK(cudaMemcpy(B, d_B, bytes, cudaMemcpyDeviceToHost));
 
-  cudaFree(d_A);
-  cudaFree(d_B);
+  CUDA_CHECK(cudaFree(d_A));
+  CUDA_CHECK(cudaFree(d_B));
 }
 
 // ============================================
-// Matrix Multiplication Kernel (tiled)
+// Matrix Multiplication Kernel (tiled, shared memory)
 // ============================================
 
 #define TILE_SIZE 16
@@ -212,28 +248,29 @@ __global__ void mulKernel(double *A, double *B, double *C, int rows_a,
 
 void gpuMatMul(double *A, double *B, double *C, int rows_a, int cols_a,
                int cols_b) {
-  int bytesA = rows_a * cols_a * sizeof(double);
-  int bytesB = cols_a * cols_b * sizeof(double);
-  int bytesC = rows_a * cols_b * sizeof(double);
+  size_t bytesA = rows_a * cols_a * sizeof(double);
+  size_t bytesB = cols_a * cols_b * sizeof(double);
+  size_t bytesC = rows_a * cols_b * sizeof(double);
 
   double *d_A, *d_B, *d_C;
-  cudaMalloc(&d_A, bytesA);
-  cudaMalloc(&d_B, bytesB);
-  cudaMalloc(&d_C, bytesC);
+  CUDA_CHECK(cudaMalloc(&d_A, bytesA));
+  CUDA_CHECK(cudaMalloc(&d_B, bytesB));
+  CUDA_CHECK(cudaMalloc(&d_C, bytesC));
 
-  cudaMemcpy(d_A, A, bytesA, cudaMemcpyHostToDevice);
-  cudaMemcpy(d_B, B, bytesB, cudaMemcpyHostToDevice);
+  CUDA_CHECK(cudaMemcpy(d_A, A, bytesA, cudaMemcpyHostToDevice));
+  CUDA_CHECK(cudaMemcpy(d_B, B, bytesB, cudaMemcpyHostToDevice));
 
   dim3 blockDim(TILE_SIZE, TILE_SIZE);
   dim3 gridDim((cols_b + TILE_SIZE - 1) / TILE_SIZE,
                (rows_a + TILE_SIZE - 1) / TILE_SIZE);
   mulKernel<<<gridDim, blockDim>>>(d_A, d_B, d_C, rows_a, cols_a, cols_b);
+  CUDA_CHECK_KERNEL();
 
-  cudaMemcpy(C, d_C, bytesC, cudaMemcpyDeviceToHost);
+  CUDA_CHECK(cudaMemcpy(C, d_C, bytesC, cudaMemcpyDeviceToHost));
 
-  cudaFree(d_A);
-  cudaFree(d_B);
-  cudaFree(d_C);
+  CUDA_CHECK(cudaFree(d_A));
+  CUDA_CHECK(cudaFree(d_B));
+  CUDA_CHECK(cudaFree(d_C));
 }
 
 // ============================================
@@ -271,16 +308,16 @@ __global__ void luColKernel(double *A, double *L, double *U, int n, int k) {
 }
 
 void gpuLU_Doolittle(double *A, double *L, double *U, int n) {
-  int bytes = n * n * sizeof(double);
+  size_t bytes = n * n * sizeof(double);
 
   double *d_A, *d_L, *d_U;
-  cudaMalloc(&d_A, bytes);
-  cudaMalloc(&d_L, bytes);
-  cudaMalloc(&d_U, bytes);
+  CUDA_CHECK(cudaMalloc(&d_A, bytes));
+  CUDA_CHECK(cudaMalloc(&d_L, bytes));
+  CUDA_CHECK(cudaMalloc(&d_U, bytes));
 
-  cudaMemcpy(d_A, A, bytes, cudaMemcpyHostToDevice);
-  cudaMemcpy(d_L, L, bytes, cudaMemcpyHostToDevice);
-  cudaMemcpy(d_U, U, bytes, cudaMemcpyHostToDevice);
+  CUDA_CHECK(cudaMemcpy(d_A, A, bytes, cudaMemcpyHostToDevice));
+  CUDA_CHECK(cudaMemcpy(d_L, L, bytes, cudaMemcpyHostToDevice));
+  CUDA_CHECK(cudaMemcpy(d_U, U, bytes, cudaMemcpyHostToDevice));
 
   int blockSize = 256;
 
@@ -289,17 +326,19 @@ void gpuLU_Doolittle(double *A, double *L, double *U, int n) {
 
     // compute U row k (parallel over columns)
     luRowKernel<<<numBlocks, blockSize>>>(d_A, d_L, d_U, n, k);
-    cudaDeviceSynchronize();
+    CUDA_CHECK(cudaGetLastError());
+    CUDA_CHECK(cudaDeviceSynchronize());
 
     // compute L column k (parallel over rows)
     luColKernel<<<numBlocks, blockSize>>>(d_A, d_L, d_U, n, k);
-    cudaDeviceSynchronize();
+    CUDA_CHECK(cudaGetLastError());
+    CUDA_CHECK(cudaDeviceSynchronize());
   }
 
-  cudaMemcpy(L, d_L, bytes, cudaMemcpyDeviceToHost);
-  cudaMemcpy(U, d_U, bytes, cudaMemcpyDeviceToHost);
+  CUDA_CHECK(cudaMemcpy(L, d_L, bytes, cudaMemcpyDeviceToHost));
+  CUDA_CHECK(cudaMemcpy(U, d_U, bytes, cudaMemcpyDeviceToHost));
 
-  cudaFree(d_A);
-  cudaFree(d_L);
-  cudaFree(d_U);
+  CUDA_CHECK(cudaFree(d_A));
+  CUDA_CHECK(cudaFree(d_L));
+  CUDA_CHECK(cudaFree(d_U));
 }

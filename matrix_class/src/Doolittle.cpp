@@ -1,6 +1,12 @@
 #include "../include/LUDecomposition.hpp"
 #include <cmath>
 #include <iostream>
+
+#ifdef USE_CUDA
+#include "../cuda/include/gpu_backend.cuh"
+#include "../cuda/include/gpu_dispatch.cuh"
+#endif
+
 using namespace std;
 
 // Doolittle constructors
@@ -28,26 +34,53 @@ double *Doolittle::solve(double *b, int n) {
   }
 
   // decompose A = L * U
-  for (int k = 0; k < n; k++) {
-    // compute U row k
-    for (int j = k; j < n; j++) {
-      double sum = 0.0;
-      for (int s = 0; s < k; s++)
-        sum += L[k][s] * U[s][j];
-      U[k][j] = data[k][j] - sum;
-    }
+#ifdef USE_CUDA
+  if (BackendDispatcher::shouldUseGPU(n, "lu_factorize")) {
+    // flatten A, L, U into 1D arrays for GPU
+    double *flatA = new double[n * n];
+    double *flatL = new double[n * n];
+    double *flatU = new double[n * n];
+    for (int i = 0; i < n; i++)
+      for (int j = 0; j < n; j++) {
+        flatA[i * n + j] = data[i][j];
+        flatL[i * n + j] = L[i][j];
+        flatU[i * n + j] = U[i][j];
+      }
+    gpuLU_Doolittle(flatA, flatL, flatU, n);
+    // copy back to 2D arrays
+    for (int i = 0; i < n; i++)
+      for (int j = 0; j < n; j++) {
+        L[i][j] = flatL[i * n + j];
+        U[i][j] = flatU[i * n + j];
+      }
+    delete[] flatA;
+    delete[] flatL;
+    delete[] flatU;
+  } else {
+#endif
+    for (int k = 0; k < n; k++) {
+      // compute U row k
+      for (int j = k; j < n; j++) {
+        double sum = 0.0;
+        for (int s = 0; s < k; s++)
+          sum += L[k][s] * U[s][j];
+        U[k][j] = data[k][j] - sum;
+      }
 
-    // compute L column k
-    for (int i = k + 1; i < n; i++) {
-      double sum = 0.0;
-      for (int s = 0; s < k; s++)
-        sum += L[i][s] * U[s][k];
-      if (fabs(U[k][k]) < 1e-12)
-        throw MatrixException(
-            "zero pivot in Doolittle... matrix might be singular bro");
-      L[i][k] = (data[i][k] - sum) / U[k][k];
+      // compute L column k
+      for (int i = k + 1; i < n; i++) {
+        double sum = 0.0;
+        for (int s = 0; s < k; s++)
+          sum += L[i][s] * U[s][k];
+        if (fabs(U[k][k]) < 1e-12)
+          throw MatrixException(
+              "zero pivot in Doolittle... matrix might be singular bro");
+        L[i][k] = (data[i][k] - sum) / U[k][k];
+      }
     }
+#ifdef USE_CUDA
   }
+#endif
 
   // === LU VERIFICATION: check if L*U == A ===
   double maxError = 0.0;

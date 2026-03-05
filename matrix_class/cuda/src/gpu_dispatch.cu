@@ -1,5 +1,5 @@
 #include "../include/gpu_backend.cuh"
-#include "../include/gpu_dispatch.hpp"
+#include "../include/gpu_dispatch.cuh"
 #include <iostream>
 using namespace std;
 
@@ -17,12 +17,16 @@ bool BackendDispatcher::shouldUseGPU(int matrixSize, string operation) {
   // LU factorization is decent on GPU for large matrices
   // Gauss-Jacobi has branching so stays on CPU
   // Gaussian Elimination with pivoting has branching so stays on CPU
-  if (operation == "matmul" || operation == "matadd")
+  if (operation == "matmul" || operation == "matadd") {
+    cout << "=== GPU Backend Active ===" << endl;
     return true;
-  if (operation == "lu_factorize" && matrixSize >= 128)
+  }
+  if (operation == "lu_factorize" && matrixSize >= 128) {
+    cout << "=== GPU Backend Active ===" << endl;
     return true;
+  }
 
-  // everything else defaults to CPU
+  cout << "=== CPU Backend Active ===" << endl;
   return false;
 }
 

@@ -43,7 +43,7 @@ $(TARGET): $(OBJS)
 # GPU build (requires nvcc and CUDA toolkit)
 # ============================================
 NVCC = nvcc
-NVCCFLAGS = -std=c++11 -arch=sm_50 -Icuda/include
+NVCCFLAGS = -std=c++11 -arch=sm_50 -Icuda/include -ccbin g++-10 -Wno-deprecated-gpu-targets
 CUDA_SRCS = cuda/src/gpu_kernels.cu cuda/src/gpu_dispatch.cu
 CUDA_OBJS = cuda/src/gpu_kernels.o cuda/src/gpu_dispatch.o
 GPU_TARGET = matrix_program_gpu

@@ -1,11 +1,36 @@
 #include "../include/Matrix.hpp"
 #include <cmath>
 #include <iostream>
+
+#ifdef USE_CUDA
+#include "../cuda/include/gpu_backend.cuh"
+#include "../cuda/include/gpu_dispatch.cuh"
+#endif
+
 using namespace std;
 
 // scalar multiplication: every element * scalar
 Matrix Matrix::operator*(double scalar) {
   Matrix result(rows, cols);
+
+#ifdef USE_CUDA
+  if (BackendDispatcher::shouldUseGPU(rows, "matadd")) {
+    int total = rows * cols;
+    double *hostA = new double[total];
+    double *hostB = new double[total];
+    for (int i = 0; i < rows; i++)
+      for (int j = 0; j < cols; j++)
+        hostA[i * cols + j] = data[i][j];
+    gpuScalarMul(hostA, hostB, scalar, rows, cols);
+    for (int i = 0; i < rows; i++)
+      for (int j = 0; j < cols; j++)
+        result.data[i][j] = hostB[i * cols + j];
+    delete[] hostA;
+    delete[] hostB;
+    return result;
+  }
+#endif
+
   for (int i = 0; i < rows; i++)
     for (int j = 0; j < cols; j++)
       result.data[i][j] = data[i][j] * scalar;
@@ -15,6 +40,25 @@ Matrix Matrix::operator*(double scalar) {
 // transpose: swap rows and cols
 Matrix Matrix::transpose() {
   Matrix result(cols, rows);
+
+#ifdef USE_CUDA
+  if (BackendDispatcher::shouldUseGPU(rows, "matadd")) {
+    int total = rows * cols;
+    double *hostA = new double[total];
+    double *hostB = new double[total];
+    for (int i = 0; i < rows; i++)
+      for (int j = 0; j < cols; j++)
+        hostA[i * cols + j] = data[i][j];
+    gpuTranspose(hostA, hostB, rows, cols);
+    for (int i = 0; i < cols; i++)
+      for (int j = 0; j < rows; j++)
+        result.data[i][j] = hostB[i * rows + j];
+    delete[] hostA;
+    delete[] hostB;
+    return result;
+  }
+#endif
+
   for (int i = 0; i < rows; i++)
     for (int j = 0; j < cols; j++)
       result.data[j][i] = data[i][j];

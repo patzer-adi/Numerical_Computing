@@ -6,6 +6,12 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
+
+#ifdef USE_CUDA
+#include "../cuda/include/gpu_backend.cuh"
+#include "../cuda/include/gpu_dispatch.cuh"
+#endif
+
 using namespace std;
 
 // default constructor
@@ -264,6 +270,29 @@ Matrix Matrix::add(Matrix other) {
     throw MatrixException(
         "can't add these matrices... they don't even match bro");
   Matrix result(rows, cols);
+
+#ifdef USE_CUDA
+  if (BackendDispatcher::shouldUseGPU(rows, "matadd")) {
+    int total = rows * cols;
+    double *hostA = new double[total];
+    double *hostB = new double[total];
+    double *hostC = new double[total];
+    for (int i = 0; i < rows; i++)
+      for (int j = 0; j < cols; j++) {
+        hostA[i * cols + j] = data[i][j];
+        hostB[i * cols + j] = other.data[i][j];
+      }
+    gpuMatAdd(hostA, hostB, hostC, rows, cols);
+    for (int i = 0; i < rows; i++)
+      for (int j = 0; j < cols; j++)
+        result.data[i][j] = hostC[i * cols + j];
+    delete[] hostA;
+    delete[] hostB;
+    delete[] hostC;
+    return result;
+  }
+#endif
+
   for (int i = 0; i < rows; i++)
     for (int j = 0; j < cols; j++)
       result.data[i][j] = data[i][j] + other.data[i][j];
@@ -281,6 +310,29 @@ Matrix Matrix::subtract(Matrix other) {
     throw MatrixException(
         "subtraction needs same size matrices... this ain't it chief");
   Matrix result(rows, cols);
+
+#ifdef USE_CUDA
+  if (BackendDispatcher::shouldUseGPU(rows, "matadd")) {
+    int total = rows * cols;
+    double *hostA = new double[total];
+    double *hostB = new double[total];
+    double *hostC = new double[total];
+    for (int i = 0; i < rows; i++)
+      for (int j = 0; j < cols; j++) {
+        hostA[i * cols + j] = data[i][j];
+        hostB[i * cols + j] = other.data[i][j];
+      }
+    gpuMatSub(hostA, hostB, hostC, rows, cols);
+    for (int i = 0; i < rows; i++)
+      for (int j = 0; j < cols; j++)
+        result.data[i][j] = hostC[i * cols + j];
+    delete[] hostA;
+    delete[] hostB;
+    delete[] hostC;
+    return result;
+  }
+#endif
+
   for (int i = 0; i < rows; i++)
     for (int j = 0; j < cols; j++)
       result.data[i][j] = data[i][j] - other.data[i][j];
@@ -298,6 +350,32 @@ Matrix Matrix::multiply(Matrix other) {
     throw MatrixException("matrix multiplication dimensions don't work... go "
                           "back to math class");
   Matrix result(rows, other.cols);
+
+#ifdef USE_CUDA
+  if (BackendDispatcher::shouldUseGPU(rows, "matmul")) {
+    int totalA = rows * cols;
+    int totalB = other.rows * other.cols;
+    int totalC = rows * other.cols;
+    double *hostA = new double[totalA];
+    double *hostB = new double[totalB];
+    double *hostC = new double[totalC];
+    for (int i = 0; i < rows; i++)
+      for (int j = 0; j < cols; j++)
+        hostA[i * cols + j] = data[i][j];
+    for (int i = 0; i < other.rows; i++)
+      for (int j = 0; j < other.cols; j++)
+        hostB[i * other.cols + j] = other.data[i][j];
+    gpuMatMul(hostA, hostB, hostC, rows, cols, other.cols);
+    for (int i = 0; i < rows; i++)
+      for (int j = 0; j < other.cols; j++)
+        result.data[i][j] = hostC[i * other.cols + j];
+    delete[] hostA;
+    delete[] hostB;
+    delete[] hostC;
+    return result;
+  }
+#endif
+
   for (int i = 0; i < rows; i++)
     for (int j = 0; j < other.cols; j++)
       for (int k = 0; k < cols; k++)
