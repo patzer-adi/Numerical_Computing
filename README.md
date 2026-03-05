@@ -1,29 +1,18 @@
-<![CDATA[<div align="center">
+# Numerical Computing
 
-# 🔢 Numerical Computing
-
-**A modular C++ library for numerical methods — matrix algebra, linear system solvers, root-finding algorithms, and more.**
-
-[![Language](https://img.shields.io/badge/Language-C%2B%2B11-blue.svg)](https://isocpp.org/)
-[![Build](https://img.shields.io/badge/Build-Make-brightgreen.svg)](#building)
-[![CUDA](https://img.shields.io/badge/GPU-CUDA%20Optional-76b900.svg)](#gpu-acceleration)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-
-</div>
+A modular C++ library for numerical methods — matrix algebra, linear system solvers, root-finding algorithms, and complex number arithmetic. Built with clean OOP design, optional CUDA GPU acceleration, and a menu-driven interactive interface.
 
 ---
 
 ## Table of Contents
 
-- [Overview](#overview)
 - [Features](#features)
 - [Project Structure](#project-structure)
-- [Building](#building)
-- [Usage](#usage)
-  - [Matrix Operations](#1-matrix-operations)
-  - [Solving Linear Systems](#2-solving-linear-systems)
-  - [Root-Finding Methods](#3-root-finding-methods)
-  - [Complex Number Arithmetic](#4-complex-number-arithmetic)
+- [Getting Started](#getting-started)
+- [Matrix Operations Library](#matrix-operations-library)
+- [Linear System Solvers](#linear-system-solvers)
+- [Root-Finding Methods](#root-finding-methods)
+- [Complex Number Class](#complex-number-class)
 - [Class Hierarchy](#class-hierarchy)
 - [API Reference](#api-reference)
 - [GPU Acceleration](#gpu-acceleration)
@@ -31,27 +20,34 @@
 
 ---
 
-## Overview
-
-This repository is a collection of numerical computing implementations written in C++11. It covers the core topics of a numerical methods course — from matrix algebra and systems of linear equations to root-finding algorithms and floating-point analysis — all organized into clean, modular, object-oriented code.
-
-The flagship component is a full-featured **Matrix class** with an inheritance-based hierarchy of linear equation solvers and optional **CUDA GPU acceleration**.
-
----
-
 ## Features
 
-| Category | Details |
-|---|---|
-| **Matrix Algebra** | Addition, subtraction, multiplication, scalar multiply, transpose, determinant, inverse, adjoint, cofactor, minor matrix |
-| **Direct Solvers** | Gaussian Elimination (with/without partial pivoting) |
-| **LU Decomposition** | Doolittle, Crout, and Cholesky (symmetric positive-definite) |
-| **Iterative Solvers** | Gauss-Jacobi |
-| **Root Finding** | Bisection, Newton-Raphson, Fixed-Point Iteration |
-| **Complex Numbers** | Arithmetic (+, −, ×, ÷), conjugate, norm, operator overloading |
-| **I/O** | Console input, file input/output (auto-format detection), solution saving |
-| **GPU** | Optional CUDA backend for parallelizable operations |
-| **Error Handling** | Custom `MatrixException` class with descriptive messages |
+**Matrix Algebra**
+> Addition, subtraction, multiplication, scalar multiply, transpose, determinant, inverse, adjoint, cofactor, minor matrix — with full operator overloading.
+
+**Direct Solvers**
+> Gaussian Elimination with and without partial pivoting.
+
+**LU Decomposition**
+> Three variants — Doolittle (unit lower), Crout (unit upper), and Cholesky (symmetric positive-definite).
+
+**Iterative Solvers**
+> Gauss-Jacobi method for diagonally dominant systems.
+
+**Root Finding**
+> Bisection, Newton-Raphson, and Fixed-Point Iteration with configurable tolerance.
+
+**Complex Arithmetic**
+> Full complex number class with +, -, *, /, conjugate, norm, and operator overloading.
+
+**Flexible I/O**
+> Console input, file input with auto-format detection, and solution export to file.
+
+**GPU Support**
+> Optional CUDA backend for parallelizable matrix operations.
+
+**Error Handling**
+> Custom `MatrixException` class with descriptive error messages.
 
 ---
 
@@ -60,92 +56,75 @@ The flagship component is a full-featured **Matrix class** with an inheritance-b
 ```
 Numerical_Computing/
 │
-├── matrix_class/               # Core matrix library
-│   ├── include/                # Header files
-│   │   ├── Matrix.hpp                          # Matrix base class
-│   │   ├── MatrixException.hpp                 # Custom exception class
-│   │   ├── SystemOfLinearEquationSolver.hpp     # Abstract solver base
-│   │   ├── GaussianElimination.hpp             # Gaussian elimination solver
-│   │   ├── LUDecomposition.hpp                 # LU variants (Doolittle, Crout, Cholesky)
-│   │   └── GaussJacobi.hpp                     # Jacobi iterative solver
-│   │
-│   ├── src/                    # Implementation files
-│   │   ├── Matrix.cpp              # Matrix core + I/O
-│   │   ├── MatrixOperations.cpp    # Arithmetic operators
+├── matrix_class/                  # Core matrix library
+│   ├── include/                   # Header files
+│   │   ├── Matrix.hpp
+│   │   ├── MatrixException.hpp
+│   │   ├── SystemOfLinearEquationSolver.hpp
+│   │   ├── GaussianElimination.hpp
+│   │   ├── LUDecomposition.hpp
+│   │   └── GaussJacobi.hpp
+│   ├── src/                       # Implementations
+│   │   ├── Matrix.cpp
+│   │   ├── MatrixOperations.cpp
 │   │   ├── GaussianElimination.cpp
 │   │   ├── Doolittle.cpp
 │   │   ├── Crout.cpp
 │   │   ├── Cholesky.cpp
-│   │   ├── GaussJacobi.cpp
-│   │   └── ...
-│   │
-│   ├── utils/                  # Shared I/O utilities
-│   │   ├── Input.hpp / Input.cpp       # Matrix input helpers
-│   │   └── Display.hpp / Display.cpp   # Solution display & save helpers
-│   │
-│   ├── cuda/                   # CUDA GPU kernels (optional)
-│   ├── examples/               # Example usage programs
-│   ├── test_cases/             # Pre-built test matrices
-│   ├── Makefile                # Build system (cpu / gpu targets)
-│   └── main.cpp                # Interactive menu-driven program
+│   │   └── GaussJacobi.cpp
+│   ├── utils/                     # Shared I/O utilities
+│   │   ├── Input.hpp / Input.cpp
+│   │   └── Display.hpp / Display.cpp
+│   ├── cuda/                      # CUDA GPU kernels (optional)
+│   ├── examples/                  # Example programs
+│   ├── test_cases/                # Pre-built test matrices
+│   ├── Makefile
+│   └── main.cpp
 │
-├── root_finding_methods/       # Root-finding algorithms
+├── root_finding_methods/          # Root-finding algorithms
 │   ├── include/
-│   │   ├── RootHunter.hpp          # Abstract root-finder base
+│   │   ├── RootHunter.hpp
 │   │   ├── Bisection.hpp
 │   │   ├── NewtonRaphson.hpp
 │   │   └── FixedPoint.hpp
-│   ├── src/                        # Implementations
-│   ├── utils/                      # I/O utilities
-│   └── main.cpp                    # Interactive selector
+│   ├── src/
+│   ├── utils/
+│   └── main.cpp
 │
-├── Complex_class_assignment/   # Complex number class
+├── Complex_class_assignment/      # Complex number class
 │   ├── complexClass_header.hpp
 │   ├── complexClass.cpp
 │   └── main.cpp
 │
-├── Miscellaneous/              # Numerical explorations
-│   ├── factorial_limits.cpp        # Factorial overflow across data types
-│   └── geometric_series_sum.cpp    # Geometric series convergence analysis
+├── Miscellaneous/                 # Numerical explorations
+│   ├── factorial_limits.cpp
+│   └── geometric_series_sum.cpp
 │
-├── Assigment_1/                # Assignment graphs & plots
-├── assignment1_graphs/         # Additional graph outputs
-├── books_followed/             # Reference textbooks
-│
-├── LICENSE                     # MIT License
-└── README.md                   # ← you are here
+├── LICENSE
+└── README.md
 ```
 
 ---
 
-## Building
+## Getting Started
 
 ### Prerequisites
 
-- **C++ compiler** with C++11 support (GCC, Clang, MSVC)
-- **GNU Make**
-- *(Optional)* NVIDIA CUDA Toolkit for GPU builds
+- C++ compiler with C++11 support (GCC, Clang, or MSVC)
+- GNU Make
+- NVIDIA CUDA Toolkit *(only for GPU builds)*
 
-### Matrix Library
+### Build and Run
+
+**Matrix Operations Library**
 
 ```bash
 cd matrix_class
-
-# CPU-only build (default)
-make cpu
-
-# GPU build (requires CUDA toolkit)
-make gpu
-
-# Run the program
-./matrix_program        # CPU version
-./matrix_program_gpu    # GPU version
-
-# Clean build artifacts
-make clean
+make cpu                  # CPU-only build (default)
+./matrix_program          # launch interactive menu
 ```
 
-### Root-Finding Methods
+**Root-Finding Methods**
 
 ```bash
 cd root_finding_methods
@@ -153,7 +132,7 @@ g++ -std=c++11 -o rootHunter main.cpp src/*.cpp
 ./rootHunter
 ```
 
-### Complex Number Class
+**Complex Number Class**
 
 ```bash
 cd Complex_class_assignment
@@ -161,106 +140,123 @@ g++ -std=c++11 -o complex_op main.cpp complexClass.cpp
 ./complex_op
 ```
 
+**Clean build artifacts**
+
+```bash
+cd matrix_class
+make clean
+```
+
 ---
 
-## Usage
+## Matrix Operations Library
 
-### 1. Matrix Operations
-
-The interactive menu provides 17 operations:
+The interactive program offers a full menu of 17 operations:
 
 ```
-=== Menu ===
-1.  Add (A + B)              10. Gauss-Jacobi (iterative)
-2.  Subtract (A - B)         11. Transpose
-3.  Multiply (A * B)         12. Scalar Multiply
-4.  Determinant              13. Inverse
-5.  Gauss Elim. (pivoting)   14. Minor Matrix
-6.  Gauss Elim. (no pivot)   15. Cofactor
-7.  LU - Doolittle           16. Adjoint
-8.  LU - Crout               17. Exit
-9.  LU - Cholesky
+ 1.  Add (A + B)               10. Gauss-Jacobi (iterative)
+ 2.  Subtract (A - B)          11. Transpose
+ 3.  Multiply (A * B)          12. Scalar Multiply
+ 4.  Determinant               13. Inverse
+ 5.  Gauss Elim. (pivoting)    14. Minor Matrix
+ 6.  Gauss Elim. (no pivot)    15. Cofactor
+ 7.  LU — Doolittle            16. Adjoint
+ 8.  LU — Crout                17. Exit
+ 9.  LU — Cholesky
 ```
 
-**Input options** — for each operation you can enter a matrix:
-- **Manually** via console (you enter rows, cols, then the values)
-- **From a file** (space/tab-separated text file, auto-detected format)
+Matrices can be entered manually via console or loaded from a space-separated text file.
 
-#### Programmatic Example
+### Programmatic Usage
 
 ```cpp
 #include "include/Matrix.hpp"
 #include "include/GaussianElimination.hpp"
 #include "include/LUDecomposition.hpp"
 
-// Create matrices
+// Create and load matrices
 Matrix A(3, 3);
 A.readFromConsole();
 
-Matrix B("data.txt");     // load from file
+Matrix B("data.txt");         // from file
 
-Matrix C = A + B;         // operator overloading
-Matrix T = A.transpose();
+// Arithmetic (operator overloading)
+Matrix C = A + B;
+Matrix D = A * B;
+Matrix S = A * 2.5;
+
+// Unary operations
+Matrix T   = A.transpose();
 double det = A.determinant();
 Matrix inv = A.inverse();
+Matrix adj = A.adjoint();
 
-// Solve Ax = b using Gaussian Elimination
+// Solve a linear system Ax = b
 GaussianElimination ge(3, 3);
-// ... populate ge with coefficients ...
 double b[] = {1.0, 2.0, 3.0};
 double *x = ge.solveWithPivoting(b, 3);
 
-// Solve using Cholesky (symmetric positive-definite)
+// Cholesky for symmetric positive-definite systems
 Cholesky ch(3, 3);
 double *x2 = ch.solve(b, 3);
 ```
 
-### 2. Solving Linear Systems
+---
 
-All solvers inherit from `SystemOfLinearEquationSolver` and implement `solve(double *b, int n)`:
+## Linear System Solvers
 
-| Solver | Method | Best For |
-|---|---|---|
-| `GaussianElimination` | Row reduction with/without pivoting | General dense systems |
-| `Doolittle` | LU decomposition (L has unit diagonal) | Multiple right-hand sides |
-| `Crout` | LU decomposition (U has unit diagonal) | Multiple right-hand sides |
-| `Cholesky` | LLᵀ decomposition | Symmetric positive-definite systems |
-| `GaussJacobi` | Iterative (Jacobi) method | Diagonally dominant, sparse systems |
-
-### 3. Root-Finding Methods
-
-```
-Select method:
-1. Bisection
-2. Newton Raphson
-3. Fixed Point iteration
-```
-
-All methods inherit from `RootHunter` and provide `input()` and `solve()`:
+All solvers inherit from `SystemOfLinearEquationSolver` and expose a uniform interface:
 
 ```cpp
-Bisection b(1e-6);    // tolerance
-b.input();             // prompts for interval
-b.solve();
-cout << "Root: " << b.getRoot() << endl;
+double* solve(double *b, int n);
+```
+
+| Solver | Algorithm | When to Use |
+|:--|:--|:--|
+| `GaussianElimination` | Row reduction with/without pivoting | General dense systems |
+| `Doolittle` | LU decomposition, L has unit diagonal | Multiple right-hand sides |
+| `Crout` | LU decomposition, U has unit diagonal | Multiple right-hand sides |
+| `Cholesky` | LL^T decomposition | Symmetric positive-definite matrices |
+| `GaussJacobi` | Jacobi iterative method | Diagonally dominant / sparse systems |
+
+---
+
+## Root-Finding Methods
+
+All methods inherit from `RootHunter` and implement `input()` and `solve()`:
+
+```cpp
+Bisection b(1e-6);         // set tolerance
+b.input();                  // prompts for interval / initial guess
+b.solve();                  // run algorithm
+
+cout << "Root: "       << b.getRoot()       << endl;
 cout << "Iterations: " << b.getIterations() << endl;
 ```
 
-### 4. Complex Number Arithmetic
+| Method | Convergence | Requires |
+|:--|:--|:--|
+| `Bisection` | Linear | Bracketing interval [a, b] with sign change |
+| `NewtonRaphson` | Quadratic | Initial guess, derivative f'(x) |
+| `FixedPoint` | Linear | Transformation g(x) such that x = g(x) |
+
+---
+
+## Complex Number Class
 
 ```cpp
 #include "complexClass_header.hpp"
 
-Complex a(3.0, 4.0);   // 3 + 4i
-Complex b(1.0, -2.0);  // 1 - 2i
+Complex a(3.0, 4.0);       // 3 + 4i
+Complex b(1.0, -2.0);      // 1 - 2i
 
-Complex sum  = a + b;
+Complex sum  = a + b;       // operator overloading
 Complex diff = a - b;
 Complex prod = a * b;
 Complex quot = a / b;
 
 Complex conj = a.conjugate();
-float   norm = a.Norm();     // |a| = sqrt(3² + 4²) = 5
+float   norm = a.Norm();    // sqrt(3^2 + 4^2) = 5
 ```
 
 ---
@@ -269,101 +265,94 @@ float   norm = a.Norm();     // |a| = sqrt(3² + 4²) = 5
 
 ```
 Matrix
-  ├── getRows(), getCols(), getData(), setData()
-  ├── readFromConsole(), readFromFile(), saveToFile()
-  ├── add(), subtract(), multiply(), operator+, operator-, operator*, operator*(scalar)
-  ├── transpose(), determinant(), inverse()
-  ├── minorMatrix(), cofactor(), adjoint()
-  ├── isSymmetric(), display()
-  │
-  └── SystemOfLinearEquationSolver  (abstract: solve() = 0)
-        ├── GaussianElimination
-        │     ├── solve()
-        │     ├── solveWithPivoting()
-        │     └── solveWithoutPivoting()
-        │
-        ├── LUDecomposition  (abstract: solve() = 0)
-        │     ├── Doolittle   → solve()
-        │     ├── Crout       → solve()
-        │     └── Cholesky    → solve()
-        │
-        └── GaussJacobi
-              └── solve()
+├── I/O: readFromConsole, readFromFile, saveToFile, display
+├── Arithmetic: +, -, *, scalar *, transpose
+├── Properties: determinant, inverse, adjoint, cofactor, minorMatrix, isSymmetric
+│
+└── SystemOfLinearEquationSolver   [abstract — solve() = 0]
+      │
+      ├── GaussianElimination
+      │     ├── solve
+      │     ├── solveWithPivoting
+      │     └── solveWithoutPivoting
+      │
+      ├── LUDecomposition            [abstract — solve() = 0]
+      │     ├── Doolittle
+      │     ├── Crout
+      │     └── Cholesky
+      │
+      └── GaussJacobi
 
 
-RootHunter  (abstract: input() = 0, solve() = 0)
-  ├── Bisection       → findInterval(), input(), solve()
-  ├── NewtonRaphson   → input(), solve()
-  └── FixedPoint      → input(), solve()
+RootHunter   [abstract — input() = 0, solve() = 0]
+├── Bisection
+├── NewtonRaphson
+└── FixedPoint
 ```
 
 ---
 
 ## API Reference
 
-### Matrix Class
+### Matrix
 
 | Method | Description |
-|---|---|
+|:--|:--|
 | `Matrix()` | Default constructor |
-| `Matrix(int r, int c)` | Create an r × c zero matrix |
-| `Matrix(string filename)` | Load matrix from file |
+| `Matrix(int r, int c)` | Create r x c zero matrix |
+| `Matrix(string filename)` | Load from file |
 | `Matrix(const Matrix &other)` | Copy constructor |
-| `readFromConsole()` | Read dimensions and values from stdin |
-| `readFromFile(string filename)` | Read from a text file |
+| `readFromConsole()` | Read matrix from stdin |
+| `readFromFile(string filename)` | Read from text file |
 | `saveToFile(string filename)` | Write matrix to file |
-| `static inputMatrix(string label)` | Interactive input (manual or file) |
-| `operator+`, `operator-`, `operator*` | Matrix arithmetic |
-| `operator*(double scalar)` | Scalar multiplication |
-| `transpose()` | Returns the transpose |
-| `determinant()` | Computes determinant (recursive cofactor expansion) |
+| `inputMatrix(string label)` | Static — interactive input (manual or file) |
+| `+`, `-`, `*` | Matrix-matrix arithmetic |
+| `*(double scalar)` | Scalar multiplication |
+| `transpose()` | Return transposed matrix |
+| `determinant()` | Compute determinant |
 | `minorMatrix(int r, int c)` | Sub-matrix with row r and col c removed |
-| `cofactor(int r, int c)` | Cofactor at (r, c) |
-| `adjoint()` | Adjugate (transpose of cofactor matrix) |
-| `inverse()` | Matrix inverse via adjoint/determinant |
-| `isSymmetric()` | Returns `true` if A = Aᵀ |
-| `display()` | Pretty-print to stdout |
-| `getRowPointer(int i)` | Raw pointer for CUDA transfers |
+| `cofactor(int r, int c)` | Signed minor |
+| `adjoint()` | Adjugate matrix |
+| `inverse()` | Inverse via adjoint and determinant |
+| `isSymmetric()` | Check if A equals A^T |
+| `display()` | Print to stdout |
+| `getRowPointer(int i)` | Raw row pointer (for CUDA transfers) |
 
-### Solver Classes
-
-Each solver exposes `double* solve(double *b, int n)` — given the right-hand-side vector **b** of length **n**, it returns the solution vector **x**.
-
-### RootHunter Classes
+### SystemOfLinearEquationSolver
 
 | Method | Description |
-|---|---|
+|:--|:--|
+| `solve(double *b, int n)` | Solve Ax = b, return solution vector x |
+
+### RootHunter
+
+| Method | Description |
+|:--|:--|
 | `RootHunter(double tol)` | Set convergence tolerance |
-| `input()` | Prompt the user for method-specific parameters |
-| `solve()` | Run the algorithm |
-| `getRoot()` | Return the computed root |
-| `getIterations()` | Return the number of iterations used |
+| `input()` | Prompt for method-specific parameters |
+| `solve()` | Execute the algorithm |
+| `getRoot()` | Retrieve computed root |
+| `getIterations()` | Retrieve iteration count |
 
 ---
 
 ## GPU Acceleration
 
-The library optionally supports **CUDA** for parallelizable matrix operations. Build with:
+The matrix library supports an optional CUDA backend for GPU-accelerated operations.
 
 ```bash
-make gpu
+make gpu                      # compile with CUDA support
+./matrix_program_gpu          # run GPU-enabled binary
 ```
 
-This compiles with the `-DUSE_CUDA` flag and links the CUDA kernels in `cuda/src/`. At runtime, GPU-accelerated code paths are selected automatically for operations that benefit from parallelism (e.g., large matrix multiplications).
+This compiles with `-DUSE_CUDA` and links the kernels in `cuda/src/`. GPU code paths are selected automatically for operations that benefit from parallelism.
 
-**Requirements:** NVIDIA GPU with compute capability ≥ 5.0 and the CUDA Toolkit installed.
+**Requirements:** NVIDIA GPU with compute capability >= 5.0 and the CUDA Toolkit.
 
 ---
 
 ## License
 
-This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
 
-Copyright © 2025 Aditya Gowari
-
----
-
-<div align="center">
-  <sub>Built with ❤️ for numerical computing enthusiasts.</sub>
-</div>
-]]>
+Copyright (c) 2025 Aditya Gowari
