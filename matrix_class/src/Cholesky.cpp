@@ -18,7 +18,7 @@ double *Cholesky::solve(double *b, int n) {
   if (!isSymmetric())
     throw MatrixException(
         "matrix is not symmetric... Cholesky only works on symmetric positive "
-        "definite matrices. try Doolittle or Crout instead 🤷");
+        "definite matrices. try Doolittle or Crout instead");
 
   // allocate L
   double **L = new double *[n];
@@ -45,7 +45,7 @@ double *Cholesky::solve(double *b, int n) {
           delete[] L;
           throw MatrixException(
               "matrix is not positive definite... Cholesky can't decompose "
-              "this. the diagonal went negative 😬");
+              "this. the diagonal went negative");
         }
         L[j][j] = sqrt(val);
       } else {
@@ -76,10 +76,10 @@ double *Cholesky::solve(double *b, int n) {
     }
   }
   if (maxError < 1e-6)
-    cout << "Cholesky verification PASSED ✅ (max error: " << maxError << ")"
+    cout << "Cholesky verification PASSED(max error: " << maxError << ")"
          << endl;
   else
-    cout << "Cholesky verification FAILED ⚠️ (max error: " << maxError << ")"
+    cout << "Cholesky verification FAILED(max error: " << maxError << ")"
          << endl;
 
   // forward substitution: Ly = b

@@ -1,9 +1,7 @@
 #ifndef GPU_DISPATCH_CUH
 #define GPU_DISPATCH_CUH
 
-// ============================================
 // Backend Dispatcher
-// ============================================
 // decides whether to use CPU or GPU for an operation
 // based on:
 //   1. is a CUDA GPU available?
@@ -15,7 +13,6 @@
 //     // use GPU path
 //   else
 //     // use CPU path
-// ============================================
 
 #include <string>
 using namespace std;

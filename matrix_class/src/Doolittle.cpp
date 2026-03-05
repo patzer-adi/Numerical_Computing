@@ -95,10 +95,10 @@ double *Doolittle::solve(double *b, int n) {
     }
   }
   if (maxError < 1e-6)
-    cout << "Doolittle LU verification PASSED ✅ (max error: " << maxError
-         << ")" << endl;
+    cout << "Doolittle LU verification PASSED(max error: " << maxError << ")"
+         << endl;
   else
-    cout << "Doolittle LU verification FAILED ⚠️ (max error: " << maxError << ")"
+    cout << "Doolittle LU verification FAILED(max error: " << maxError << ")"
          << endl;
 
   // forward substitution: Ly = b

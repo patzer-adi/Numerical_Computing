@@ -29,7 +29,28 @@ example_basic: examples/example_basic.cpp $(LIB_CORE)
 example_solve: examples/example_solve.cpp $(LIB_CORE) $(LIB_SLE) $(LIB_GE) $(LIB_LU)
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
+# ============================================
+# Link against pre-built libraries
+# (run 'make -f Makefile.lib cpu_shared static' first)
+# ============================================
+
+# shared library linking
+example_basic_shared: examples/example_basic.cpp
+	$(CXX) $(CXXFLAGS) -Iinclude -o $@ $< -Llib -lmatrix_cpu -Wl,-rpath,$(CURDIR)/lib
+
+example_solve_shared: examples/example_solve.cpp
+	$(CXX) $(CXXFLAGS) -Iinclude -o $@ $< -Llib -lmatrix_cpu -Wl,-rpath,$(CURDIR)/lib
+
+# static library linking
+example_basic_static: examples/example_basic.cpp
+	$(CXX) $(CXXFLAGS) -Iinclude -o $@ $< lib/libmatrix.a
+
+example_solve_static: examples/example_solve.cpp
+	$(CXX) $(CXXFLAGS) -Iinclude -o $@ $< lib/libmatrix.a
+
 clean:
 	rm -f example_basic example_solve
+	rm -f example_basic_shared example_solve_shared
+	rm -f example_basic_static example_solve_static
 
 .PHONY: all clean

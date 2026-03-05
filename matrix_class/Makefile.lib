@@ -1,0 +1,208 @@
+# ============================================
+# Makefile.lib — Build Matrix Libraries
+# ============================================
+# Builds:
+#   libmatrix_cpu.so  — shared library (CPU only)
+#   libmatrix_gpu.so  — shared library (CPU + CUDA)
+#   libmatrix.a       — static library (CPU only)
+#
+# Usage:
+#   make -f Makefile.lib cpu_shared    → lib/libmatrix_cpu.so
+#   make -f Makefile.lib gpu_shared    → lib/libmatrix_gpu.so
+#   make -f Makefile.lib static        → lib/libmatrix.a
+#   make -f Makefile.lib all           → cpu_shared + static
+#   make -f Makefile.lib install       → install to /usr/local
+#   make -f Makefile.lib uninstall     → remove from /usr/local
+#   make -f Makefile.lib clean         → remove build artifacts
+# ============================================
+
+# ── Toolchain ────────────────────────────────
+CXX       = g++
+CXXFLAGS  = -std=c++11 -Wall
+NVCC      = nvcc
+NVCCFLAGS = -std=c++11 -arch=sm_50 -Icuda/include -Wno-deprecated-gpu-targets
+AR        = ar
+ARFLAGS   = rcs
+
+# ── Directories ──────────────────────────────
+BUILD_DIR   = build
+CPU_OBJ_DIR = $(BUILD_DIR)/cpu
+GPU_OBJ_DIR = $(BUILD_DIR)/gpu
+LIB_DIR     = lib
+INCLUDE_DIR = include
+
+# ── Install paths ────────────────────────────
+PREFIX     = /usr/local
+INST_LIB   = $(PREFIX)/lib
+INST_INC   = $(PREFIX)/include/matrix
+
+# ── Source files (NO utils/ — those are interactive I/O helpers) ──
+CPU_SRCS = src/Matrix.cpp \
+           src/MatrixException.cpp \
+           src/SystemOfLinearEquationSolver.cpp \
+           src/GaussianElimination.cpp \
+           src/LUDecomposition.cpp \
+           src/Doolittle.cpp \
+           src/Crout.cpp \
+           src/Cholesky.cpp \
+           src/GaussJacobi.cpp \
+           src/MatrixOperations.cpp
+
+CUDA_SRCS = cuda/src/gpu_kernels.cu \
+            cuda/src/gpu_dispatch.cu
+
+# ── Object file lists ────────────────────────
+# CPU objects (for libmatrix_cpu.so and libmatrix.a)
+CPU_OBJS = $(patsubst src/%.cpp,$(CPU_OBJ_DIR)/%.o,$(CPU_SRCS))
+
+# GPU objects — C++ sources recompiled with -DUSE_CUDA
+GPU_CPP_OBJS = $(patsubst src/%.cpp,$(GPU_OBJ_DIR)/%.o,$(CPU_SRCS))
+
+# GPU objects — CUDA sources
+GPU_CU_OBJS = $(patsubst cuda/src/%.cu,$(GPU_OBJ_DIR)/cuda_%.o,$(CUDA_SRCS))
+
+# All GPU objects combined
+GPU_OBJS = $(GPU_CPP_OBJS) $(GPU_CU_OBJS)
+
+# ── Header files to install ─────────────────
+HEADERS = $(wildcard $(INCLUDE_DIR)/*.hpp)
+
+# ============================================
+# Default target
+# ============================================
+all: cpu_shared static
+
+# ============================================
+# 1. CPU Shared Library — libmatrix_cpu.so
+# ============================================
+cpu_shared: $(LIB_DIR)/libmatrix_cpu.so
+
+$(LIB_DIR)/libmatrix_cpu.so: $(CPU_OBJS) | $(LIB_DIR)
+	$(CXX) -shared -o $@ $(CPU_OBJS)
+	@echo ""
+	@echo "═══════════════════════════════════════════"
+	@echo "  ✓ Built: $@"
+	@echo "    Type:  shared library (CPU only)"
+	@echo "    Link:  -Llib -lmatrix_cpu"
+	@echo "═══════════════════════════════════════════"
+
+# Compile CPU .cpp → PIC .o
+$(CPU_OBJ_DIR)/%.o: src/%.cpp | $(CPU_OBJ_DIR)
+	$(CXX) $(CXXFLAGS) -fPIC -c $< -o $@
+
+# ============================================
+# 2. GPU Shared Library — libmatrix_gpu.so
+# ============================================
+gpu_shared: $(LIB_DIR)/libmatrix_gpu.so
+
+$(LIB_DIR)/libmatrix_gpu.so: $(GPU_OBJS) | $(LIB_DIR)
+	$(NVCC) $(NVCCFLAGS) -shared -o $@ $(GPU_OBJS)
+	@echo ""
+	@echo "═══════════════════════════════════════════"
+	@echo "  ✓ Built: $@"
+	@echo "    Type:  shared library (CPU + CUDA GPU)"
+	@echo "    Link:  -Llib -lmatrix_gpu -lcudart"
+	@echo "═══════════════════════════════════════════"
+
+# Compile GPU .cpp → PIC .o (with -DUSE_CUDA)
+$(GPU_OBJ_DIR)/%.o: src/%.cpp | $(GPU_OBJ_DIR)
+	$(CXX) $(CXXFLAGS) -fPIC -DUSE_CUDA -c $< -o $@
+
+# Compile GPU .cu → PIC .o
+$(GPU_OBJ_DIR)/cuda_%.o: cuda/src/%.cu | $(GPU_OBJ_DIR)
+	$(NVCC) $(NVCCFLAGS) -Xcompiler -fPIC -c $< -o $@
+
+# ============================================
+# 3. Static Library — libmatrix.a
+# ============================================
+static: $(LIB_DIR)/libmatrix.a
+
+$(LIB_DIR)/libmatrix.a: $(CPU_OBJS) | $(LIB_DIR)
+	$(AR) $(ARFLAGS) $@ $(CPU_OBJS)
+	@echo ""
+	@echo "═══════════════════════════════════════════"
+	@echo "  ✓ Built: $@"
+	@echo "    Type:  static archive (CPU only)"
+	@echo "    Link:  lib/libmatrix.a (or -Llib -lmatrix)"
+	@echo "═══════════════════════════════════════════"
+
+# ============================================
+# Install / Uninstall
+# ============================================
+install:
+	@echo "Installing libraries to $(INST_LIB)..."
+	@mkdir -p $(INST_LIB)
+	@mkdir -p $(INST_INC)
+	@# Copy whatever libraries have been built
+	@if [ -f $(LIB_DIR)/libmatrix_cpu.so ]; then \
+		cp $(LIB_DIR)/libmatrix_cpu.so $(INST_LIB)/; \
+		echo "  ✓ $(INST_LIB)/libmatrix_cpu.so"; \
+	fi
+	@if [ -f $(LIB_DIR)/libmatrix_gpu.so ]; then \
+		cp $(LIB_DIR)/libmatrix_gpu.so $(INST_LIB)/; \
+		echo "  ✓ $(INST_LIB)/libmatrix_gpu.so"; \
+	fi
+	@if [ -f $(LIB_DIR)/libmatrix.a ]; then \
+		cp $(LIB_DIR)/libmatrix.a $(INST_LIB)/; \
+		echo "  ✓ $(INST_LIB)/libmatrix.a"; \
+	fi
+	@# Copy headers
+	@cp $(HEADERS) $(INST_INC)/
+	@echo "  ✓ Headers → $(INST_INC)/"
+	@echo ""
+	@echo "Done! You can now compile with:"
+	@echo "  g++ -std=c++11 -I$(INST_INC) my_app.cpp -lmatrix_cpu"
+	@echo ""
+	@echo "If using shared libs, you may need to run:"
+	@echo "  sudo ldconfig   (Linux)"
+
+uninstall:
+	@echo "Removing installed files..."
+	rm -f $(INST_LIB)/libmatrix_cpu.so
+	rm -f $(INST_LIB)/libmatrix_gpu.so
+	rm -f $(INST_LIB)/libmatrix.a
+	rm -rf $(INST_INC)
+	@echo "Done."
+
+# ============================================
+# Info — show what would be built
+# ============================================
+info:
+	@echo ""
+	@echo "── Matrix Library Build System ──────────────"
+	@echo ""
+	@echo "  CPU sources:  $(words $(CPU_SRCS)) files"
+	@echo "  CUDA sources: $(words $(CUDA_SRCS)) files"
+	@echo "  Headers:      $(words $(HEADERS)) files"
+	@echo ""
+	@echo "  Targets:"
+	@echo "    cpu_shared  → $(LIB_DIR)/libmatrix_cpu.so"
+	@echo "    gpu_shared  → $(LIB_DIR)/libmatrix_gpu.so"
+	@echo "    static      → $(LIB_DIR)/libmatrix.a"
+	@echo "    all         → cpu_shared + static"
+	@echo "    install     → copy to $(PREFIX)"
+	@echo "    uninstall   → remove from $(PREFIX)"
+	@echo "    clean       → remove build artifacts"
+	@echo "    info        → this message"
+	@echo ""
+
+# ============================================
+# Directory creation
+# ============================================
+$(CPU_OBJ_DIR):
+	@mkdir -p $(CPU_OBJ_DIR)
+
+$(GPU_OBJ_DIR):
+	@mkdir -p $(GPU_OBJ_DIR)
+
+$(LIB_DIR):
+	@mkdir -p $(LIB_DIR)
+
+# ============================================
+# Clean
+# ============================================
+clean:
+	rm -rf $(BUILD_DIR) $(LIB_DIR)
+	@echo "Cleaned build/ and lib/ directories."
+
+.PHONY: all cpu_shared gpu_shared static install uninstall clean info
