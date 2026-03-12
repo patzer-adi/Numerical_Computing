@@ -47,6 +47,16 @@ public:
   Matrix operator*(const Matrix &other);
   Matrix operator*(double scalar);
 
+  // stream operators (friend functions)
+  friend ostream &operator<<(ostream &out, const Matrix &m);
+  friend istream &operator>>(istream &in, Matrix &m);
+
+  // element access operator: A(i, j)
+  double &operator()(int i, int j);
+
+  // equality operator
+  bool operator==(const Matrix &other);
+
   // transpose
   Matrix transpose();
 
@@ -59,8 +69,14 @@ public:
   Matrix adjoint();
   Matrix inverse();
 
-  // check if matrix is symmetric (needed for Cholesky)
+  // matrix check functions
+  bool isSquare();
   bool isSymmetric();
+  bool isIdentity();
+  bool isNull();
+  bool isDiagonal();
+  bool isDiagonallyDominant();
+  Matrix makeDiagonallyDominant();
 
   // get raw pointer to a row (for CUDA memory transfers)
   double *getRowPointer(int i);

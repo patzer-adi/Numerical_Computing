@@ -42,4 +42,19 @@ void gpuMatMul(double *A, double *B, double *C, int rows_a, int cols_a,
 // A, L, U are all flat arrays of size n*n (row-major)
 void gpuLU_Doolittle(double *A, double *L, double *U, int n);
 
+// GPU Matrix Check Operations
+// all return 1 if true, 0 if false
+
+// check if matrix is identity
+int gpuIsIdentity(double *A, int n);
+
+// check if matrix is null (all zeros)
+int gpuIsNull(double *A, int rows, int cols);
+
+// check if matrix is diagonal
+int gpuIsDiagonal(double *A, int n);
+
+// check if matrix is diagonally dominant
+int gpuIsDiagonallyDominant(double *A, int n);
+
 #endif

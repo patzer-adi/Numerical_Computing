@@ -449,19 +449,6 @@ double Matrix::determinant() {
   return det;
 }
 
-// check if matrix is symmetric (A[i][j] == A[j][i] for all i,j)
-bool Matrix::isSymmetric() {
-  if (rows != cols)
-    return false;
-  for (int i = 0; i < rows; i++) {
-    for (int j = i + 1; j < cols; j++) {
-      if (fabs(data[i][j] - data[j][i]) > 1e-10)
-        return false;
-    }
-  }
-  return true;
-}
-
 // get pointer to row i (for CUDA memory transfer)
 double *Matrix::getRowPointer(int i) {
   if (i < 0 || i >= rows)

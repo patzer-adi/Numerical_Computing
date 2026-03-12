@@ -342,3 +342,202 @@ void gpuLU_Doolittle(double *A, double *L, double *U, int n) {
   CUDA_CHECK(cudaFree(d_L));
   CUDA_CHECK(cudaFree(d_U));
 }
+
+// ============================================
+// GPU Matrix Check: Is Identity
+// ============================================
+// each thread checks one element — writes 1 if pass, 0 if fail
+
+__global__ void isIdentityKernel(double *A, int *flags, int n) {
+  int idx = blockIdx.x * blockDim.x + threadIdx.x;
+  if (idx < n * n) {
+    int i = idx / n;
+    int j = idx % n;
+    if (i == j) {
+      flags[idx] = (fabs(A[idx] - 1.0) < 1e-10) ? 1 : 0;
+    } else {
+      flags[idx] = (fabs(A[idx]) < 1e-10) ? 1 : 0;
+    }
+  }
+}
+
+int gpuIsIdentity(double *A, int n) {
+  int total = n * n;
+  size_t bytesA = total * sizeof(double);
+  size_t bytesF = total * sizeof(int);
+
+  double *d_A;
+  int *d_flags;
+  CUDA_CHECK(cudaMalloc(&d_A, bytesA));
+  CUDA_CHECK(cudaMalloc(&d_flags, bytesF));
+
+  CUDA_CHECK(cudaMemcpy(d_A, A, bytesA, cudaMemcpyHostToDevice));
+
+  int blockSize = 256;
+  int numBlocks = (total + blockSize - 1) / blockSize;
+  isIdentityKernel<<<numBlocks, blockSize>>>(d_A, d_flags, n);
+  CUDA_CHECK_KERNEL();
+
+  int *hostFlags = new int[total];
+  CUDA_CHECK(cudaMemcpy(hostFlags, d_flags, bytesF, cudaMemcpyDeviceToHost));
+
+  int result = 1;
+  for (int i = 0; i < total; i++) {
+    if (hostFlags[i] == 0) {
+      result = 0;
+      break;
+    }
+  }
+
+  delete[] hostFlags;
+  CUDA_CHECK(cudaFree(d_A));
+  CUDA_CHECK(cudaFree(d_flags));
+  return result;
+}
+
+// ============================================
+// GPU Matrix Check: Is Null
+// ============================================
+
+__global__ void isNullKernel(double *A, int *flags, int total) {
+  int idx = blockIdx.x * blockDim.x + threadIdx.x;
+  if (idx < total) {
+    flags[idx] = (fabs(A[idx]) < 1e-10) ? 1 : 0;
+  }
+}
+
+int gpuIsNull(double *A, int rows, int cols) {
+  int total = rows * cols;
+  size_t bytesA = total * sizeof(double);
+  size_t bytesF = total * sizeof(int);
+
+  double *d_A;
+  int *d_flags;
+  CUDA_CHECK(cudaMalloc(&d_A, bytesA));
+  CUDA_CHECK(cudaMalloc(&d_flags, bytesF));
+
+  CUDA_CHECK(cudaMemcpy(d_A, A, bytesA, cudaMemcpyHostToDevice));
+
+  int blockSize = 256;
+  int numBlocks = (total + blockSize - 1) / blockSize;
+  isNullKernel<<<numBlocks, blockSize>>>(d_A, d_flags, total);
+  CUDA_CHECK_KERNEL();
+
+  int *hostFlags = new int[total];
+  CUDA_CHECK(cudaMemcpy(hostFlags, d_flags, bytesF, cudaMemcpyDeviceToHost));
+
+  int result = 1;
+  for (int i = 0; i < total; i++) {
+    if (hostFlags[i] == 0) {
+      result = 0;
+      break;
+    }
+  }
+
+  delete[] hostFlags;
+  CUDA_CHECK(cudaFree(d_A));
+  CUDA_CHECK(cudaFree(d_flags));
+  return result;
+}
+
+// ============================================
+// GPU Matrix Check: Is Diagonal
+// ============================================
+
+__global__ void isDiagonalKernel(double *A, int *flags, int n) {
+  int idx = blockIdx.x * blockDim.x + threadIdx.x;
+  if (idx < n * n) {
+    int i = idx / n;
+    int j = idx % n;
+    if (i != j) {
+      flags[idx] = (fabs(A[idx]) < 1e-10) ? 1 : 0;
+    } else {
+      flags[idx] = 1; // diagonal elements can be anything
+    }
+  }
+}
+
+int gpuIsDiagonal(double *A, int n) {
+  int total = n * n;
+  size_t bytesA = total * sizeof(double);
+  size_t bytesF = total * sizeof(int);
+
+  double *d_A;
+  int *d_flags;
+  CUDA_CHECK(cudaMalloc(&d_A, bytesA));
+  CUDA_CHECK(cudaMalloc(&d_flags, bytesF));
+
+  CUDA_CHECK(cudaMemcpy(d_A, A, bytesA, cudaMemcpyHostToDevice));
+
+  int blockSize = 256;
+  int numBlocks = (total + blockSize - 1) / blockSize;
+  isDiagonalKernel<<<numBlocks, blockSize>>>(d_A, d_flags, n);
+  CUDA_CHECK_KERNEL();
+
+  int *hostFlags = new int[total];
+  CUDA_CHECK(cudaMemcpy(hostFlags, d_flags, bytesF, cudaMemcpyDeviceToHost));
+
+  int result = 1;
+  for (int i = 0; i < total; i++) {
+    if (hostFlags[i] == 0) {
+      result = 0;
+      break;
+    }
+  }
+
+  delete[] hostFlags;
+  CUDA_CHECK(cudaFree(d_A));
+  CUDA_CHECK(cudaFree(d_flags));
+  return result;
+}
+
+// ============================================
+// GPU Matrix Check: Is Diagonally Dominant
+// ============================================
+// each thread handles one row
+
+__global__ void isDiagDomKernel(double *A, int *flags, int n) {
+  int row = blockIdx.x * blockDim.x + threadIdx.x;
+  if (row < n) {
+    double diagVal = fabs(A[row * n + row]);
+    double offDiagSum = 0.0;
+    for (int j = 0; j < n; j++) {
+      if (j != row)
+        offDiagSum += fabs(A[row * n + j]);
+    }
+    flags[row] = (diagVal >= offDiagSum) ? 1 : 0;
+  }
+}
+
+int gpuIsDiagonallyDominant(double *A, int n) {
+  size_t bytesA = n * n * sizeof(double);
+  size_t bytesF = n * sizeof(int);
+
+  double *d_A;
+  int *d_flags;
+  CUDA_CHECK(cudaMalloc(&d_A, bytesA));
+  CUDA_CHECK(cudaMalloc(&d_flags, bytesF));
+
+  CUDA_CHECK(cudaMemcpy(d_A, A, bytesA, cudaMemcpyHostToDevice));
+
+  int blockSize = 256;
+  int numBlocks = (n + blockSize - 1) / blockSize;
+  isDiagDomKernel<<<numBlocks, blockSize>>>(d_A, d_flags, n);
+  CUDA_CHECK_KERNEL();
+
+  int *hostFlags = new int[n];
+  CUDA_CHECK(cudaMemcpy(hostFlags, d_flags, bytesF, cudaMemcpyDeviceToHost));
+
+  int result = 1;
+  for (int i = 0; i < n; i++) {
+    if (hostFlags[i] == 0) {
+      result = 0;
+      break;
+    }
+  }
+
+  delete[] hostFlags;
+  CUDA_CHECK(cudaFree(d_A));
+  CUDA_CHECK(cudaFree(d_flags));
+  return result;
+}

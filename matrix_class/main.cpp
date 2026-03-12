@@ -45,7 +45,15 @@ int main() {
     cout << "14. Minor Matrix" << endl;
     cout << "15. Cofactor" << endl;
     cout << "16. Adjoint" << endl;
-    cout << "17. Exit" << endl;
+    cout << "17. Check if Square" << endl;
+    cout << "18. Check if Symmetric" << endl;
+    cout << "19. Check if Identity" << endl;
+    cout << "20. Check if Null" << endl;
+    cout << "21. Check if Diagonal" << endl;
+    cout << "22. Check if Diagonally Dominant" << endl;
+    cout << "23. Make Diagonally Dominant" << endl;
+    cout << "24. Check Equality (A == B)" << endl;
+    cout << "25. Exit" << endl;
     cout << "Enter choice: ";
     cin >> choice;
 
@@ -63,7 +71,7 @@ int main() {
 
         Matrix C = A + B;
         cout << "\nResult (A + B):" << endl;
-        C.display();
+        cout << C;
         break;
       }
 
@@ -78,7 +86,7 @@ int main() {
 
         Matrix C = A - B;
         cout << "\nResult (A - B):" << endl;
-        C.display();
+        cout << C;
         break;
       }
 
@@ -93,7 +101,7 @@ int main() {
 
         Matrix C = A * B;
         cout << "\nResult (A * B):" << endl;
-        C.display();
+        cout << C;
         break;
       }
 
@@ -148,7 +156,7 @@ int main() {
 
         Matrix T = A.transpose();
         cout << "\nTranspose:" << endl;
-        T.display();
+        cout << T;
         break;
       }
 
@@ -163,7 +171,7 @@ int main() {
 
         Matrix S = A * scalar;
         cout << "\nResult (A * " << scalar << "):" << endl;
-        S.display();
+        cout << S;
         break;
       }
 
@@ -174,7 +182,7 @@ int main() {
 
         Matrix inv = A.inverse();
         cout << "\nInverse:" << endl;
-        inv.display();
+        cout << inv;
         break;
       }
 
@@ -192,7 +200,7 @@ int main() {
         Matrix M = A.minorMatrix(r, c);
         cout << "\nMinor Matrix (removed row " << r << ", col " << c
              << "):" << endl;
-        M.display();
+        cout << M;
         break;
       }
 
@@ -219,11 +227,112 @@ int main() {
 
         Matrix adj = A.adjoint();
         cout << "\nAdjoint:" << endl;
-        adj.display();
+        cout << adj;
         break;
       }
 
-      case 17:
+      case 17: {
+        cout << "\n--- Enter matrix ---" << endl;
+        Matrix A;
+        getMatrixInput(A);
+
+        if (A.isSquare())
+          cout << "\nyes, the matrix is square (" << A.getRows() << "x"
+               << A.getCols() << ")" << endl;
+        else
+          cout << "\nnope, the matrix is not square (" << A.getRows() << "x"
+               << A.getCols() << ")" << endl;
+        break;
+      }
+
+      case 18: {
+        cout << "\n--- Enter matrix ---" << endl;
+        Matrix A;
+        getMatrixInput(A);
+
+        if (A.isSymmetric())
+          cout << "\nyes, the matrix is symmetric" << endl;
+        else
+          cout << "\nnope, the matrix is not symmetric" << endl;
+        break;
+      }
+
+      case 19: {
+        cout << "\n--- Enter matrix ---" << endl;
+        Matrix A;
+        getMatrixInput(A);
+
+        if (A.isIdentity())
+          cout << "\nyes, the matrix is an identity matrix" << endl;
+        else
+          cout << "\nnope, the matrix is not an identity matrix" << endl;
+        break;
+      }
+
+      case 20: {
+        cout << "\n--- Enter matrix ---" << endl;
+        Matrix A;
+        getMatrixInput(A);
+
+        if (A.isNull())
+          cout << "\nyes, the matrix is a null (zero) matrix" << endl;
+        else
+          cout << "\nnope, the matrix is not a null matrix" << endl;
+        break;
+      }
+
+      case 21: {
+        cout << "\n--- Enter matrix ---" << endl;
+        Matrix A;
+        getMatrixInput(A);
+
+        if (A.isDiagonal())
+          cout << "\nyes, the matrix is diagonal" << endl;
+        else
+          cout << "\nnope, the matrix is not diagonal" << endl;
+        break;
+      }
+
+      case 22: {
+        cout << "\n--- Enter matrix ---" << endl;
+        Matrix A;
+        getMatrixInput(A);
+
+        if (A.isDiagonallyDominant())
+          cout << "\nyes, the matrix is diagonally dominant" << endl;
+        else
+          cout << "\nnope, the matrix is not diagonally dominant" << endl;
+        break;
+      }
+
+      case 23: {
+        cout << "\n--- Enter matrix ---" << endl;
+        Matrix A;
+        getMatrixInput(A);
+
+        Matrix D = A.makeDiagonallyDominant();
+        cout << "\nResult:" << endl;
+        cout << D;
+        break;
+      }
+
+      case 24: {
+        cout << "\n--- Matrix A ---" << endl;
+        Matrix A;
+        getMatrixInput(A);
+
+        cout << "\n--- Matrix B ---" << endl;
+        Matrix B;
+        getMatrixInput(B);
+
+        if (A == B)
+          cout << "\nyes, the matrices are equal" << endl;
+        else
+          cout << "\nnope, the matrices are not equal" << endl;
+        break;
+      }
+
+      case 25:
         cout << "\nbye bye!" << endl;
         running = false;
         break;
