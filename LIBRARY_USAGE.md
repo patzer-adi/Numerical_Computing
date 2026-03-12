@@ -1,6 +1,6 @@
 # How to Use the Numerical Computing Library (`libnumcomp`)
 
-This guide explains how to download, build, link, and use the unified numerical computing library in your own C++ projects. The library combines **matrix algebra**, **linear system solvers**, **root-finding algorithms**, and **complex number arithmetic** into one package.
+This guide explains how to download, build, link, and use the unified numerical computing library in your own C++ projects. Works on **macOS** and **Linux** — the Makefile auto-detects your OS and builds the correct library format (`.dylib` on macOS, `.so` on Linux).
 
 ---
 
@@ -44,15 +44,33 @@ The `libnumcomp` library compiles **19 source files** from 3 modules into a sing
 
 | File | Size | Description |
 |---|---|---|
-| `lib/libnumcomp.dylib` | ~180 KB | Dynamic shared library (macOS) |
-| `lib/libnumcomp.a` | ~534 KB | Static archive |
+| `lib/libnumcomp.dylib` | ~180 KB | Dynamic shared library (**macOS**) |
+| `lib/libnumcomp.so` | ~180 KB | Dynamic shared library (**Linux**) |
+| `lib/libnumcomp.a` | ~534 KB | Static archive (**both platforms**) |
+
+> Only one of `.dylib` / `.so` is built — whichever matches your OS.
 
 ---
 
 ## 2. Requirements
 
-- **C++ compiler** with C++11 support — GCC (`g++`), Clang (`clang++`), or MSVC
-- **GNU Make** — comes with Xcode Command Line Tools on macOS (`xcode-select --install`)
+- **C++ compiler** with C++11 support — GCC (`g++`) or Clang (`clang++`)
+- **GNU Make**
+
+**macOS:**
+```bash
+xcode-select --install    # installs clang++ and make
+```
+
+**Linux (Ubuntu/Debian):**
+```bash
+sudo apt install build-essential    # installs g++ and make
+```
+
+**Linux (Fedora/RHEL):**
+```bash
+sudo dnf groupinstall "Development Tools"
+```
 
 That's it. No external libraries, no package managers, no Python, no Java.
 
@@ -71,7 +89,7 @@ make --version   # should print GNU Make info
 git clone <repo-url> Numerical_Computing
 cd Numerical_Computing
 
-# 2. Build the library
+# 2. Build the library (auto-detects macOS/Linux)
 make all
 
 # 3. Build and run the example
@@ -87,11 +105,11 @@ That's it — three commands. You now have `lib/libnumcomp.dylib` and `lib/libnu
 
 ### Way 1: Dynamic Library (recommended)
 
-Build the `.dylib` once, then link any program against it:
+Build the shared library once (`.dylib` on macOS, `.so` on Linux), then link any program against it:
 
 ```bash
 # Step 1: Build the library (only need to do this once)
-make dylib
+make dylib    # produces .dylib on macOS, .so on Linux
 
 # Step 2: Write your code (my_app.cpp)
 # Step 3: Compile and link
@@ -103,16 +121,18 @@ g++ -std=c++11 -I. my_app.cpp -Llib -lnumcomp -o my_app
 
 **When to use:** Your main use case. Fast compile times (only your code recompiles), small binary, easy to update the library without recompiling your app.
 
-**Runtime note:** The `.dylib` must be findable when you run the program. The Makefile embeds an rpath for the example, but for your own programs, either:
+**Runtime note:** The shared library must be findable when you run the program. The Makefile embeds an rpath for the example, but for your own programs, either:
 - Run from the `Numerical_Computing/` directory, or
-- Set `DYLD_LIBRARY_PATH` (macOS): `export DYLD_LIBRARY_PATH=./lib:$DYLD_LIBRARY_PATH`, or
-- Install system-wide with `sudo make install`
+- Set the library path:
+  - **macOS:** `export DYLD_LIBRARY_PATH=./lib:$DYLD_LIBRARY_PATH`
+  - **Linux:** `export LD_LIBRARY_PATH=./lib:$LD_LIBRARY_PATH`
+- Install system-wide with `sudo make install` (runs `ldconfig` on Linux)
 
 ---
 
 ### Way 2: Static Library
 
-The entire library gets baked into your executable — no `.dylib` needed at runtime:
+The entire library gets baked into your executable — no `.dylib`/`.so` needed at runtime:
 
 ```bash
 # Build
@@ -121,11 +141,11 @@ make static
 # Link
 g++ -std=c++11 -I. my_app.cpp lib/libnumcomp.a -o my_app
 
-# Run anywhere — no library files needed
+# Run anywhere — no shared library files needed
 ./my_app
 ```
 
-**When to use:** When you want a self-contained binary that works without the library files present. Larger binary, but zero runtime dependencies.
+**When to use:** When you want a self-contained binary that works without the library files present. Larger binary, but zero runtime dependencies. Works identically on macOS and Linux.
 
 ---
 
@@ -511,6 +531,9 @@ To use the library from anywhere on your system (without `-I` and `-L` flags):
 # Install
 sudo make install
 
+# Linux only — update the linker cache:
+sudo ldconfig
+
 # Now compile from anywhere:
 g++ -std=c++11 -I/usr/local/include/numcomp my_app.cpp -lnumcomp -o my_app
 ```
@@ -579,21 +602,26 @@ MINIMUM files someone needs to use the library:
 g++ -std=c++11 -I. my_app.cpp -Llib -lnumcomp -o my_app
 ```
 
-### "dyld: Library not loaded: libnumcomp.dylib"
+### "dyld: Library not loaded" (macOS) or "cannot open shared object file" (Linux)
 
-**Cause:** macOS can't find the `.dylib` at runtime.
+**Cause:** OS can't find the shared library at runtime.
 
 **Fix (pick one):**
 ```bash
 # Option 1: Set the library path
+# macOS:
 export DYLD_LIBRARY_PATH=$(pwd)/lib:$DYLD_LIBRARY_PATH
+# Linux:
+export LD_LIBRARY_PATH=$(pwd)/lib:$LD_LIBRARY_PATH
+
 ./my_app
 
 # Option 2: Install system-wide
 sudo make install
+# Linux only: sudo ldconfig
 ./my_app
 
-# Option 3: Use the static library instead (no runtime dependency)
+# Option 3: Use the static library instead (no runtime dependency, works on both platforms)
 g++ -std=c++11 -I. my_app.cpp lib/libnumcomp.a -o my_app
 ```
 

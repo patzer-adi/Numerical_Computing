@@ -1,12 +1,14 @@
 # ============================================
 # Makefile — Unified Numerical Computing Library
 # ============================================
+# Cross-platform: macOS (.dylib) and Linux (.so)
+#
 # Builds:
-#   libnumcomp.dylib  — dynamic shared library (macOS)
-#   libnumcomp.a      — static library
+#   libnumcomp.dylib / libnumcomp.so  — dynamic shared library
+#   libnumcomp.a                      — static library
 #
 # Usage:
-#   make dylib         → lib/libnumcomp.dylib
+#   make dylib         → lib/libnumcomp.{dylib,so}
 #   make static        → lib/libnumcomp.a
 #   make all           → dylib + static
 #   make example       → build example program
@@ -15,6 +17,29 @@
 #   make clean         → remove build artifacts
 #   make info          → show build info
 # ============================================
+
+# ── OS Detection ─────────────────────────────
+UNAME_S := $(shell uname -s)
+
+ifeq ($(UNAME_S),Darwin)
+    # macOS
+    SHARED_EXT     = dylib
+    SHARED_FLAGS   = -dynamiclib -install_name @rpath/libnumcomp.dylib
+    RPATH_FLAG     = -Wl,-rpath,@executable_path/../lib
+    RPATH_LDCONFIG = @echo "No ldconfig needed on macOS."
+    LIB_PATH_VAR   = DYLD_LIBRARY_PATH
+    PLATFORM       = macOS
+else
+    # Linux (and other Unix-like)
+    SHARED_EXT     = so
+    SHARED_FLAGS   = -shared
+    RPATH_FLAG     = -Wl,-rpath,'$$ORIGIN/../lib'
+    RPATH_LDCONFIG = @echo "Run: sudo ldconfig"
+    LIB_PATH_VAR   = LD_LIBRARY_PATH
+    PLATFORM       = Linux
+endif
+
+SHARED_LIB = libnumcomp.$(SHARED_EXT)
 
 # ── Toolchain ────────────────────────────────
 CXX       = g++
@@ -75,8 +100,6 @@ ALL_SRCS = $(MATRIX_SRCS) $(MATRIX_UTILS_SRCS) \
            $(COMPLEX_SRCS)
 
 # ── Object file list ─────────────────────────
-# Convert source paths to object paths under build/lib/
-# e.g. matrix_class/src/Matrix.cpp → build/lib/matrix_class_src_Matrix.o
 ALL_OBJS = $(foreach src,$(ALL_SRCS),$(BUILD_DIR)/$(subst /,_,$(src:.cpp=.o)))
 
 # ═══════════════════════════════════════════════
@@ -85,17 +108,18 @@ ALL_OBJS = $(foreach src,$(ALL_SRCS),$(BUILD_DIR)/$(subst /,_,$(src:.cpp=.o)))
 all: dylib static
 
 # ═══════════════════════════════════════════════
-# 1. Dynamic Library — libnumcomp.dylib
+# 1. Dynamic Library — libnumcomp.{dylib,so}
 # ═══════════════════════════════════════════════
-dylib: $(LIB_DIR)/libnumcomp.dylib
+dylib: $(LIB_DIR)/$(SHARED_LIB)
 
-$(LIB_DIR)/libnumcomp.dylib: $(ALL_OBJS) | $(LIB_DIR)
-	$(CXX) -shared -o $@ $(ALL_OBJS)
+$(LIB_DIR)/$(SHARED_LIB): $(ALL_OBJS) | $(LIB_DIR)
+	$(CXX) $(SHARED_FLAGS) -o $@ $(ALL_OBJS)
 	@echo ""
 	@echo "═══════════════════════════════════════════"
 	@echo "  ✓ Built: $@"
-	@echo "    Type:  dynamic shared library"
-	@echo "    Link:  -Llib -lnumcomp"
+	@echo "    Platform: $(PLATFORM)"
+	@echo "    Type:     dynamic shared library"
+	@echo "    Link:     -Llib -lnumcomp"
 	@echo "═══════════════════════════════════════════"
 
 # ═══════════════════════════════════════════════
@@ -143,7 +167,7 @@ example: dylib examples/example_usage.cpp
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -I. \
 		examples/example_usage.cpp \
 		-Llib -lnumcomp \
-		-Wl,-rpath,@executable_path/../lib \
+		$(RPATH_FLAG) \
 		-o examples/example_usage
 	@echo ""
 	@echo "═══════════════════════════════════════════"
@@ -155,16 +179,17 @@ example: dylib examples/example_usage.cpp
 # Install / Uninstall
 # ═══════════════════════════════════════════════
 install:
-	@echo "Installing library to $(INST_LIB)..."
+	@echo "Installing library to $(INST_LIB)... ($(PLATFORM))"
 	@mkdir -p $(INST_LIB)
 	@mkdir -p $(INST_INC)/matrix
 	@mkdir -p $(INST_INC)/rootfinding
 	@mkdir -p $(INST_INC)/complex
-	@# Copy libraries
-	@if [ -f $(LIB_DIR)/libnumcomp.dylib ]; then \
-		cp $(LIB_DIR)/libnumcomp.dylib $(INST_LIB)/; \
-		echo "  ✓ $(INST_LIB)/libnumcomp.dylib"; \
+	@# Copy shared library
+	@if [ -f $(LIB_DIR)/$(SHARED_LIB) ]; then \
+		cp $(LIB_DIR)/$(SHARED_LIB) $(INST_LIB)/; \
+		echo "  ✓ $(INST_LIB)/$(SHARED_LIB)"; \
 	fi
+	@# Copy static library
 	@if [ -f $(LIB_DIR)/libnumcomp.a ]; then \
 		cp $(LIB_DIR)/libnumcomp.a $(INST_LIB)/; \
 		echo "  ✓ $(INST_LIB)/libnumcomp.a"; \
@@ -180,10 +205,11 @@ install:
 	@echo ""
 	@echo "Done! Compile with:"
 	@echo "  g++ -std=c++11 -I$(INST_INC) my_app.cpp -lnumcomp"
+	$(RPATH_LDCONFIG)
 
 uninstall:
 	@echo "Removing installed files..."
-	rm -f $(INST_LIB)/libnumcomp.dylib
+	rm -f $(INST_LIB)/$(SHARED_LIB)
 	rm -f $(INST_LIB)/libnumcomp.a
 	rm -rf $(INST_INC)
 	@echo "Done."
@@ -195,13 +221,18 @@ info:
 	@echo ""
 	@echo "── Numerical Computing Library Build ──────"
 	@echo ""
+	@echo "  Platform:    $(PLATFORM) ($(UNAME_S))"
+	@echo "  Shared ext:  .$(SHARED_EXT)"
+	@echo "  Lib path var: $(LIB_PATH_VAR)"
+	@echo "  Compiler:    $(CXX)"
+	@echo ""
 	@echo "  Source files:  $(words $(ALL_SRCS)) total"
 	@echo "    Matrix:      $(words $(MATRIX_SRCS)) + $(words $(MATRIX_UTILS_SRCS)) utils"
 	@echo "    Root-find:   $(words $(ROOT_SRCS)) + $(words $(ROOT_UTILS_SRCS)) utils"
 	@echo "    Complex:     $(words $(COMPLEX_SRCS))"
 	@echo ""
 	@echo "  Targets:"
-	@echo "    dylib    → $(LIB_DIR)/libnumcomp.dylib"
+	@echo "    dylib    → $(LIB_DIR)/$(SHARED_LIB)"
 	@echo "    static   → $(LIB_DIR)/libnumcomp.a"
 	@echo "    all      → dylib + static"
 	@echo "    example  → examples/example_usage"
@@ -224,7 +255,7 @@ $(LIB_DIR):
 # Clean
 # ═══════════════════════════════════════════════
 clean:
-	rm -rf build/lib $(LIB_DIR)/libnumcomp.dylib $(LIB_DIR)/libnumcomp.a
+	rm -rf build/lib $(LIB_DIR)/$(SHARED_LIB) $(LIB_DIR)/libnumcomp.a
 	rm -f examples/example_usage
 	@echo "Cleaned library build artifacts."
 

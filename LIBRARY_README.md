@@ -4,7 +4,7 @@ A unified C++ shared library combining **matrix algebra**, **linear system solve
 
 **Author:** Aditya Gowari  
 **License:** MIT  
-**Platform:** macOS (`.dylib`), Linux (`.so`)
+**Platforms:** macOS (`.dylib`) and Linux (`.so`) — auto-detected at build time
 
 ---
 
@@ -29,7 +29,7 @@ The library bundles **3 modules** from the Numerical Computing repository:
 ```bash
 cd Numerical_Computing
 
-# Dynamic library (macOS .dylib)
+# Dynamic library (auto-detects macOS .dylib or Linux .so)
 make dylib
 
 # Static library (.a)
@@ -37,12 +37,21 @@ make static
 
 # Both
 make all
+
+# See detected platform config
+make info
 ```
 
-Output:
+Output (macOS):
 ```
 lib/libnumcomp.dylib    ← dynamic shared library (180 KB)
 lib/libnumcomp.a        ← static archive (534 KB)
+```
+
+Output (Linux):
+```
+lib/libnumcomp.so       ← dynamic shared library
+lib/libnumcomp.a        ← static archive
 ```
 
 ### Link Your Own Program
@@ -341,8 +350,13 @@ sudo make install
 ```
 
 This copies:
-- `libnumcomp.dylib` and `libnumcomp.a` → `/usr/local/lib/`
+- `libnumcomp.dylib` (macOS) or `libnumcomp.so` (Linux) + `libnumcomp.a` → `/usr/local/lib/`
 - All headers → `/usr/local/include/numcomp/`
+
+**Linux only — update the linker cache after installing:**
+```bash
+sudo ldconfig
+```
 
 After installing, compile anywhere without `-I` and `-L` flags:
 
@@ -397,11 +411,26 @@ sudo make uninstall
 
 ## Build Requirements
 
-- **C++ compiler** with C++11 support (GCC, Clang, or MSVC)
+- **C++ compiler** with C++11 support (GCC or Clang)
 - **GNU Make**
-- macOS (produces `.dylib`) or Linux (produces `.so`)
+- **macOS** or **Linux** (auto-detected; produces `.dylib` or `.so` respectively)
 
-No external dependencies required.
+**macOS:**
+```bash
+xcode-select --install    # installs g++/clang++ and make
+```
+
+**Linux (Ubuntu/Debian):**
+```bash
+sudo apt install build-essential    # installs g++ and make
+```
+
+**Linux (Fedora/RHEL):**
+```bash
+sudo dnf groupinstall "Development Tools"
+```
+
+No external libraries or package managers required beyond the compiler toolchain.
 
 ---
 
