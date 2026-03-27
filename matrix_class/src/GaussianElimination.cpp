@@ -14,6 +14,7 @@ SolverResult GaussianElimination::solve(double *b, int n, int maxIter, double to
   result.n = n;
   result.iterations = 0;    // direct method — no iterations
   result.converged = true;   // direct methods always "converge"
+  result.dominanceAchieved = true;
   result.error = 0.0;
   return result;
 }

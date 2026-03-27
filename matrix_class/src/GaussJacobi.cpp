@@ -1,55 +1,10 @@
 #include "../include/GaussJacobi.hpp"
 #include <cmath>
+#include <limits>
 using namespace std;
 
 GaussJacobi::GaussJacobi() : SystemOfLinearEquationSolver() {}
 GaussJacobi::GaussJacobi(int r, int c) : SystemOfLinearEquationSolver(r, c) {}
-
-// helper: make A diagonally dominant, rearranging rows of both A and b together
-// for each column i, find a row r where |a[r][i]| >= sum of |a[r][j]| for j!=i
-static bool makeDiagDominant(double **A, double *b, int n) {
-  for (int i = 0; i < n; i++) {
-    // check if current row i is already dominant at position i
-    double diag = fabs(A[i][i]);
-    double sum = 0.0;
-    for (int j = 0; j < n; j++) {
-      if (j != i)
-        sum += fabs(A[i][j]);
-    }
-    if (diag >= sum)
-      continue; // already dominant, move on
-
-    // find a row r (from i+1 onward) that would be dominant at position i
-    bool found = false;
-    for (int r = i + 1; r < n; r++) {
-      double d = fabs(A[r][i]);
-      double s = 0.0;
-      for (int j = 0; j < n; j++) {
-        if (j != i)
-          s += fabs(A[r][j]);
-      }
-
-      if (d >= s) {
-        // swap rows r and i in A
-        double *tempRow = A[i];
-        A[i] = A[r];
-        A[r] = tempRow;
-
-        // swap b entries
-        double tempB = b[i];
-        b[i] = b[r];
-        b[r] = tempB;
-
-        found = true;
-        break;
-      }
-    }
-
-    if (!found)
-      return false; // can't make position i dominant
-  }
-  return true;
-}
 
 // Jacobi iterative method
 // splits A into D (diagonal) and R (rest)
@@ -58,6 +13,7 @@ static bool makeDiagDominant(double **A, double *b, int n) {
 //
 // NO cout here — solver is pure logic. UI layer handles printing.
 // Does NOT modify this->data — works on copies.
+// Caller is responsible for freeing result.x via delete[].
 SolverResult GaussJacobi::solve(double *b, int n, int maxIter, double tol) {
   if (rows != cols || rows != n)
     throw MatrixException("matrix dimensions are sus for Gauss-Jacobi");
@@ -67,6 +23,7 @@ SolverResult GaussJacobi::solve(double *b, int n, int maxIter, double tol) {
   result.iterations = 0;
   result.converged = false;
   result.error = 0.0;
+  result.dominanceAchieved = true;
 
   // COPY matrix data and b so we don't mutate the original
   double **A = new double *[n];
@@ -80,15 +37,18 @@ SolverResult GaussJacobi::solve(double *b, int n, int maxIter, double tol) {
     rhs[i] = b[i];
 
   // check diagonal dominance — if not, try to fix by row swapping on copies
+  // uses the consolidated base class helper (issue #1)
+  // returns bool so we know if dominance was achieved (issue #2, #3)
   if (!isDiagonallyDominant()) {
-    makeDiagDominant(A, rhs, n);
+    result.dominanceAchieved = makeDiagDominant(A, rhs, n);
   }
 
   // check for zero diagonals
   for (int i = 0; i < n; i++) {
     if (fabs(A[i][i]) < 1e-12) {
-      // cleanup and throw
-      for (int k = 0; k < n; k++) delete[] A[k];
+      // cleanup everything before throwing (issue #6)
+      for (int k = 0; k < n; k++)
+        delete[] A[k];
       delete[] A;
       delete[] rhs;
       throw MatrixException(
@@ -105,6 +65,7 @@ SolverResult GaussJacobi::solve(double *b, int n, int maxIter, double tol) {
   }
 
   // iterate
+  double lastMaxDiff = 0.0; // track last diff for result.error (issue #4)
   int iter;
   for (iter = 0; iter < maxIter; iter++) {
     bool diverged = false;
@@ -126,12 +87,15 @@ SolverResult GaussJacobi::solve(double *b, int n, int maxIter, double tol) {
     }
 
     if (diverged) {
+      // set error to infinity on divergence (issue #5)
+      result.error = numeric_limits<double>::infinity();
       result.x = x_new;
       result.iterations = iter + 1;
       result.converged = false;
-      // cleanup
+      // cleanup all heap allocations (issue #6)
       delete[] x_old;
-      for (int i = 0; i < n; i++) delete[] A[i];
+      for (int i = 0; i < n; i++)
+        delete[] A[i];
       delete[] A;
       delete[] rhs;
       return result;
@@ -144,6 +108,7 @@ SolverResult GaussJacobi::solve(double *b, int n, int maxIter, double tol) {
       if (diff > maxDiff)
         maxDiff = diff;
     }
+    lastMaxDiff = maxDiff; // always track (issue #4)
 
     // copy new to old (replace old vector)
     for (int i = 0; i < n; i++)
@@ -159,13 +124,15 @@ SolverResult GaussJacobi::solve(double *b, int n, int maxIter, double tol) {
 
   if (!result.converged) {
     result.iterations = maxIter;
+    result.error = lastMaxDiff; // non-zero error on non-convergence (issue #4)
   }
 
   result.x = x_new;
 
   // cleanup
   delete[] x_old;
-  for (int i = 0; i < n; i++) delete[] A[i];
+  for (int i = 0; i < n; i++)
+    delete[] A[i];
   delete[] A;
   delete[] rhs;
 

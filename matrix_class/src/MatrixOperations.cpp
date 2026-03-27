@@ -15,7 +15,7 @@ Matrix Matrix::operator*(double scalar) const {
   Matrix result(rows, cols);
 
 #ifdef USE_CUDA
-  if (BackendDispatcher::shouldUseGPU(rows, "matadd")) {
+  if (BackendDispatcher::shouldUseGPU(rows, "scalarmul")) {
     int total = rows * cols;
     double *hostA = new double[total];
     double *hostB = new double[total];
@@ -43,7 +43,7 @@ Matrix Matrix::transpose() const {
   Matrix result(cols, rows);
 
 #ifdef USE_CUDA
-  if (BackendDispatcher::shouldUseGPU(rows, "matadd")) {
+  if (BackendDispatcher::shouldUseGPU(rows, "transpose")) {
     int total = rows * cols;
     double *hostA = new double[total];
     double *hostB = new double[total];
@@ -234,7 +234,7 @@ bool Matrix::isIdentity() const {
     return false;
 
 #ifdef USE_CUDA
-  if (BackendDispatcher::shouldUseGPU(rows, "matadd")) {
+  if (BackendDispatcher::shouldUseGPU(rows, "identity_check")) {
     int total = rows * rows;
     double *hostA = new double[total];
     for (int i = 0; i < rows; i++)
@@ -263,7 +263,7 @@ bool Matrix::isIdentity() const {
 // check if matrix is null (all elements are zero)
 bool Matrix::isNull() const {
 #ifdef USE_CUDA
-  if (BackendDispatcher::shouldUseGPU(rows, "matadd")) {
+  if (BackendDispatcher::shouldUseGPU(rows, "null_check")) {
     int total = rows * cols;
     double *hostA = new double[total];
     for (int i = 0; i < rows; i++)
@@ -290,7 +290,7 @@ bool Matrix::isDiagonal() const {
     return false;
 
 #ifdef USE_CUDA
-  if (BackendDispatcher::shouldUseGPU(rows, "matadd")) {
+  if (BackendDispatcher::shouldUseGPU(rows, "diagonal_check")) {
     int total = rows * rows;
     double *hostA = new double[total];
     for (int i = 0; i < rows; i++)
@@ -318,7 +318,7 @@ bool Matrix::isDiagonallyDominant() const {
     return false;
 
 #ifdef USE_CUDA
-  if (BackendDispatcher::shouldUseGPU(rows, "matadd")) {
+  if (BackendDispatcher::shouldUseGPU(rows, "diagdom_check")) {
     int total = rows * rows;
     double *hostA = new double[total];
     for (int i = 0; i < rows; i++)
@@ -345,6 +345,7 @@ bool Matrix::isDiagonallyDominant() const {
 
 // try to make matrix diagonally dominant by swapping rows
 // returns a new matrix with rows rearranged
+// picks the BEST qualifying row (largest |A[r][i]|) for each position (issue #11)
 Matrix Matrix::makeDiagonallyDominant() {
   if (rows != cols)
     throw MatrixException(
@@ -353,46 +354,39 @@ Matrix Matrix::makeDiagonallyDominant() {
   int n = rows;
   Matrix result(*this); // copy the matrix
 
-  // for each column i, find a row r (from i onward) where
-  // |a[r][i]| >= sum of |a[r][j]| for j != i
-  // (i.e. that row would be diagonally dominant if placed at position i)
   for (int i = 0; i < n; i++) {
-    bool found = false;
+    // check if current row is already dominant
+    double diag = fabs(result.data[i][i]);
+    double sum = 0.0;
+    for (int j = 0; j < n; j++) {
+      if (j != i)
+        sum += fabs(result.data[i][j]);
+    }
+    if (diag >= sum)
+      continue;
 
-    for (int r = i; r < n; r++) {
-      double diag = fabs(result.data[r][i]);
-      double sum = 0.0;
-
+    // find the BEST qualifying row (largest |A[r][i]| among dominant ones)
+    int bestRow = -1;
+    double bestDiag = -1.0;
+    for (int r = i + 1; r < n; r++) {
+      double d = fabs(result.data[r][i]);
+      double s = 0.0;
       for (int j = 0; j < n; j++) {
         if (j != i)
-          sum += fabs(result.data[r][j]);
+          s += fabs(result.data[r][j]);
       }
-
-      if (diag >= sum) {
-        // swap row r with row i
-        if (r != i) {
-          double *temp = result.data[i];
-          result.data[i] = result.data[r];
-          result.data[r] = temp;
-        }
-        found = true;
-        break;
+      if (d >= s && d > bestDiag) {
+        bestDiag = d;
+        bestRow = r;
       }
     }
 
-    if (!found) {
-      // no row can make position i dominant — can't fix it
-      break;
+    // swap if found
+    if (bestRow != -1) {
+      double *temp = result.data[i];
+      result.data[i] = result.data[bestRow];
+      result.data[bestRow] = temp;
     }
-  }
-
-  // check if we actually achieved diagonal dominance
-  if (result.isDiagonallyDominant()) {
-    cout << "successfully made the matrix diagonally dominant!" << endl;
-  } else {
-    cout << "tried my best but this matrix can't be made diagonally dominant "
-            "just by swapping rows... sorry bro"
-         << endl;
   }
 
   return result;

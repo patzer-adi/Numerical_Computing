@@ -17,6 +17,15 @@ public:
   virtual SolverResult solve(double *b, int n,
                              int maxIter = 10000,
                              double tol = 1e-10) = 0;
+
+protected:
+  // consolidated diagonal dominance helper — shared by all iterative solvers
+  // rearranges rows of A and b to achieve diagonal dominance where possible
+  // returns true if the resulting matrix IS diagonally dominant
+  static bool makeDiagDominant(double **A, double *b, int n);
+
+  // check if a raw A[][] is diagonally dominant (operates on copy, not this->data)
+  static bool checkDiagDominant(double **A, int n);
 };
 
 #endif

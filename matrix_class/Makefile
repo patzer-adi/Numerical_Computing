@@ -60,9 +60,31 @@ cuda/src/%.o: cuda/src/%.cu
 	$(NVCC) $(NVCCFLAGS) -c $< -o $@
 
 # ============================================
+# Verification suite
+# ============================================
+VERIFY_TARGET = verify_program
+VERIFY_SRCS = verify.cpp \
+       src/Matrix.cpp \
+       src/MatrixException.cpp \
+       src/SystemOfLinearEquationSolver.cpp \
+       src/GaussianElimination.cpp \
+       src/LUDecomposition.cpp \
+       src/Doolittle.cpp \
+       src/Crout.cpp \
+       src/Cholesky.cpp \
+       src/GaussJacobi.cpp \
+       src/GaussSeidel.cpp \
+       src/MatrixOperations.cpp
+
+verify: $(VERIFY_TARGET)
+
+$(VERIFY_TARGET): $(VERIFY_SRCS)
+	$(CXX) $(CXXFLAGS) -o $@ $(VERIFY_SRCS)
+
+# ============================================
 # Cleanup
 # ============================================
 clean:
-	rm -f $(OBJS) $(CUDA_OBJS) $(TARGET) $(GPU_TARGET)
+	rm -f $(OBJS) $(CUDA_OBJS) $(TARGET) $(GPU_TARGET) $(VERIFY_TARGET)
 
-.PHONY: cpu gpu clean
+.PHONY: cpu gpu verify clean

@@ -89,6 +89,7 @@ SolverResult Cholesky::solve(double *b, int n, int maxIter, double tol) {
   result.n = n;
   result.iterations = 0;
   result.converged = true;
+  result.dominanceAchieved = true;
   result.error = maxError;
   return result;
 }

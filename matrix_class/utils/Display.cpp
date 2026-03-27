@@ -3,6 +3,7 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <limits>
 using namespace std;
 
 void displayMatrix(double **data, int rows, int cols) {
@@ -105,12 +106,21 @@ void solveIterative(SystemOfLinearEquationSolver &solver, const string &methodNa
 
   SolverResult res = solver.solve(b, n);
 
+  // print dominance result
+  if (!res.dominanceAchieved) {
+    cout << "WARNING: diagonal dominance could NOT be achieved after row swaps" << endl;
+  }
+
   // print status (the UI layer's job)
   if (res.converged) {
-    cout << methodName << " converged in " << res.iterations << " iterations" << endl;
-  } else {
+    cout << methodName << " converged in " << res.iterations << " iterations"
+         << " (error: " << res.error << ")" << endl;
+  } else if (res.error == numeric_limits<double>::infinity()) {
     cout << methodName << " DIVERGED at iteration " << res.iterations
          << " (got NaN/Inf)... system might not be suitable for this method" << endl;
+  } else {
+    cout << methodName << " did NOT converge after " << res.iterations
+         << " iterations (last max diff: " << res.error << ")" << endl;
   }
 
   displaySolution(res.x, res.n);

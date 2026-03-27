@@ -519,7 +519,7 @@ x_new[1] = (11 - 1*1.333) / 3 = 3.222
 
 **Automatic diagonal dominance fix:** Before solving, the implementation checks if the matrix is diagonally dominant. If not, it tries to rearrange rows to achieve dominance. It also works on a **copy** of the matrix, so the original is never modified.
 
-**SolverResult:** The method returns a `SolverResult` struct containing the solution vector, iteration count, convergence status, and maximum error. The solver itself produces no console output — status messages are printed by the UI layer.
+**SolverResult:** The method returns a `SolverResult` struct containing the solution vector, iteration count, convergence status, maximum error, and `dominanceAchieved` (whether diagonal dominance was achieved after row rearrangement). The solver itself produces no console output — status messages are printed by the UI layer.
 
 **When does it fail?** If the matrix is not diagonally dominant and can't be made so by row swaps, the iteration might diverge (get worse instead of better).
 
@@ -569,7 +569,7 @@ Compare with Jacobi iteration 2: x = [1.333, 2.917]. Gauss-Seidel is already clo
 
 **GPU implementation note:** Unlike Jacobi (which is naturally parallel — all rows can update simultaneously), Gauss-Seidel is inherently sequential (row i needs updated rows 0..i-1). The GPU kernel parallelizes the dot-product computation within each row instead.
 
-**SolverResult:** Like Jacobi, Gauss-Seidel returns a `SolverResult` struct with `{x, iterations, converged, error}`. Both solvers accept configurable `maxIter` and `tol` parameters (defaults: 10000, 1e-10). Both work on copies of the original matrix.
+**SolverResult:** Like Jacobi, Gauss-Seidel returns a `SolverResult` struct with `{x, iterations, converged, error, dominanceAchieved}`. Both solvers accept configurable `maxIter` and `tol` parameters (defaults: 10000, 1e-10). Both work on copies of the original matrix.
 
 ---
 

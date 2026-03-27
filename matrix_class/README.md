@@ -51,7 +51,8 @@ This compiles everything into one executable called `matrix_program`.
 
 Or, if you've filled in the Makefile:
 ```bash
-make
+make          # or make cpu
+make verify   # builds the verification test suite
 ```
 
 ---
@@ -412,7 +413,7 @@ matrix_class/
 │   ├── Matrix.cpp               constructors, add/sub/mul, det, display
 │   ├── MatrixOperations.cpp     transpose, inverse, property checks
 │   ├── MatrixException.cpp      (empty — everything is in the header)
-│   ├── SystemOfLinearEquationSolver.cpp  base class constructors
+│   ├── SystemOfLinearEquationSolver.cpp  base class + consolidated makeDiagDominant
 │   ├── GaussianElimination.cpp  solveWithPivoting / solveWithoutPivoting
 │   ├── LUDecomposition.cpp      base class constructors
 │   ├── Doolittle.cpp            Doolittle LU decomposition
@@ -429,8 +430,9 @@ matrix_class/
 ├── 49/                      ← test data (49×49 system)
 ├── 225/                     ← test data (225×225 system)
 ├── output/                  ← saved solution outputs
-├── Makefile                 ← build for CPU-only version
+├── Makefile                 ← build for CPU-only version (+ verify target)
 ├── Makefile.lib             ← build as shared/static library
+├── verify.cpp               ← automated verification test suite
 ├── README.md                ← this file
 ├── ALGORITHMS.md            ← algorithm explanations
 └── CHANGELOG_2026-03-27.md  ← detailed refactoring changelog
@@ -449,6 +451,8 @@ Matrix                                ← base class (Rule of 5, const-correct)
 │
 └── SystemOfLinearEquationSolver       ← inherits from Matrix
     │    abstract base: solve(b, n, maxIter, tol) → SolverResult
+    │    shared: makeDiagDominant() → bool (consolidated helper)
+    │    shared: checkDiagDominant() → bool
     │
     ├── GaussianElimination            ← direct solver
     │      solve() → SolverResult (converged=true, iterations=0)
@@ -461,10 +465,10 @@ Matrix                                ← base class (Rule of 5, const-correct)
     │   └── Cholesky → SolverResult (error = max|L*L^T-A|)
     │
     ├── GaussJacobi                    ← iterative (two-array, old values only)
-    │      solve() → SolverResult {x, iterations, converged, error}
+    │      solve() → SolverResult {x, iterations, converged, error, dominanceAchieved}
     │
     └── GaussSeidel                    ← iterative (in-place, newest values)
-           solve() → SolverResult {x, iterations, converged, error}
+           solve() → SolverResult {x, iterations, converged, error, dominanceAchieved}
 ```
 
 **Why inheritance?** All these algorithms need a matrix to work on. Instead of copying the matrix storage code into every class, they all inherit from `Matrix`. This means `GaussianElimination` can use `data[i][j]`, `rows`, `cols`, `setData()`, etc. — all from the parent class.
@@ -494,7 +498,7 @@ The matrices use raw `double**` pointers (2D arrays on the heap):
 - **Copy constructor** makes a deep copy (new memory, copies every element)
 - **Move constructor** steals the pointer (no copy, just takes ownership — Rule of 5)
 - **Move assignment** same as move constructor but for assignment
-- **copyFrom()** is like assignment — cleans up old data, then deep copies
+- **copyFrom()** delegates to operator= (kept for backward compatibility)
 
 Solvers work on **copies** of the matrix data (original matrix is never modified). Caller must `delete[]` the solution vector from `SolverResult.x`.
 

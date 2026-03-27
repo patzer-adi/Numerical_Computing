@@ -234,6 +234,11 @@ static void handleMakeDiagDominant() {
   Matrix A;
   getMatrixInput(A);
   Matrix D = A.makeDiagonallyDominant();
+  if (D.isDiagonallyDominant())
+    cout << "\nsuccessfully made the matrix diagonally dominant!" << endl;
+  else
+    cout << "\ntried my best but this matrix can't be made diagonally dominant "
+            "just by swapping rows... sorry bro" << endl;
   cout << "\nResult:" << endl;
   cout << D;
 }

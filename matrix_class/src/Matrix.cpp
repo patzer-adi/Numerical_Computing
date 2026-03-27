@@ -238,21 +238,9 @@ Matrix Matrix::inputMatrix(string label) {
 
 // ===== OPERATIONS =====
 
-// copy from another matrix
+// copy from another matrix — delegates to operator= (issue #10)
 void Matrix::copyFrom(const Matrix &other) {
-  if (data != nullptr) {
-    for (int i = 0; i < rows; i++)
-      delete[] data[i];
-    delete[] data;
-  }
-  rows = other.rows;
-  cols = other.cols;
-  data = new double *[rows];
-  for (int i = 0; i < rows; i++) {
-    data[i] = new double[cols];
-    for (int j = 0; j < cols; j++)
-      data[i][j] = other.data[i][j];
-  }
+  *this = other;
 }
 
 // assignment operator (deep copy)
@@ -343,7 +331,7 @@ Matrix Matrix::subtract(const Matrix &other) const {
   Matrix result(rows, cols);
 
 #ifdef USE_CUDA
-  if (BackendDispatcher::shouldUseGPU(rows, "matadd")) {
+  if (BackendDispatcher::shouldUseGPU(rows, "matsub")) {
     int total = rows * cols;
     double *hostA = new double[total];
     double *hostB = new double[total];

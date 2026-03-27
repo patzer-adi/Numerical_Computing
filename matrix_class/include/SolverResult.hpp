@@ -11,11 +11,12 @@
 // WHO FREES x? the caller (whoever receives this result)
 
 struct SolverResult {
-  double *x;      // solution vector (caller must delete[])
-  int n;           // size of x
-  int iterations;  // how many iterations (0 for direct methods like GE/LU)
-  bool converged;  // did it converge? (always true for direct methods)
-  double error;    // max residual (0.0 if not computed)
+  double *x;             // solution vector (caller must delete[])
+  int n;                  // size of x
+  int iterations;         // how many iterations (0 for direct methods like GE/LU)
+  bool converged;         // did it converge? (always true for direct methods)
+  double error;           // max residual or max diff (0.0 if not computed)
+  bool dominanceAchieved; // was diagonal dominance achieved? (true for direct methods)
 };
 
 #endif

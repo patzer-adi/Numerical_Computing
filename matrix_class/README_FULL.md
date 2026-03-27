@@ -83,6 +83,8 @@ Matrix                                    ← base class (Rule of 5, const-corre
 │
 └── SystemOfLinearEquationSolver          ← abstract SLE base (inherits Matrix)
     │   pure virtual: solve(b, n, maxIter, tol) → SolverResult
+    │   shared: makeDiagDominant(A, b, n) → bool
+    │   shared: checkDiagDominant(A, n) → bool
     │
     ├── GaussianElimination               ← solveWithPivoting / solveWithoutPivoting
     │      solve() → SolverResult (converged=true, iterations=0)
@@ -93,10 +95,10 @@ Matrix                                    ← base class (Rule of 5, const-corre
     │   └── Cholesky → SolverResult (error = max|L*L^T-A|)
     │
     ├── GaussJacobi                       ← iterative method (configurable maxIter/tol)
-    │      solve() → SolverResult {x, iterations, converged, error}
+    │      solve() → SolverResult {x, iterations, converged, error, dominanceAchieved}
     │
     └── GaussSeidel                       ← iterative method (faster than Jacobi)
-           solve() → SolverResult {x, iterations, converged, error}
+           solve() → SolverResult {x, iterations, converged, error, dominanceAchieved}
 ```
 
 ---
@@ -186,8 +188,8 @@ If no GPU is found or the matrix is too small, the CPU backend runs automaticall
 | `Doolittle::solve(b, n)` | Returns `SolverResult` (error = max\|L*U-A\|) |
 | `Crout::solve(b, n)` | Returns `SolverResult` (error = max\|L*U-A\|) |
 | `Cholesky::solve(b, n)` | Returns `SolverResult` (error = max\|L*L^T-A\|) |
-| `GaussJacobi::solve(b, n, maxIter, tol)` | Returns `SolverResult` {x, iterations, converged, error} |
-| `GaussSeidel::solve(b, n, maxIter, tol)` | Returns `SolverResult` {x, iterations, converged, error} |
+| `GaussJacobi::solve(b, n, maxIter, tol)` | Returns `SolverResult` {x, iterations, converged, error, dominanceAchieved} |
+| `GaussSeidel::solve(b, n, maxIter, tol)` | Returns `SolverResult` {x, iterations, converged, error, dominanceAchieved} |
 
 ---
 
