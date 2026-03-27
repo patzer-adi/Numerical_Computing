@@ -1,0 +1,123 @@
+
+=== Matrix Operations Program ===
+=== CPU Backend Active ===
+
+
+=== Menu ===
+1.  Add (A + B)
+2.  Subtract (A - B)
+3.  Multiply (A * B)
+4.  Determinant
+5.  Gaussian elimination (with pivoting)
+6.  Gaussian elimination (without pivoting)
+7.  LU - Doolittle
+8.  LU - Crout
+9.  LU - Cholesky
+10. Gauss-Jacobi (iterative)
+11. Gauss-Seidel (iterative)
+12. Transpose
+13. Scalar Multiply
+14. Inverse
+15. Minor Matrix
+16. Cofactor
+17. Adjoint
+18. Check if Square
+19. Check if Symmetric
+20. Check if Identity
+21. Check if Null
+22. Check if Diagonal
+23. Check if Diagonally Dominant
+24. Make Diagonally Dominant
+25. Check Equality (A == B)
+26. Exit
+Enter choice: 
+How do you want to input the system Ax = b?
+1. Enter A and b manually
+2. Load from augmented file [A|b]
+3. Load A from left file and b from right file
+Enter choice: Enter matrix (left) file: Enter RHS (right) file: Loaded 49x50 matrix from 49/49l.txt
+Loaded 49x49 system
+Gauss-Jacobi converged in 2010 iterations
+
+--- Solution ---
+x[0] = nan
+x[1] = nan
+x[2] = nan
+x[3] = nan
+x[4] = nan
+x[5] = nan
+x[6] = nan
+x[7] = nan
+x[8] = nan
+x[9] = nan
+x[10] = nan
+x[11] = nan
+x[12] = nan
+x[13] = nan
+x[14] = nan
+x[15] = nan
+x[16] = nan
+x[17] = nan
+x[18] = nan
+x[19] = nan
+x[20] = nan
+x[21] = nan
+x[22] = nan
+x[23] = nan
+x[24] = nan
+x[25] = nan
+x[26] = nan
+x[27] = nan
+x[28] = nan
+x[29] = nan
+x[30] = nan
+x[31] = nan
+x[32] = nan
+x[33] = nan
+x[34] = nan
+x[35] = nan
+x[36] = nan
+x[37] = nan
+x[38] = nan
+x[39] = nan
+x[40] = nan
+x[41] = nan
+x[42] = nan
+x[43] = nan
+x[44] = nan
+x[45] = nan
+x[46] = nan
+x[47] = nan
+x[48] = nan
+
+Save solution to file? (1=yes, 0=no): Enter output filename: Solution written to output/gauss_jacobi_49x49.txt
+
+=== Menu ===
+1.  Add (A + B)
+2.  Subtract (A - B)
+3.  Multiply (A * B)
+4.  Determinant
+5.  Gaussian elimination (with pivoting)
+6.  Gaussian elimination (without pivoting)
+7.  LU - Doolittle
+8.  LU - Crout
+9.  LU - Cholesky
+10. Gauss-Jacobi (iterative)
+11. Gauss-Seidel (iterative)
+12. Transpose
+13. Scalar Multiply
+14. Inverse
+15. Minor Matrix
+16. Cofactor
+17. Adjoint
+18. Check if Square
+19. Check if Symmetric
+20. Check if Identity
+21. Check if Null
+22. Check if Diagonal
+23. Check if Diagonally Dominant
+24. Make Diagonally Dominant
+25. Check Equality (A == B)
+26. Exit
+Enter choice: 
+bye bye!

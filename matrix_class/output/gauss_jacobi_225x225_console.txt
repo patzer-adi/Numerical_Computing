@@ -1,0 +1,299 @@
+
+=== Matrix Operations Program ===
+=== CPU Backend Active ===
+
+
+=== Menu ===
+1.  Add (A + B)
+2.  Subtract (A - B)
+3.  Multiply (A * B)
+4.  Determinant
+5.  Gaussian elimination (with pivoting)
+6.  Gaussian elimination (without pivoting)
+7.  LU - Doolittle
+8.  LU - Crout
+9.  LU - Cholesky
+10. Gauss-Jacobi (iterative)
+11. Gauss-Seidel (iterative)
+12. Transpose
+13. Scalar Multiply
+14. Inverse
+15. Minor Matrix
+16. Cofactor
+17. Adjoint
+18. Check if Square
+19. Check if Symmetric
+20. Check if Identity
+21. Check if Null
+22. Check if Diagonal
+23. Check if Diagonally Dominant
+24. Make Diagonally Dominant
+25. Check Equality (A == B)
+26. Exit
+Enter choice: 
+How do you want to input the system Ax = b?
+1. Enter A and b manually
+2. Load from augmented file [A|b]
+3. Load A from left file and b from right file
+Enter choice: Enter matrix (left) file: Enter RHS (right) file: Loaded 225x226 matrix from 225/225left.txt
+Loaded 225x225 system
+Gauss-Jacobi converged in 1295 iterations
+
+--- Solution ---
+x[0] = nan
+x[1] = nan
+x[2] = nan
+x[3] = nan
+x[4] = nan
+x[5] = nan
+x[6] = nan
+x[7] = nan
+x[8] = nan
+x[9] = nan
+x[10] = nan
+x[11] = nan
+x[12] = nan
+x[13] = nan
+x[14] = nan
+x[15] = nan
+x[16] = nan
+x[17] = nan
+x[18] = nan
+x[19] = nan
+x[20] = nan
+x[21] = nan
+x[22] = nan
+x[23] = nan
+x[24] = nan
+x[25] = nan
+x[26] = nan
+x[27] = nan
+x[28] = nan
+x[29] = nan
+x[30] = nan
+x[31] = nan
+x[32] = nan
+x[33] = nan
+x[34] = nan
+x[35] = nan
+x[36] = nan
+x[37] = nan
+x[38] = nan
+x[39] = nan
+x[40] = nan
+x[41] = nan
+x[42] = nan
+x[43] = nan
+x[44] = nan
+x[45] = nan
+x[46] = nan
+x[47] = nan
+x[48] = nan
+x[49] = nan
+x[50] = nan
+x[51] = nan
+x[52] = nan
+x[53] = nan
+x[54] = nan
+x[55] = nan
+x[56] = nan
+x[57] = nan
+x[58] = nan
+x[59] = nan
+x[60] = nan
+x[61] = nan
+x[62] = nan
+x[63] = nan
+x[64] = nan
+x[65] = nan
+x[66] = nan
+x[67] = nan
+x[68] = nan
+x[69] = nan
+x[70] = nan
+x[71] = nan
+x[72] = nan
+x[73] = nan
+x[74] = nan
+x[75] = nan
+x[76] = nan
+x[77] = nan
+x[78] = nan
+x[79] = nan
+x[80] = nan
+x[81] = nan
+x[82] = nan
+x[83] = nan
+x[84] = nan
+x[85] = nan
+x[86] = nan
+x[87] = nan
+x[88] = nan
+x[89] = nan
+x[90] = nan
+x[91] = nan
+x[92] = nan
+x[93] = nan
+x[94] = nan
+x[95] = nan
+x[96] = nan
+x[97] = nan
+x[98] = nan
+x[99] = nan
+x[100] = nan
+x[101] = nan
+x[102] = nan
+x[103] = nan
+x[104] = nan
+x[105] = nan
+x[106] = nan
+x[107] = nan
+x[108] = nan
+x[109] = nan
+x[110] = nan
+x[111] = nan
+x[112] = nan
+x[113] = nan
+x[114] = nan
+x[115] = nan
+x[116] = nan
+x[117] = nan
+x[118] = nan
+x[119] = nan
+x[120] = nan
+x[121] = nan
+x[122] = nan
+x[123] = nan
+x[124] = nan
+x[125] = nan
+x[126] = nan
+x[127] = nan
+x[128] = nan
+x[129] = nan
+x[130] = nan
+x[131] = nan
+x[132] = nan
+x[133] = nan
+x[134] = nan
+x[135] = nan
+x[136] = nan
+x[137] = nan
+x[138] = nan
+x[139] = nan
+x[140] = nan
+x[141] = nan
+x[142] = nan
+x[143] = nan
+x[144] = nan
+x[145] = nan
+x[146] = nan
+x[147] = nan
+x[148] = nan
+x[149] = nan
+x[150] = nan
+x[151] = nan
+x[152] = nan
+x[153] = nan
+x[154] = nan
+x[155] = nan
+x[156] = nan
+x[157] = nan
+x[158] = nan
+x[159] = nan
+x[160] = nan
+x[161] = nan
+x[162] = nan
+x[163] = nan
+x[164] = nan
+x[165] = nan
+x[166] = nan
+x[167] = nan
+x[168] = nan
+x[169] = nan
+x[170] = nan
+x[171] = nan
+x[172] = nan
+x[173] = nan
+x[174] = nan
+x[175] = nan
+x[176] = nan
+x[177] = nan
+x[178] = nan
+x[179] = nan
+x[180] = nan
+x[181] = nan
+x[182] = nan
+x[183] = nan
+x[184] = nan
+x[185] = nan
+x[186] = nan
+x[187] = nan
+x[188] = nan
+x[189] = nan
+x[190] = nan
+x[191] = nan
+x[192] = nan
+x[193] = nan
+x[194] = nan
+x[195] = nan
+x[196] = nan
+x[197] = nan
+x[198] = nan
+x[199] = nan
+x[200] = nan
+x[201] = nan
+x[202] = nan
+x[203] = nan
+x[204] = nan
+x[205] = nan
+x[206] = nan
+x[207] = nan
+x[208] = nan
+x[209] = nan
+x[210] = nan
+x[211] = nan
+x[212] = nan
+x[213] = nan
+x[214] = nan
+x[215] = nan
+x[216] = nan
+x[217] = nan
+x[218] = nan
+x[219] = nan
+x[220] = nan
+x[221] = nan
+x[222] = nan
+x[223] = nan
+x[224] = nan
+
+Save solution to file? (1=yes, 0=no): Enter output filename: Solution written to output/gauss_jacobi_225x225.txt
+
+=== Menu ===
+1.  Add (A + B)
+2.  Subtract (A - B)
+3.  Multiply (A * B)
+4.  Determinant
+5.  Gaussian elimination (with pivoting)
+6.  Gaussian elimination (without pivoting)
+7.  LU - Doolittle
+8.  LU - Crout
+9.  LU - Cholesky
+10. Gauss-Jacobi (iterative)
+11. Gauss-Seidel (iterative)
+12. Transpose
+13. Scalar Multiply
+14. Inverse
+15. Minor Matrix
+16. Cofactor
+17. Adjoint
+18. Check if Square
+19. Check if Symmetric
+20. Check if Identity
+21. Check if Null
+22. Check if Diagonal
+23. Check if Diagonally Dominant
+24. Make Diagonally Dominant
+25. Check Equality (A == B)
+26. Exit
+Enter choice: 
+bye bye!
