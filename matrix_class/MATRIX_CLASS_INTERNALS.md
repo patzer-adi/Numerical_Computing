@@ -176,16 +176,15 @@ Both do the same thing — the `+` operator calls the `add()` method internally.
 
 **Declarations:**
 ```cpp
-Matrix operator+(const Matrix &other);
-Matrix operator-(const Matrix &other);
-Matrix operator*(const Matrix &other);
+Matrix operator+(const Matrix &other) const;
+Matrix operator-(const Matrix &other) const;
+Matrix operator*(const Matrix &other) const;
 ```
 
 **How `operator+` works:**
 ```cpp
-Matrix Matrix::operator+(const Matrix &other) {
-    Matrix temp(other);       // make a copy (because add() takes by value)
-    return add(temp);         // delegate to the add() method
+Matrix Matrix::operator+(const Matrix &other) const {
+    return add(other);         // delegate to the add() method
 }
 ```
 
@@ -690,24 +689,26 @@ Row 1: |2| < |3|+|6| = 9 ❌  → still not diagonally dominant
 
 | Operator | Method | What It Does | Returns |
 |---|---|---|---|
-| `A + B` | `operator+` | Element-wise addition | New `Matrix` |
-| `A - B` | `operator-` | Element-wise subtraction | New `Matrix` |
-| `A * B` | `operator*(Matrix)` | Row-by-column multiplication | New `Matrix` |
-| `A * 2.5` | `operator*(double)` | Multiply every element by scalar | New `Matrix` |
+| `A + B` | `operator+ const` | Element-wise addition | New `Matrix` |
+| `A - B` | `operator- const` | Element-wise subtraction | New `Matrix` |
+| `A * B` | `operator*(Matrix) const` | Row-by-column multiplication | New `Matrix` |
+| `A * 2.5` | `operator*(double) const` | Multiply every element by scalar | New `Matrix` |
 | `A(i, j)` | `operator()` | Access/modify element at (i, j) | `double &` (reference) |
-| `A == B` | `operator==` | Compare all elements (with tolerance) | `bool` |
+| `A(i, j)` const | `operator() const` | Read-only element access | `double` (copy) |
+| `A == B` | `operator== const` | Compare all elements (with tolerance) | `bool` |
 | `A = B` | `operator=` | Deep copy all data | `Matrix &` (self) |
+| `A = std::move(B)` | `operator=(Matrix&&)` | Steal pointer (Rule of 5) | `Matrix &` (self) |
 
 ### Property Checks
 
 | Method | Question Answered | Requires Square? | Complexity |
 |---|---|---|---|
-| `isSquare()` | rows == cols? | No | O(1) |
-| `isSymmetric()` | A == Aᵀ? | Yes | O(n²) |
-| `isIdentity()` | Diagonal = 1, rest = 0? | Yes | O(n²) |
-| `isNull()` | All elements = 0? | No | O(n×m) |
-| `isDiagonal()` | Off-diagonal = 0? | Yes | O(n²) |
-| `isDiagonallyDominant()` | \|diag\| ≥ Σ\|off-diag\| per row? | Yes | O(n²) |
+| `isSquare() const` | rows == cols? | No | O(1) |
+| `isSymmetric() const` | A == Aᵀ? | Yes | O(n²) |
+| `isIdentity() const` | Diagonal = 1, rest = 0? | Yes | O(n²) |
+| `isNull() const` | All elements = 0? | No | O(n×m) |
+| `isDiagonal() const` | Off-diagonal = 0? | Yes | O(n²) |
+| `isDiagonallyDominant() const` | \|diag\| ≥ Σ\|off-diag\| per row? | Yes | O(n²) |
 | `makeDiagonallyDominant()` | Rearrange rows for dominance | Yes | O(n²) |
 
 ---

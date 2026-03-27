@@ -1,14 +1,14 @@
-#ifndef GAUSSJACOBI_HPP
-#define GAUSSJACOBI_HPP
+#ifndef GAUSSSEIDEL_HPP
+#define GAUSSSEIDEL_HPP
 
 #include "SystemOfLinearEquationSolver.hpp"
 
-class GaussJacobi : public SystemOfLinearEquationSolver {
+class GaussSeidel : public SystemOfLinearEquationSolver {
 public:
-  GaussJacobi();
-  GaussJacobi(int r, int c);
+  GaussSeidel();
+  GaussSeidel(int r, int c);
 
-  // solve Ax = b using Jacobi iteration
+  // solve Ax = b using Gauss-Seidel iteration
   // maxIter and tol are configurable (default: 10000, 1e-10)
   SolverResult solve(double *b, int n,
                      int maxIter = 10000,

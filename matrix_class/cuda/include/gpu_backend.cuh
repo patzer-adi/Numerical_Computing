@@ -57,4 +57,16 @@ int gpuIsDiagonal(double *A, int n);
 // check if matrix is diagonally dominant
 int gpuIsDiagonallyDominant(double *A, int n);
 
+// GPU-accelerated Gauss-Jacobi iterative solver
+// A is flat row-major n*n, b is RHS vector, x is solution vector
+// solves Ax = b iteratively, returns number of iterations used
+void gpuGaussJacobi(double *A, double *b, double *x, int n, int maxIter,
+                    double tol, int *outIter);
+
+// GPU-accelerated Gauss-Seidel iterative solver
+// parallelizes the row-sum computation per iteration
+// (row iteration is sequential since Seidel uses updated values)
+void gpuGaussSeidel(double *A, double *b, double *x, int n, int maxIter,
+                    double tol, int *outIter);
+
 #endif

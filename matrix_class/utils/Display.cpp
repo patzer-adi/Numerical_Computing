@@ -75,26 +75,47 @@ void solveLU(LUDecomposition &solver) {
   int n;
   getSystemInput(solver, b, n);
 
-  double *x = solver.solve(b, n);
+  SolverResult res = solver.solve(b, n);
 
-  displaySolution(x, n);
-  askToSaveSolution(x, n);
+  // print LU verification info (since core no longer prints)
+  if (res.error < 1e-6)
+    cout << "LU verification PASSED (max error: " << res.error << ")" << endl;
+  else
+    cout << "LU verification FAILED (max error: " << res.error << ")" << endl;
 
-  delete[] x;
+  displaySolution(res.x, res.n);
+  askToSaveSolution(res.x, res.n);
+
+  delete[] res.x;
   delete[] b;
 }
 
 // handles: input -> solve -> display -> save -> cleanup
-void solveIterative(GaussJacobi &solver) {
+// prints solver status (converged/diverged, iterations, etc.)
+// uses polymorphism — works for Jacobi, Seidel, or any future iterative solver
+void solveIterative(SystemOfLinearEquationSolver &solver, const string &methodName) {
   double *b = nullptr;
   int n;
   getSystemInput(solver, b, n);
 
-  double *x = solver.solve(b, n);
+  // print diagonal dominance status (the core no longer does this)
+  if (!solver.isDiagonallyDominant()) {
+    cout << "matrix is NOT diagonally dominant... trying to fix it by swapping rows" << endl;
+  }
 
-  displaySolution(x, n);
-  askToSaveSolution(x, n);
+  SolverResult res = solver.solve(b, n);
 
-  delete[] x;
+  // print status (the UI layer's job)
+  if (res.converged) {
+    cout << methodName << " converged in " << res.iterations << " iterations" << endl;
+  } else {
+    cout << methodName << " DIVERGED at iteration " << res.iterations
+         << " (got NaN/Inf)... system might not be suitable for this method" << endl;
+  }
+
+  displaySolution(res.x, res.n);
+  askToSaveSolution(res.x, res.n);
+
+  delete[] res.x;
   delete[] b;
 }

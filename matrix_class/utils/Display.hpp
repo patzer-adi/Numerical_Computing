@@ -1,9 +1,10 @@
 #ifndef DISPLAY_HPP
 #define DISPLAY_HPP
 
-#include "../include/GaussJacobi.hpp"
 #include "../include/GaussianElimination.hpp"
 #include "../include/LUDecomposition.hpp"
+#include "../include/SolverResult.hpp"
+#include "../include/SystemOfLinearEquationSolver.hpp"
 #include <string>
 
 using namespace std;
@@ -28,7 +29,8 @@ void solveGaussian(GaussianElimination &ge, bool withPivoting);
 // solve using LU decomposition — handles input, solve, display, save
 void solveLU(LUDecomposition &solver);
 
-// solve using iterative method — handles input, solve, display, save
-void solveIterative(GaussJacobi &solver);
+// solve using any iterative method (polymorphic) — handles input, solve, display, save
+// also prints solver status (converged/diverged, iterations, etc.)
+void solveIterative(SystemOfLinearEquationSolver &solver, const string &methodName);
 
 #endif

@@ -22,9 +22,11 @@ SRCS = main.cpp \
        src/Crout.cpp \
        src/Cholesky.cpp \
        src/GaussJacobi.cpp \
+       src/GaussSeidel.cpp \
        src/MatrixOperations.cpp \
        utils/Input.cpp \
-       utils/Display.cpp
+       utils/Display.cpp \
+       app/Menu.cpp
 
 OBJS = $(SRCS:.cpp=.o)
 

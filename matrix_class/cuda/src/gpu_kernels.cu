@@ -541,3 +541,185 @@ int gpuIsDiagonallyDominant(double *A, int n) {
   CUDA_CHECK(cudaFree(d_flags));
   return result;
 }
+
+// ============================================
+// GPU Gauss-Jacobi Iterative Solver
+// ============================================
+// each thread computes one x_new[i] per iteration
+
+__global__ void jacobiIterKernel(double *A, double *b, double *x_old,
+                                 double *x_new, int n) {
+  int i = blockIdx.x * blockDim.x + threadIdx.x;
+  if (i < n) {
+    double sum = 0.0;
+    for (int j = 0; j < n; j++) {
+      if (j != i)
+        sum += A[i * n + j] * x_old[j];
+    }
+    x_new[i] = (b[i] - sum) / A[i * n + i];
+  }
+}
+
+__global__ void diffKernel(double *x_new, double *x_old, double *diffs,
+                           int n) {
+  int i = blockIdx.x * blockDim.x + threadIdx.x;
+  if (i < n) {
+    diffs[i] = fabs(x_new[i] - x_old[i]);
+  }
+}
+
+void gpuGaussJacobi(double *A, double *b, double *x, int n, int maxIter,
+                    double tol, int *outIter) {
+  size_t bytesA = n * n * sizeof(double);
+  size_t bytesV = n * sizeof(double);
+
+  double *d_A, *d_b, *d_x_old, *d_x_new, *d_diffs;
+  CUDA_CHECK(cudaMalloc(&d_A, bytesA));
+  CUDA_CHECK(cudaMalloc(&d_b, bytesV));
+  CUDA_CHECK(cudaMalloc(&d_x_old, bytesV));
+  CUDA_CHECK(cudaMalloc(&d_x_new, bytesV));
+  CUDA_CHECK(cudaMalloc(&d_diffs, bytesV));
+
+  CUDA_CHECK(cudaMemcpy(d_A, A, bytesA, cudaMemcpyHostToDevice));
+  CUDA_CHECK(cudaMemcpy(d_b, b, bytesV, cudaMemcpyHostToDevice));
+
+  // initial guess x = 0
+  CUDA_CHECK(cudaMemset(d_x_old, 0, bytesV));
+  CUDA_CHECK(cudaMemset(d_x_new, 0, bytesV));
+
+  int blockSize = 256;
+  int numBlocks = (n + blockSize - 1) / blockSize;
+
+  double *hostDiffs = new double[n];
+  int iter;
+
+  for (iter = 0; iter < maxIter; iter++) {
+    // compute x_new from x_old (all rows in parallel)
+    jacobiIterKernel<<<numBlocks, blockSize>>>(d_A, d_b, d_x_old, d_x_new, n);
+    CUDA_CHECK(cudaGetLastError());
+    CUDA_CHECK(cudaDeviceSynchronize());
+
+    // compute diffs
+    diffKernel<<<numBlocks, blockSize>>>(d_x_new, d_x_old, d_diffs, n);
+    CUDA_CHECK(cudaGetLastError());
+    CUDA_CHECK(cudaDeviceSynchronize());
+
+    // check convergence on host
+    CUDA_CHECK(
+        cudaMemcpy(hostDiffs, d_diffs, bytesV, cudaMemcpyDeviceToHost));
+    double maxDiff = 0.0;
+    for (int i = 0; i < n; i++) {
+      if (hostDiffs[i] > maxDiff)
+        maxDiff = hostDiffs[i];
+    }
+
+    // swap x_old and x_new
+    double *temp = d_x_old;
+    d_x_old = d_x_new;
+    d_x_new = temp;
+
+    if (maxDiff < tol) {
+      iter++;
+      break;
+    }
+  }
+
+  *outIter = iter;
+
+  // x_old now has the latest result (after swap)
+  CUDA_CHECK(cudaMemcpy(x, d_x_old, bytesV, cudaMemcpyDeviceToHost));
+
+  delete[] hostDiffs;
+  CUDA_CHECK(cudaFree(d_A));
+  CUDA_CHECK(cudaFree(d_b));
+  CUDA_CHECK(cudaFree(d_x_old));
+  CUDA_CHECK(cudaFree(d_x_new));
+  CUDA_CHECK(cudaFree(d_diffs));
+}
+
+// ============================================
+// GPU Gauss-Seidel Iterative Solver
+// ============================================
+// Gauss-Seidel is inherently sequential per row (uses updated x[j] for j<i)
+// GPU parallelizes the dot-product sum within each row using a reduction kernel
+
+__global__ void seidelRowSumKernel(double *A, double *x, double *b,
+                                   double *x_out, int n, int row) {
+  // single-thread kernel: computes x[row] using latest x values
+  // (for small/medium n this is fine; for very large n a parallel
+  //  reduction would help but adds complexity)
+  if (threadIdx.x == 0 && blockIdx.x == 0) {
+    double sum = 0.0;
+    for (int j = 0; j < n; j++) {
+      if (j != row)
+        sum += A[row * n + j] * x[j];
+    }
+    x_out[row] = (b[row] - sum) / A[row * n + row];
+  }
+}
+
+void gpuGaussSeidel(double *A, double *b, double *x, int n, int maxIter,
+                    double tol, int *outIter) {
+  size_t bytesA = n * n * sizeof(double);
+  size_t bytesV = n * sizeof(double);
+
+  double *d_A, *d_b, *d_x;
+  CUDA_CHECK(cudaMalloc(&d_A, bytesA));
+  CUDA_CHECK(cudaMalloc(&d_b, bytesV));
+  CUDA_CHECK(cudaMalloc(&d_x, bytesV));
+
+  CUDA_CHECK(cudaMemcpy(d_A, A, bytesA, cudaMemcpyHostToDevice));
+  CUDA_CHECK(cudaMemcpy(d_b, b, bytesV, cudaMemcpyHostToDevice));
+
+  // initial guess x = 0
+  CUDA_CHECK(cudaMemset(d_x, 0, bytesV));
+
+  double *hostX = new double[n];
+  double *hostXPrev = new double[n];
+  for (int i = 0; i < n; i++) {
+    hostX[i] = 0.0;
+    hostXPrev[i] = 0.0;
+  }
+
+  int iter;
+  for (iter = 0; iter < maxIter; iter++) {
+    // save previous x for convergence check
+    for (int i = 0; i < n; i++)
+      hostXPrev[i] = hostX[i];
+
+    // update each row sequentially (Seidel requires this)
+    for (int row = 0; row < n; row++) {
+      seidelRowSumKernel<<<1, 1>>>(d_A, d_x, d_b, d_x, n, row);
+      CUDA_CHECK(cudaGetLastError());
+      CUDA_CHECK(cudaDeviceSynchronize());
+    }
+
+    // copy x back to check convergence
+    CUDA_CHECK(cudaMemcpy(hostX, d_x, bytesV, cudaMemcpyDeviceToHost));
+
+    double maxDiff = 0.0;
+    for (int i = 0; i < n; i++) {
+      double diff = fabs(hostX[i] - hostXPrev[i]);
+      if (diff > maxDiff)
+        maxDiff = diff;
+    }
+
+    if (maxDiff < tol) {
+      iter++;
+      break;
+    }
+  }
+
+  *outIter = iter;
+
+  // copy final result
+  for (int i = 0; i < n; i++)
+    x[i] = hostX[i];
+
+  delete[] hostX;
+  delete[] hostXPrev;
+  CUDA_CHECK(cudaFree(d_A));
+  CUDA_CHECK(cudaFree(d_b));
+  CUDA_CHECK(cudaFree(d_x));
+}
+

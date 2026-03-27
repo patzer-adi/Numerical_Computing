@@ -6,9 +6,16 @@ GaussianElimination::GaussianElimination() : SystemOfLinearEquationSolver() {}
 GaussianElimination::GaussianElimination(int r, int c)
     : SystemOfLinearEquationSolver(r, c) {}
 
-// default solve — uses pivoting
-double *GaussianElimination::solve(double *b, int n) {
-  return solveWithPivoting(b, n);
+// default solve — uses pivoting, wraps result in SolverResult
+SolverResult GaussianElimination::solve(double *b, int n, int maxIter, double tol) {
+  double *x = solveWithPivoting(b, n);
+  SolverResult result;
+  result.x = x;
+  result.n = n;
+  result.iterations = 0;    // direct method — no iterations
+  result.converged = true;   // direct methods always "converge"
+  result.error = 0.0;
+  return result;
 }
 
 // gaussian elimination WITH partial pivoting

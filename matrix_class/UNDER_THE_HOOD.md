@@ -90,6 +90,7 @@ public:
     void printError();
 };
 
+```cpp
 // === pasted from include/Matrix.hpp ===
 class Matrix {
 protected:
@@ -98,12 +99,14 @@ protected:
 public:
     Matrix();
     Matrix(int r, int c);
-    Matrix add(Matrix other);
-    Matrix subtract(Matrix other);
-    Matrix multiply(Matrix other);
-    Matrix operator+(const Matrix &other);
+    Matrix(const Matrix &other);          // copy constructor
+    Matrix(Matrix &&other) noexcept;      // move constructor (Rule of 5)
+    Matrix add(const Matrix &other) const;
+    Matrix subtract(const Matrix &other) const;
+    Matrix multiply(const Matrix &other) const;
+    Matrix operator+(const Matrix &other) const;
     // ... all 30+ method declarations
-    void display();
+    void display() const;
 };
 
 // === pasted from <iostream> (thousands of lines from the standard library) ===
@@ -374,7 +377,9 @@ MatrixException.hpp          ← no dependencies
        ↑
 Matrix.hpp                   ← includes MatrixException.hpp
        ↑
-SystemOfLinearEquationSolver.hpp  ← includes Matrix.hpp
+SolverResult.hpp             ← standalone struct
+       ↑
+SystemOfLinearEquationSolver.hpp  ← includes Matrix.hpp, SolverResult.hpp
        ↑
        ├── GaussianElimination.hpp
        ├── LUDecomposition.hpp
@@ -382,7 +387,8 @@ SystemOfLinearEquationSolver.hpp  ← includes Matrix.hpp
        │       ├── Doolittle   (declared inside LUDecomposition.hpp)
        │       ├── Crout       (declared inside LUDecomposition.hpp)
        │       └── Cholesky    (declared inside LUDecomposition.hpp)
-       └── GaussJacobi.hpp
+       ├── GaussJacobi.hpp
+       └── GaussSeidel.hpp
 ```
 
 **Including `LUDecomposition.hpp` automatically gives you:**
@@ -595,8 +601,10 @@ SRCS = main.cpp src/Matrix.cpp src/MatrixException.cpp \
        src/SystemOfLinearEquationSolver.cpp \
        src/GaussianElimination.cpp src/LUDecomposition.cpp \
        src/Doolittle.cpp src/Crout.cpp src/Cholesky.cpp \
-       src/GaussJacobi.cpp src/MatrixOperations.cpp \
-       utils/Input.cpp utils/Display.cpp
+       src/GaussJacobi.cpp src/GaussSeidel.cpp \
+       src/MatrixOperations.cpp \
+       utils/Input.cpp utils/Display.cpp \
+       app/Menu.cpp
 
 OBJS = $(SRCS:.cpp=.o)    # Replace .cpp with .o in all paths
 TARGET = matrix_program
@@ -724,12 +732,16 @@ protected:           // ← accessible by derived classes
 
 class SystemOfLinearEquationSolver : public Matrix {
     // inherits data, rows, cols
-    virtual double* solve(double *b, int n) = 0;
+    virtual SolverResult solve(double *b, int n,
+                               int maxIter = 10000,
+                               double tol = 1e-10) = 0;
 };
 
 class Doolittle : public LUDecomposition {
     // inherits data, rows, cols (from Matrix, through SLE, through LU)
-    double* solve(double *b, int n) override;
+    SolverResult solve(double *b, int n,
+                       int maxIter = 10000,
+                       double tol = 1e-10) override;
 };
 ```
 

@@ -20,12 +20,13 @@ public:
   Matrix(int r, int c);
   Matrix(string filename);     // construct from file
   Matrix(const Matrix &other); // copy constructor
+  Matrix(Matrix &&other) noexcept; // move constructor (Rule of 5)
   virtual ~Matrix();
 
   // getters
-  int getRows();
-  int getCols();
-  double getData(int i, int j);
+  int getRows() const;
+  int getCols() const;
+  double getData(int i, int j) const;
   void setData(int i, int j, double val);
 
   // I/O methods — the class handles its own input/output
@@ -37,15 +38,15 @@ public:
   static Matrix inputMatrix(string label);
 
   // basic operations
-  Matrix add(Matrix other);
-  Matrix subtract(Matrix other);
-  Matrix multiply(Matrix other);
+  Matrix add(const Matrix &other) const;
+  Matrix subtract(const Matrix &other) const;
+  Matrix multiply(const Matrix &other) const;
 
   // operator overloading
-  Matrix operator+(const Matrix &other);
-  Matrix operator-(const Matrix &other);
-  Matrix operator*(const Matrix &other);
-  Matrix operator*(double scalar);
+  Matrix operator+(const Matrix &other) const;
+  Matrix operator-(const Matrix &other) const;
+  Matrix operator*(const Matrix &other) const;
+  Matrix operator*(double scalar) const;
 
   // stream operators (friend functions)
   friend ostream &operator<<(ostream &out, const Matrix &m);
@@ -53,40 +54,42 @@ public:
 
   // element access operator: A(i, j)
   double &operator()(int i, int j);
+  double operator()(int i, int j) const; // const overload
 
   // equality operator
-  bool operator==(const Matrix &other);
+  bool operator==(const Matrix &other) const;
 
   // transpose
-  Matrix transpose();
+  Matrix transpose() const;
 
   // determinant
-  double determinant();
+  double determinant() const;
 
   // inverse and related
-  Matrix minorMatrix(int r, int c);
-  double cofactor(int r, int c);
-  Matrix adjoint();
-  Matrix inverse();
+  Matrix minorMatrix(int r, int c) const;
+  double cofactor(int r, int c) const;
+  Matrix adjoint() const;
+  Matrix inverse() const;
 
   // matrix check functions
-  bool isSquare();
-  bool isSymmetric();
-  bool isIdentity();
-  bool isNull();
-  bool isDiagonal();
-  bool isDiagonallyDominant();
+  bool isSquare() const;
+  bool isSymmetric() const;
+  bool isIdentity() const;
+  bool isNull() const;
+  bool isDiagonal() const;
+  bool isDiagonallyDominant() const;
   Matrix makeDiagonallyDominant();
 
   // get raw pointer to a row (for CUDA memory transfers)
   double *getRowPointer(int i);
 
   // display
-  void display();
+  void display() const;
 
   // assignment
   Matrix &operator=(const Matrix &other);
-  void copyFrom(Matrix &other);
+  Matrix &operator=(Matrix &&other) noexcept; // move assignment (Rule of 5)
+  void copyFrom(const Matrix &other);
 };
 
 #endif

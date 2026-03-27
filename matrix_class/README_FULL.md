@@ -13,9 +13,10 @@ A C++ matrix computation library with **CPU** and **CUDA GPU** backends. Provide
 |---|---|
 | **Arithmetic** | Addition, Subtraction, Multiplication, Scalar Multiplication |
 | **Unary** | Transpose, Determinant, Inverse, Minor Matrix, Cofactor, Adjoint |
-| **SLE Solvers** | Gaussian Elimination (±pivoting), Doolittle LU, Crout LU, Cholesky LU, Gauss-Jacobi |
+| **SLE Solvers** | Gaussian Elimination (±pivoting), Doolittle LU, Crout LU, Cholesky LU, Gauss-Jacobi, Gauss-Seidel |
 | **CUDA GPU** | GPU-accelerated add, subtract, multiply, scalar mul, transpose, LU factorization |
 | **I/O** | Console input, file input (auto-detect format), solution save to file |
+| **Architecture** | Rule of 5, const-correctness, SolverResult return type, 3-layer separation (Core/Utils/App) |
 
 ---
 
@@ -23,15 +24,20 @@ A C++ matrix computation library with **CPU** and **CUDA GPU** backends. Provide
 
 ```
 matrix_class/
-├── main.cpp                          ← menu-driven program
-├── include/                          ← header files
-│   ├── Matrix.hpp                        base Matrix class
+├── main.cpp                          ← entry point (6 lines, calls runMenu())
+├── app/                              ← application layer (menu + routing)
+│   ├── Menu.hpp                          runMenu() declaration
+│   └── Menu.cpp                          handler functions + menu loop
+├── include/                          ← core library headers (NO cin/cout)
+│   ├── Matrix.hpp                        base Matrix class (Rule of 5, const-correct)
+│   ├── SolverResult.hpp                  struct returned by all solvers
 │   ├── MatrixException.hpp               custom exception class
 │   ├── SystemOfLinearEquationSolver.hpp   abstract SLE base class
 │   ├── GaussianElimination.hpp           GE solver
 │   ├── LUDecomposition.hpp               LU abstract + Doolittle/Crout/Cholesky
-│   └── GaussJacobi.hpp                  iterative solver
-├── src/                              ← implementations
+│   ├── GaussJacobi.hpp                  Jacobi iterative solver
+│   └── GaussSeidel.hpp                  Gauss-Seidel iterative solver
+├── src/                              ← core implementations (NO cin/cout)
 │   ├── Matrix.cpp                        constructors, add/sub/mul, det, I/O
 │   ├── MatrixOperations.cpp              transpose, inverse, minor, cofactor, adjoint
 │   ├── MatrixException.cpp               (header-only, kept for future use)
@@ -41,15 +47,16 @@ matrix_class/
 │   ├── Doolittle.cpp                     Doolittle decomposition + verification
 │   ├── Crout.cpp                         Crout decomposition + verification
 │   ├── Cholesky.cpp                      Cholesky decomposition + verification
-│   └── GaussJacobi.cpp                  Jacobi iteration
+│   ├── GaussJacobi.cpp                  Jacobi iteration
+│   └── GaussSeidel.cpp                  Gauss-Seidel iteration
 ├── cuda/                             ← GPU backend
 │   ├── gpu_backend.cuh                   GPU function declarations
-│   ├── gpu_kernels.cu                    CUDA kernels (add, sub, mul, scalar, transpose, LU)
+│   ├── gpu_kernels.cu                    CUDA kernels
 │   ├── gpu_dispatch.hpp                  BackendDispatcher class
 │   └── gpu_dispatch.cu                   runtime CPU/GPU decision logic
-├── utils/                            ← helper I/O functions
+├── utils/                            ← I/O helpers (no menus, no decisions)
 │   ├── Input.hpp / Input.cpp             matrix & system input
-│   └── Display.hpp / Display.cpp         result display & file save
+│   └── Display.hpp / Display.cpp         result display, solver status, file save
 ├── 49/                               ← 49×49 test system
 ├── 225/                              ← 225×225 test system
 ├── test_cases/                       ← SageMath generator scripts
@@ -57,6 +64,7 @@ matrix_class/
 ├── README.md                         ← original readme
 ├── README_FULL.md                    ← this file
 ├── ALGORITHMS.md                     ← algorithm explanations with examples
+├── CHANGELOG_2026-03-27.md           ← detailed refactoring changelog
 └── LICENSE                           ← MIT license
 ```
 
@@ -65,24 +73,30 @@ matrix_class/
 ## Class Hierarchy
 
 ```
-Matrix                                    ← base class (data storage + operations)
+Matrix                                    ← base class (Rule of 5, const-correct)
 │   data[][],  rows, cols
-│   add, subtract, multiply, determinant
-│   transpose, inverse, minor, cofactor, adjoint
-│   operator+, operator-, operator*, operator*(scalar)
+│   add, subtract, multiply, determinant (all const)
+│   transpose, inverse, minor, cofactor, adjoint (all const)
+│   operator+, -, *(Matrix), *(scalar) (all const)
 │   display, readFromFile, saveToFile
+│   move constructor, move assignment (Rule of 5)
 │
 └── SystemOfLinearEquationSolver          ← abstract SLE base (inherits Matrix)
-    │   pure virtual: solve(double *b, int n)
+    │   pure virtual: solve(b, n, maxIter, tol) → SolverResult
     │
     ├── GaussianElimination               ← solveWithPivoting / solveWithoutPivoting
+    │      solve() → SolverResult (converged=true, iterations=0)
     │
     ├── LUDecomposition                   ← abstract base for LU methods
-    │   ├── Doolittle                         L has 1s on diagonal, U upper triangular
-    │   ├── Crout                             U has 1s on diagonal, L lower triangular
-    │   └── Cholesky                          A = L*L^T (symmetric positive definite only)
+    │   ├── Doolittle → SolverResult (error = max|L*U-A|)
+    │   ├── Crout → SolverResult (error = max|L*U-A|)
+    │   └── Cholesky → SolverResult (error = max|L*L^T-A|)
     │
-    └── GaussJacobi                       ← iterative method (max 10000 iter, tol 1e-10)
+    ├── GaussJacobi                       ← iterative method (configurable maxIter/tol)
+    │      solve() → SolverResult {x, iterations, converged, error}
+    │
+    └── GaussSeidel                       ← iterative method (faster than Jacobi)
+           solve() → SolverResult {x, iterations, converged, error}
 ```
 
 ---
@@ -136,37 +150,44 @@ If no GPU is found or the matrix is too small, the CPU backend runs automaticall
 | `Matrix(int r, int c)` | Create r×c matrix filled with zeros |
 | `Matrix(string filename)` | Construct from file |
 | `Matrix(const Matrix &other)` | Copy constructor (deep copy) |
-| `getRows()`, `getCols()` | Get dimensions |
-| `getData(i, j)`, `setData(i, j, val)` | Element access |
+| `Matrix(Matrix &&other) noexcept` | Move constructor (steals pointer, no copy) |
+| `getRows() const`, `getCols() const` | Get dimensions |
+| `getData(i, j) const`, `setData(i, j, val)` | Element access |
 | `readFromConsole()` | Manual input |
 | `readFromFile(string)` | File input (auto-detect format) |
 | `saveToFile(string)` | Write matrix to file |
-| `display()` | Print matrix to console |
-| `add(Matrix)`, `operator+` | Matrix addition |
-| `subtract(Matrix)`, `operator-` | Matrix subtraction |
-| `multiply(Matrix)`, `operator*(Matrix)` | Matrix multiplication |
-| `operator*(double)` | Scalar multiplication |
-| `transpose()` | Return transposed matrix |
-| `determinant()` | Compute determinant (Gaussian elimination method) |
-| `minorMatrix(r, c)` | Remove row r, col c → (n-1)×(n-1) matrix |
-| `cofactor(r, c)` | (-1)^(r+c) × det(minor(r,c)) |
-| `adjoint()` | Transpose of cofactor matrix |
-| `inverse()` | adj(A) / det(A) |
-| `isSymmetric()` | Check if A[i][j] == A[j][i] for all i,j |
-| `copyFrom(Matrix&)` | Deep copy from another matrix |
-| `operator=` | Assignment operator (deep copy) |
+| `display() const` | Print matrix to console |
+| `add(const Matrix&) const`, `operator+` | Matrix addition |
+| `subtract(const Matrix&) const`, `operator-` | Matrix subtraction |
+| `multiply(const Matrix&) const`, `operator*(Matrix)` | Matrix multiplication |
+| `operator*(double) const` | Scalar multiplication |
+| `transpose() const` | Return transposed matrix |
+| `determinant() const` | Compute determinant |
+| `minorMatrix(r, c) const` | Remove row r, col c |
+| `cofactor(r, c) const` | (-1)^(r+c) × det(minor(r,c)) |
+| `adjoint() const` | Transpose of cofactor matrix |
+| `inverse() const` | adj(A) / det(A) |
+| `isSquare() const`, `isSymmetric() const` | Matrix property checks |
+| `isIdentity() const`, `isNull() const`, `isDiagonal() const` | Matrix property checks |
+| `isDiagonallyDominant() const` | Check diagonal dominance |
+| `makeDiagonallyDominant()` | Rearrange rows for dominance |
+| `operator==(const Matrix&) const` | Equality check (with fp tolerance) |
+| `operator=(const Matrix&)` | Copy assignment (deep copy) |
+| `operator=(Matrix&&) noexcept` | Move assignment (steal pointer) |
+| `copyFrom(const Matrix&)` | Deep copy from another matrix |
 
 ### Solver Classes
 
 | Method | Description |
 |---|---|
-| `GaussianElimination::solve(b, n)` | Default: uses pivoting |
-| `GaussianElimination::solveWithPivoting(b, n)` | Forward elimination + back substitution |
-| `GaussianElimination::solveWithoutPivoting(b, n)` | No pivoting (less stable) |
-| `Doolittle::solve(b, n)` | A = LU, L unit diagonal, verifies L*U=A |
-| `Crout::solve(b, n)` | A = LU, U unit diagonal, verifies L*U=A |
-| `Cholesky::solve(b, n)` | A = LL^T, symmetric check, verifies L*L^T=A |
-| `GaussJacobi::solve(b, n)` | Iterative (max 10000 iter, tol 1e-10) |
+| `GaussianElimination::solve(b, n)` | Returns `SolverResult` (uses pivoting) |
+| `GaussianElimination::solveWithPivoting(b, n)` | Returns `double*` |
+| `GaussianElimination::solveWithoutPivoting(b, n)` | Returns `double*` (less stable) |
+| `Doolittle::solve(b, n)` | Returns `SolverResult` (error = max\|L*U-A\|) |
+| `Crout::solve(b, n)` | Returns `SolverResult` (error = max\|L*U-A\|) |
+| `Cholesky::solve(b, n)` | Returns `SolverResult` (error = max\|L*L^T-A\|) |
+| `GaussJacobi::solve(b, n, maxIter, tol)` | Returns `SolverResult` {x, iterations, converged, error} |
+| `GaussSeidel::solve(b, n, maxIter, tol)` | Returns `SolverResult` {x, iterations, converged, error} |
 
 ---
 
@@ -197,13 +218,16 @@ solver.readFromFile("49/49l.txt");  // load 49×49 matrix
 double *b = new double[49];
 // ... load b from file ...
 
-double *x = solver.solve(b, 49);
-// prints: "Doolittle LU verification PASSED ✅"
+SolverResult res = solver.solve(b, 49);
+// res.x = solution, res.error = LU verification error
 
-for (int i = 0; i < 49; i++)
-    cout << "x[" << i << "] = " << x[i] << endl;
+if (res.error < 1e-6)
+    cout << "LU verification PASSED" << endl;
 
-delete[] x;
+for (int i = 0; i < res.n; i++)
+    cout << "x[" << i << "] = " << res.x[i] << endl;
+
+delete[] res.x;
 delete[] b;
 ```
 
@@ -263,10 +287,11 @@ All errors are caught via `MatrixException`. The program never crashes — error
 ## Memory Management
 
 - All matrices use `double**` (2D dynamic arrays)
-- Constructors allocate, destructors free
+- Constructors allocate, destructors free (Rule of 3)
+- Move constructor and move assignment steal pointers (Rule of 5)
 - Copy constructor and `operator=` perform deep copies
-- Solver functions allocate working copies (original matrix preserved)
-- Caller must `delete[]` returned solution vectors
+- Solver functions work on **copies** (original matrix never modified)
+- Caller must `delete[]` the `SolverResult.x` vector
 
 ---
 

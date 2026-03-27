@@ -27,7 +27,7 @@ make clean
 
 ### What it does
 
-Compiles the entire library using **g++** only. All matrix operations (add, subtract, multiply, determinant, Gaussian elimination, LU decomposition, Gauss-Jacobi) run on the CPU using standard nested loops.
+Compiles the entire library using **g++** only. All matrix operations (add, subtract, multiply, determinant, Gaussian elimination, LU decomposition, Gauss-Jacobi, Gauss-Seidel) run on the CPU using standard nested loops.
 
 ### Requirements
 
@@ -56,7 +56,7 @@ make cpu
 ### Source files compiled
 
 ```
-main.cpp                              ← menu loop
+main.cpp                              ← entry point (6 lines, calls runMenu)
 src/Matrix.cpp                        ← core matrix class
 src/MatrixException.cpp               ← error handling
 src/SystemOfLinearEquationSolver.cpp   ← base solver class
@@ -66,9 +66,11 @@ src/Doolittle.cpp                     ← Doolittle decomposition
 src/Crout.cpp                         ← Crout decomposition
 src/Cholesky.cpp                      ← Cholesky decomposition
 src/GaussJacobi.cpp                   ← Gauss-Jacobi iterative solver
-src/MatrixOperations.cpp              ← operator overloads (+, -, *)
+src/GaussSeidel.cpp                   ← Gauss-Seidel iterative solver
+src/MatrixOperations.cpp              ← operator overloads, property checks
 utils/Input.cpp                       ← console & file input
-utils/Display.cpp                     ← output & file save
+utils/Display.cpp                     ← output, solver status, file save
+app/Menu.cpp                          ← application menu + handler functions
 ```
 
 ### Output
@@ -250,17 +252,19 @@ These are CPU-only and don't require CUDA.
 ```
 matrix_class/
 ├── Makefile                  ← main build file (cpu/gpu/clean targets)
-├── main.cpp                  ← program entry point
-├── include/                  ← header files (.hpp)
-├── src/                      ← C++ implementations (.cpp)
+├── main.cpp                  ← entry point (6 lines)
+├── app/                      ← application layer (menu + routing)
+│   ├── Menu.hpp
+│   └── Menu.cpp
+├── include/                  ← core library headers (NO cin/cout)
+│   ├── SolverResult.hpp          ← return type for all solvers
+│   └── ... (other .hpp files)
+├── src/                      ← C++ implementations (NO cin/cout)
 ├── utils/                    ← I/O helper functions
 ├── cuda/                     ← GPU backend (only used with make gpu)
 │   ├── include/              ← GPU headers (.cuh, .hpp)
 │   └── src/                  ← CUDA kernels (.cu)
 ├── examples/                 ← standalone example programs
-│   ├── Makefile              ← separate Makefile for examples
-│   ├── example_basic.cpp
-│   └── example_solve.cpp
 ├── 49/                       ← 49×49 test data
 ├── 225/                      ← 225×225 test data
 └── test_cases/               ← test generators

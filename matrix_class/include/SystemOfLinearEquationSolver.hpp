@@ -2,8 +2,9 @@
 #define SYSTEMOFLINEAREQUATIONSOLVER_HPP
 
 #include "Matrix.hpp"
+#include "SolverResult.hpp"
 
-// abstract base class for all solvers (GE, LU, GJ)
+// abstract base class for all solvers (GE, LU, Jacobi, Seidel)
 // every solver must implement solve()
 class SystemOfLinearEquationSolver : public Matrix {
 public:
@@ -12,7 +13,10 @@ public:
   virtual ~SystemOfLinearEquationSolver() {}
 
   // every solver class must override this
-  virtual double *solve(double *b, int n) = 0;
+  // returns a SolverResult with x, iterations, convergence info
+  virtual SolverResult solve(double *b, int n,
+                             int maxIter = 10000,
+                             double tol = 1e-10) = 0;
 };
 
 #endif

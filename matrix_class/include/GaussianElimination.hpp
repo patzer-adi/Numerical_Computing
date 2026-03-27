@@ -8,8 +8,10 @@ public:
   GaussianElimination();
   GaussianElimination(int r, int c);
 
-  // default solve uses pivoting
-  double *solve(double *b, int n);
+  // default solve uses pivoting (maxIter/tol ignored for direct methods)
+  SolverResult solve(double *b, int n,
+                     int maxIter = 10000,
+                     double tol = 1e-10) override;
 
   // solve Ax = b — the only thing this class adds
   double *solveWithPivoting(double *b, int n);

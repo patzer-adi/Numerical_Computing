@@ -6,9 +6,16 @@ This is a menu-based C++ program for working with matrices. It can:
 
 - **Add, subtract, multiply** matrices of any size
 - **Calculate determinants** of square matrices
-- **Solve systems of linear equations** (Ax = b) using Gaussian elimination
+- **Solve systems of linear equations** (Ax = b) using:
+  - Gaussian elimination (with/without pivoting)
+  - LU Decomposition (Doolittle, Crout, Cholesky)
+  - Gauss-Jacobi iteration
+  - Gauss-Seidel iteration (with automatic diagonal dominance fix)
+- **Matrix properties**: transpose, inverse, cofactor, adjoint, minor
+- **Check properties**: square, symmetric, identity, null, diagonal, diagonally dominant
 - **Read matrices from files** or let you type them in manually
 - **Save solutions** to a file
+- **GPU acceleration** with CUDA (optional)
 
 Everything runs in a loop — pick an option, do the operation, go back to the menu.
 
@@ -16,20 +23,28 @@ Everything runs in a loop — pick an option, do the operation, go back to the m
 
 ## Compiling
 
-From the `matrix_class/` folder, run:
+```bash
+make clean && make
+```
 
+Or manually:
 ```bash
 g++ -std=c++11 -Wall -o matrix_program \
     main.cpp \
     src/Matrix.cpp \
     src/MatrixException.cpp \
+    src/SystemOfLinearEquationSolver.cpp \
     src/GaussianElimination.cpp \
     src/LUDecomposition.cpp \
     src/Doolittle.cpp \
     src/Crout.cpp \
     src/Cholesky.cpp \
+    src/GaussJacobi.cpp \
+    src/GaussSeidel.cpp \
+    src/MatrixOperations.cpp \
     utils/Input.cpp \
-    utils/Display.cpp
+    utils/Display.cpp \
+    app/Menu.cpp
 ```
 
 This compiles everything into one executable called `matrix_program`.
@@ -59,22 +74,38 @@ When you start the program, you see:
 === Matrix Operations Program ===
 
 === Menu ===
-1. Add two matrices
-2. Subtract two matrices
-3. Multiply two matrices
-4. Calculate determinant
-5. Gaussian elimination with pivoting
-6. Gaussian elimination without pivoting
-7. LU Decomposition (Doolittle)
-8. LU Decomposition (Crout)
-9. LU Decomposition (Cholesky)
-10. Exit
+1.  Add (A + B)
+2.  Subtract (A - B)
+3.  Multiply (A * B)
+4.  Determinant
+5.  Gaussian elimination (with pivoting)
+6.  Gaussian elimination (without pivoting)
+7.  LU - Doolittle
+8.  LU - Crout
+9.  LU - Cholesky
+10. Gauss-Jacobi (iterative)
+11. Gauss-Seidel (iterative)
+12. Transpose
+13. Scalar Multiply
+14. Inverse
+15. Minor Matrix
+16. Cofactor
+17. Adjoint
+18. Check if Square
+19. Check if Symmetric
+20. Check if Identity
+21. Check if Null
+22. Check if Diagonal
+23. Check if Diagonally Dominant
+24. Make Diagonally Dominant
+25. Check Equality (A == B)
+26. Exit
 Enter choice:
 ```
 
 Type a number and press Enter.
 
-After each operation finishes, the menu appears again. This continues until you choose 10 (Exit).
+After each operation finishes, the menu appears again. This continues until you choose 26 (Exit).
 
 ---
 
@@ -303,16 +334,31 @@ Same as option 5, but **skips the pivoting step**. It just uses whatever value i
 
 ### Options 7, 8, 9: LU Decomposition
 
-**Not implemented yet.** The code compiles (skeleton is there), but choosing these prints:
-```
-Doolittle LU Decomposition - not implemented yet, coming soon! 🚧
-```
+**All implemented!** Doolittle, Crout, and Cholesky LU decomposition methods.
 
-These are for you to implement. See `README.md` from the earlier version for the formulas.
+Each decomposes A into L×U (or L×L^T for Cholesky), then solves via forward/back substitution. The solver returns a `SolverResult` containing the solution, iteration count, and verification error (max |L*U - A|).
 
-### Option 10: Exit
+### Options 10-11: Iterative Solvers
 
-Prints `bye bye! 👋` and quits.
+**Option 10 (Gauss-Jacobi):** Solves Ax = b using the Jacobi iterative method. Each x[i] is updated using values from the previous iteration only. Automatically checks and tries to fix diagonal dominance.
+
+**Option 11 (Gauss-Seidel):** Solves Ax = b using the Gauss-Seidel method. More efficient than Jacobi because it uses updated values as soon as they're computed. Also automatically checks and fixes diagonal dominance.
+
+**Both methods:**
+- Return a `SolverResult` with `{x, iterations, converged, error}`
+- Accept configurable `maxIter` and `tol` (defaults: 10000, 1e-10)
+- Work on copies of the matrix (original is never modified)
+- Print status messages (converged/diverged) from the UI layer, not from the solver itself
+
+**Important:** Both methods require the matrix to be diagonally dominant (or have spectral radius < 1) for convergence.
+
+### Options 12-25: Matrix Operations & Property Checks
+
+Transpose, scalar multiply, inverse, minor, cofactor, adjoint, and various property checks (square, symmetric, identity, null, diagonal, diagonally dominant, equality).
+
+### Option 26: Exit
+
+Prints `bye bye!` and quits.
 
 ---
 
@@ -349,48 +395,76 @@ After any error, the program goes right back to the menu — you don't need to r
 
 ```
 matrix_class/
-├── main.cpp                 ← the menu loop, ties everything together
-├── include/                 ← class declarations (what exists)
-│   ├── Matrix.hpp               base Matrix class
+├── main.cpp                 ← entry point (just calls runMenu(), 6 lines)
+├── app/                     ← application layer (menu + routing)
+│   ├── Menu.hpp                 runMenu() declaration
+│   └── Menu.cpp                 all menu logic + handler functions
+├── include/                 ← core library (NO cin/cout, pure logic)
+│   ├── Matrix.hpp               base Matrix class (Rule of 5, const-correct)
+│   ├── SolverResult.hpp         return type for all solvers
 │   ├── MatrixException.hpp      error message class
+│   ├── SystemOfLinearEquationSolver.hpp  abstract base for solvers
 │   ├── GaussianElimination.hpp  GE class declaration
-│   └── LUDecomposition.hpp      LU + Doolittle/Crout/Cholesky declarations
-├── src/                     ← class implementations (how things work)
+│   ├── LUDecomposition.hpp      LU + Doolittle/Crout/Cholesky declarations
+│   ├── GaussJacobi.hpp          Gauss-Jacobi iterative solver
+│   └── GaussSeidel.hpp          Gauss-Seidel iterative solver
+├── src/                     ← core implementations (NO cin/cout)
 │   ├── Matrix.cpp               constructors, add/sub/mul, det, display
+│   ├── MatrixOperations.cpp     transpose, inverse, property checks
 │   ├── MatrixException.cpp      (empty — everything is in the header)
+│   ├── SystemOfLinearEquationSolver.cpp  base class constructors
 │   ├── GaussianElimination.cpp  solveWithPivoting / solveWithoutPivoting
 │   ├── LUDecomposition.cpp      base class constructors
-│   ├── Doolittle.cpp            skeleton (throws "not implemented")
-│   ├── Crout.cpp                skeleton
-│   └── Cholesky.cpp             skeleton
-├── utils/                   ← helper functions (I/O)
+│   ├── Doolittle.cpp            Doolittle LU decomposition
+│   ├── Crout.cpp                Crout LU decomposition
+│   ├── Cholesky.cpp             Cholesky LU decomposition
+│   ├── GaussJacobi.cpp          Gauss-Jacobi iterative solver
+│   └── GaussSeidel.cpp          Gauss-Seidel with diagonal dominance fix
+├── cuda/                    ← GPU-accelerated implementations
+│   ├── include/gpu_backend.cuh  GPU function declarations
+│   └── src/gpu_kernels.cu       GPU kernels (Jacobi, Seidel, etc.)
+├── utils/                   ← I/O helpers (read/write only, no menus)
 │   ├── Input.hpp / Input.cpp    reading matrices from console or files
-│   └── Display.hpp / Display.cpp printing results, writing to files
+│   └── Display.hpp / Display.cpp printing results, solver status, saving
 ├── 49/                      ← test data (49×49 system)
 ├── 225/                     ← test data (225×225 system)
-├── test_cases/              ← SageMath generator + gnuplot scripts
-├── Makefile                 ← fill-in-the-blanks template for building
+├── output/                  ← saved solution outputs
+├── Makefile                 ← build for CPU-only version
+├── Makefile.lib             ← build as shared/static library
 ├── README.md                ← this file
-└── MATRIX_FILES.md          ← explains the test data files
+├── ALGORITHMS.md            ← algorithm explanations
+└── CHANGELOG_2026-03-27.md  ← detailed refactoring changelog
 ```
 
 ### Class Hierarchy
 
 ```
-Matrix                          ← base class
+Matrix                                ← base class (Rule of 5, const-correct)
 │  stores: data[][], rows, cols
-│  can do:  add, subtract, multiply, determinant, display
-│  has:     constructors, copy constructor, destructor
+│  can do:  add, subtract, multiply, determinant, display (all const)
+│  can do:  transpose, inverse, cofactor, adjoint, minor (all const)
+│  checks:  isSquare, isSymmetric, isIdentity, isNull, isDiagonal (all const)
+│  checks:  isDiagonallyDominant, makeDiagonallyDominant
+│  move:    move constructor, move assignment (Rule of 5)
 │
-├── GaussianElimination         ← inherits everything from Matrix
-│      adds: solveWithPivoting(b, n)
-│            solveWithoutPivoting(b, n)
-│
-└── LUDecomposition             ← inherits everything from Matrix
-       abstract base class (pure virtual solve)
-       ├── Doolittle            ← inherits from LUDecomposition
-       ├── Crout                ← inherits from LUDecomposition
-       └── Cholesky             ← inherits from LUDecomposition
+└── SystemOfLinearEquationSolver       ← inherits from Matrix
+    │    abstract base: solve(b, n, maxIter, tol) → SolverResult
+    │
+    ├── GaussianElimination            ← direct solver
+    │      solve() → SolverResult (converged=true, iterations=0)
+    │      solveWithPivoting(b, n) → double*
+    │      solveWithoutPivoting(b, n) → double*
+    │
+    ├── LUDecomposition                ← abstract base for LU methods
+    │   ├── Doolittle → SolverResult (error = max|L*U-A|)
+    │   ├── Crout → SolverResult (error = max|L*U-A|)
+    │   └── Cholesky → SolverResult (error = max|L*L^T-A|)
+    │
+    ├── GaussJacobi                    ← iterative (two-array, old values only)
+    │      solve() → SolverResult {x, iterations, converged, error}
+    │
+    └── GaussSeidel                    ← iterative (in-place, newest values)
+           solve() → SolverResult {x, iterations, converged, error}
 ```
 
 **Why inheritance?** All these algorithms need a matrix to work on. Instead of copying the matrix storage code into every class, they all inherit from `Matrix`. This means `GaussianElimination` can use `data[i][j]`, `rows`, `cols`, `setData()`, etc. — all from the parent class.
@@ -418,9 +492,11 @@ The matrices use raw `double**` pointers (2D arrays on the heap):
 - **Constructor** allocates memory: `data = new double*[rows]`, then each `data[i] = new double[cols]`
 - **Destructor** frees it: loops through deleting each `data[i]`, then `delete[] data`
 - **Copy constructor** makes a deep copy (new memory, copies every element)
+- **Move constructor** steals the pointer (no copy, just takes ownership — Rule of 5)
+- **Move assignment** same as move constructor but for assignment
 - **copyFrom()** is like assignment — cleans up old data, then deep copies
 
-The Gaussian elimination functions also allocate working copies of A and b so the original matrix isn't destroyed.
+Solvers work on **copies** of the matrix data (original matrix is never modified). Caller must `delete[]` the solution vector from `SolverResult.x`.
 
 ---
 
@@ -430,16 +506,20 @@ The Gaussian elimination functions also allocate working copies of A and b so th
 |---------|--------|------|
 | Matrix storage & constructors | ✅ | `Matrix.cpp` |
 | Add / Subtract / Multiply | ✅ | `Matrix.cpp` |
-| Operator overloading (+, -, *) | ✅ | `Matrix.cpp` |
+| Operator overloading (+, -, *, ==, <<, >>) | ✅ | `Matrix.cpp` |
 | Determinant | ✅ | `Matrix.cpp` |
-| Display | ✅ | `Matrix.cpp` |
+| Transpose / Inverse / Cofactor / Adjoint | ✅ | `MatrixOperations.cpp` |
+| Property checks (square, symmetric, etc.) | ✅ | `MatrixOperations.cpp` |
+| Diagonal dominance check & fix | ✅ | `MatrixOperations.cpp` |
 | GE with pivoting | ✅ | `GaussianElimination.cpp` |
 | GE without pivoting | ✅ | `GaussianElimination.cpp` |
+| Doolittle LU | ✅ | `Doolittle.cpp` |
+| Crout LU | ✅ | `Crout.cpp` |
+| Cholesky LU | ✅ | `Cholesky.cpp` |
+| Gauss-Jacobi (iterative) | ✅ | `GaussJacobi.cpp` |
+| Gauss-Seidel (iterative, with diag. dominance fix) | ✅ | `GaussSeidel.cpp` |
+| GPU kernels (Jacobi, Seidel, operations) | ✅ | `gpu_kernels.cu` |
 | Console input | ✅ | `Input.cpp` |
-| File input (matrix + RHS) | ✅ | `Input.cpp` |
-| Augmented file input | ✅ | `Input.cpp` |
+| File input (matrix + RHS + augmented) | ✅ | `Input.cpp` |
 | Solution display & file save | ✅ | `Display.cpp` |
 | Error handling | ✅ | `MatrixException.hpp` |
-| Doolittle LU | 🚧 skeleton | `Doolittle.cpp` |
-| Crout LU | 🚧 skeleton | `Crout.cpp` |
-| Cholesky | 🚧 skeleton | `Cholesky.cpp` |

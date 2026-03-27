@@ -19,6 +19,7 @@ This document explains every algorithm used in the Matrix Operations Library, st
 11. [LU Decomposition — Crout Method](#11-lu-decomposition--crout-method)
 12. [LU Decomposition — Cholesky Method](#12-lu-decomposition--cholesky-method)
 13. [Gauss-Jacobi Iterative Method](#13-gauss-jacobi-iterative-method)
+14. [Gauss-Seidel Iterative Method](#14-gauss-seidel-iterative-method)
 
 ---
 
@@ -516,7 +517,59 @@ x_new[1] = (11 - 1*1.333) / 3 = 3.222
 
 **When does it work?** Gauss-Jacobi is **guaranteed to converge** when the matrix is **diagonally dominant** — meaning each diagonal entry is bigger than the sum of the other entries in that row.
 
-**When does it fail?** If the matrix is not diagonally dominant, the iteration might diverge (get worse instead of better). The code warns you if it doesn't converge after 10,000 iterations.
+**Automatic diagonal dominance fix:** Before solving, the implementation checks if the matrix is diagonally dominant. If not, it tries to rearrange rows to achieve dominance. It also works on a **copy** of the matrix, so the original is never modified.
+
+**SolverResult:** The method returns a `SolverResult` struct containing the solution vector, iteration count, convergence status, and maximum error. The solver itself produces no console output — status messages are printed by the UI layer.
+
+**When does it fail?** If the matrix is not diagonally dominant and can't be made so by row swaps, the iteration might diverge (get worse instead of better).
+
+---
+
+## 14. Gauss-Seidel Iterative Method
+
+**Idea:** Like Gauss-Jacobi, but **smarter** — instead of waiting for the entire iteration to finish before using updated values, it uses the **newest values immediately** as they become available.
+
+**Formula:** For each iteration:
+```
+x[i] = (b[i] - sum(A[i][j] * x[j] for j < i)    ← uses NEW x values!
+              - sum(A[i][j] * x[j] for j > i)    ← uses old x values
+       ) / A[i][i]
+```
+
+**Key difference from Jacobi:** In Jacobi, you compute all new x values using the OLD values, then swap. In Gauss-Seidel, you update x[i] **in place** and immediately use it for x[i+1], x[i+2], etc.
+
+**Diagonal Dominance Auto-Fix:** Before solving, the implementation:
+1. Checks if the matrix is diagonally dominant
+2. If not, tries to rearrange rows (both A and b) to achieve diagonal dominance
+3. If row swapping can't fix it, proceeds anyway with a warning
+
+**Example: Solve the same system**
+```
+4x + y  = 9       A = | 4  1 |   b = | 9 |
+x + 3y  = 11          | 1  3 |       |11 |
+```
+
+**Initial guess:** x = [0, 0]
+
+**Iteration 1:**
+```
+x[0] = (9 - 1*0) / 4 = 2.25          ← same as Jacobi
+x[1] = (11 - 1*2.25) / 3 = 2.917     ← uses NEW x[0]=2.25, not old x[0]=0!
+```
+
+**Iteration 2:**
+```
+x[0] = (9 - 1*2.917) / 4 = 1.521     ← uses NEW x[1]=2.917
+x[1] = (11 - 1*1.521) / 3 = 3.160    ← uses NEW x[0]=1.521
+```
+
+Compare with Jacobi iteration 2: x = [1.333, 2.917]. Gauss-Seidel is already closer to the true answer after just 2 iterations!
+
+**When does it converge faster?** Generally, Gauss-Seidel converges about **twice as fast** as Gauss-Jacobi for the same system. This is because it uses the most up-to-date information at every step.
+
+**GPU implementation note:** Unlike Jacobi (which is naturally parallel — all rows can update simultaneously), Gauss-Seidel is inherently sequential (row i needs updated rows 0..i-1). The GPU kernel parallelizes the dot-product computation within each row instead.
+
+**SolverResult:** Like Jacobi, Gauss-Seidel returns a `SolverResult` struct with `{x, iterations, converged, error}`. Both solvers accept configurable `maxIter` and `tol` parameters (defaults: 10000, 1e-10). Both work on copies of the original matrix.
 
 ---
 
@@ -530,3 +583,4 @@ x_new[1] = (11 - 1*1.333) / 3 = 3.222
 | Crout LU | Direct | General systems | A=LU, U has 1s on diagonal |
 | Cholesky LU | Direct | Symmetric positive definite | Only works on SPD matrices |
 | Gauss-Jacobi | Iterative | Large sparse systems | Needs diagonal dominance |
+| Gauss-Seidel | Iterative | Large sparse, faster than Jacobi | Needs diagonal dominance, sequential |

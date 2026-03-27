@@ -1,15 +1,14 @@
-#include "../include/GaussJacobi.hpp"
+#include "../include/GaussSeidel.hpp"
 #include <cmath>
 using namespace std;
 
-GaussJacobi::GaussJacobi() : SystemOfLinearEquationSolver() {}
-GaussJacobi::GaussJacobi(int r, int c) : SystemOfLinearEquationSolver(r, c) {}
+GaussSeidel::GaussSeidel() : SystemOfLinearEquationSolver() {}
+GaussSeidel::GaussSeidel(int r, int c) : SystemOfLinearEquationSolver(r, c) {}
 
 // helper: make A diagonally dominant, rearranging rows of both A and b together
 // for each column i, find a row r where |a[r][i]| >= sum of |a[r][j]| for j!=i
 static bool makeDiagDominant(double **A, double *b, int n) {
   for (int i = 0; i < n; i++) {
-    // check if current row i is already dominant at position i
     double diag = fabs(A[i][i]);
     double sum = 0.0;
     for (int j = 0; j < n; j++) {
@@ -17,9 +16,8 @@ static bool makeDiagDominant(double **A, double *b, int n) {
         sum += fabs(A[i][j]);
     }
     if (diag >= sum)
-      continue; // already dominant, move on
+      continue;
 
-    // find a row r (from i+1 onward) that would be dominant at position i
     bool found = false;
     for (int r = i + 1; r < n; r++) {
       double d = fabs(A[r][i]);
@@ -30,12 +28,10 @@ static bool makeDiagDominant(double **A, double *b, int n) {
       }
 
       if (d >= s) {
-        // swap rows r and i in A
         double *tempRow = A[i];
         A[i] = A[r];
         A[r] = tempRow;
 
-        // swap b entries
         double tempB = b[i];
         b[i] = b[r];
         b[r] = tempB;
@@ -46,21 +42,21 @@ static bool makeDiagDominant(double **A, double *b, int n) {
     }
 
     if (!found)
-      return false; // can't make position i dominant
+      return false;
   }
   return true;
 }
 
-// Jacobi iterative method
-// splits A into D (diagonal) and R (rest)
-// x_new[i] = (b[i] - sum(A[i][j]*x_old[j] for j!=i)) / A[i][i]
-// uses ONLY old values — stores results in a new array, does NOT overwrite
+// Gauss-Seidel iterative method
+// like Jacobi, but uses updated x values as soon as they're computed
+// x[i] = (b[i] - sum(A[i][j]*x[j] for j<i, using NEW x)
+//                - sum(A[i][j]*x[j] for j>i, using OLD x)) / A[i][i]
 //
 // NO cout here — solver is pure logic. UI layer handles printing.
 // Does NOT modify this->data — works on copies.
-SolverResult GaussJacobi::solve(double *b, int n, int maxIter, double tol) {
+SolverResult GaussSeidel::solve(double *b, int n, int maxIter, double tol) {
   if (rows != cols || rows != n)
-    throw MatrixException("matrix dimensions are sus for Gauss-Jacobi");
+    throw MatrixException("matrix dimensions are sus for Gauss-Seidel");
 
   SolverResult result;
   result.n = n;
@@ -87,67 +83,60 @@ SolverResult GaussJacobi::solve(double *b, int n, int maxIter, double tol) {
   // check for zero diagonals
   for (int i = 0; i < n; i++) {
     if (fabs(A[i][i]) < 1e-12) {
-      // cleanup and throw
       for (int k = 0; k < n; k++) delete[] A[k];
       delete[] A;
       delete[] rhs;
       throw MatrixException(
-          "zero on diagonal... Jacobi can't work with this");
+          "zero on diagonal... Gauss-Seidel can't work with this");
     }
   }
 
   // initial guess x = 0
-  double *x_old = new double[n];
-  double *x_new = new double[n];
-  for (int i = 0; i < n; i++) {
-    x_old[i] = 0.0;
-    x_new[i] = 0.0;
-  }
+  double *x = new double[n];
+  for (int i = 0; i < n; i++)
+    x[i] = 0.0;
 
   // iterate
   int iter;
   for (iter = 0; iter < maxIter; iter++) {
+    double maxDiff = 0.0;
     bool diverged = false;
 
-    // compute ALL x_new from x_old (use only old values!)
     for (int i = 0; i < n; i++) {
       double sum = 0.0;
-      for (int j = 0; j < n; j++) {
-        if (j != i)
-          sum += A[i][j] * x_old[j];
-      }
-      x_new[i] = (rhs[i] - sum) / A[i][i];
+
+      // use already-updated x[j] for j < i (this is the Seidel difference!)
+      for (int j = 0; j < i; j++)
+        sum += A[i][j] * x[j];
+
+      // use old x[j] for j > i
+      for (int j = i + 1; j < n; j++)
+        sum += A[i][j] * x[j];
+
+      double newVal = (rhs[i] - sum) / A[i][i];
 
       // check for NaN/Inf divergence
-      if (isnan(x_new[i]) || isinf(x_new[i])) {
+      if (isnan(newVal) || isinf(newVal)) {
         diverged = true;
         break;
       }
+
+      double diff = fabs(newVal - x[i]);
+      if (diff > maxDiff)
+        maxDiff = diff;
+
+      x[i] = newVal; // update immediately (Seidel style)
     }
 
     if (diverged) {
-      result.x = x_new;
+      result.x = x;
       result.iterations = iter + 1;
       result.converged = false;
-      // cleanup
-      delete[] x_old;
       for (int i = 0; i < n; i++) delete[] A[i];
       delete[] A;
       delete[] rhs;
       return result;
     }
-
-    // check convergence
-    double maxDiff = 0.0;
-    for (int i = 0; i < n; i++) {
-      double diff = fabs(x_new[i] - x_old[i]);
-      if (diff > maxDiff)
-        maxDiff = diff;
-    }
-
-    // copy new to old (replace old vector)
-    for (int i = 0; i < n; i++)
-      x_old[i] = x_new[i];
 
     if (maxDiff < tol) {
       result.iterations = iter + 1;
@@ -157,14 +146,13 @@ SolverResult GaussJacobi::solve(double *b, int n, int maxIter, double tol) {
     }
   }
 
-  if (!result.converged) {
+  if (!result.converged && iter == maxIter) {
     result.iterations = maxIter;
   }
 
-  result.x = x_new;
+  result.x = x;
 
   // cleanup
-  delete[] x_old;
   for (int i = 0; i < n; i++) delete[] A[i];
   delete[] A;
   delete[] rhs;

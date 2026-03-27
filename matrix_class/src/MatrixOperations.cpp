@@ -11,7 +11,7 @@
 using namespace std;
 
 // scalar multiplication: every element * scalar
-Matrix Matrix::operator*(double scalar) {
+Matrix Matrix::operator*(double scalar) const {
   Matrix result(rows, cols);
 
 #ifdef USE_CUDA
@@ -39,7 +39,7 @@ Matrix Matrix::operator*(double scalar) {
 }
 
 // transpose: swap rows and cols
-Matrix Matrix::transpose() {
+Matrix Matrix::transpose() const {
   Matrix result(cols, rows);
 
 #ifdef USE_CUDA
@@ -67,7 +67,7 @@ Matrix Matrix::transpose() {
 }
 
 // minor matrix: remove row r and col c, return (n-1)x(n-1)
-Matrix Matrix::minorMatrix(int r, int c) {
+Matrix Matrix::minorMatrix(int r, int c) const {
   if (rows != cols)
     throw MatrixException(
         "minor matrix only works on square matrices... come on");
@@ -94,7 +94,7 @@ Matrix Matrix::minorMatrix(int r, int c) {
 }
 
 // cofactor: (-1)^(r+c) * det(minor(r,c))
-double Matrix::cofactor(int r, int c) {
+double Matrix::cofactor(int r, int c) const {
   Matrix minor = minorMatrix(r, c);
   double det = minor.determinant();
   double sign = ((r + c) % 2 == 0) ? 1.0 : -1.0;
@@ -102,7 +102,7 @@ double Matrix::cofactor(int r, int c) {
 }
 
 // adjoint: transpose of the cofactor matrix
-Matrix Matrix::adjoint() {
+Matrix Matrix::adjoint() const {
   if (rows != cols)
     throw MatrixException(
         "adjoint only works on square matrices... nice try though");
@@ -118,7 +118,7 @@ Matrix Matrix::adjoint() {
 }
 
 // inverse: adj(A) / det(A)
-Matrix Matrix::inverse() {
+Matrix Matrix::inverse() const {
   if (rows != cols)
     throw MatrixException(
         "inverse only works on square matrices... everybody knows that");
@@ -187,10 +187,18 @@ double &Matrix::operator()(int i, int j) {
   return data[i][j];
 }
 
+// const overload for read-only access
+double Matrix::operator()(int i, int j) const {
+  if (i < 0 || i >= rows || j < 0 || j >= cols)
+    throw MatrixException(
+        "bruh you went out of bounds with ()... matrix ain't that big");
+  return data[i][j];
+}
+
 // ===== EQUALITY OPERATOR =====
 
 // check if two matrices are equal (with floating point tolerance)
-bool Matrix::operator==(const Matrix &other) {
+bool Matrix::operator==(const Matrix &other) const {
   if (rows != other.rows || cols != other.cols)
     return false;
   for (int i = 0; i < rows; i++) {
@@ -205,10 +213,10 @@ bool Matrix::operator==(const Matrix &other) {
 // ===== MATRIX CHECK FUNCTIONS =====
 
 // check if matrix is square (rows == cols)
-bool Matrix::isSquare() { return rows == cols; }
+bool Matrix::isSquare() const { return rows == cols; }
 
 // check if matrix is symmetric (A[i][j] == A[j][i] for all i,j)
-bool Matrix::isSymmetric() {
+bool Matrix::isSymmetric() const {
   if (rows != cols)
     return false;
   for (int i = 0; i < rows; i++) {
@@ -221,7 +229,7 @@ bool Matrix::isSymmetric() {
 }
 
 // check if matrix is identity (diagonal = 1, rest = 0)
-bool Matrix::isIdentity() {
+bool Matrix::isIdentity() const {
   if (rows != cols)
     return false;
 
@@ -253,7 +261,7 @@ bool Matrix::isIdentity() {
 }
 
 // check if matrix is null (all elements are zero)
-bool Matrix::isNull() {
+bool Matrix::isNull() const {
 #ifdef USE_CUDA
   if (BackendDispatcher::shouldUseGPU(rows, "matadd")) {
     int total = rows * cols;
@@ -277,7 +285,7 @@ bool Matrix::isNull() {
 }
 
 // check if matrix is diagonal (only diagonal has non-zero values)
-bool Matrix::isDiagonal() {
+bool Matrix::isDiagonal() const {
   if (rows != cols)
     return false;
 
@@ -305,7 +313,7 @@ bool Matrix::isDiagonal() {
 
 // check if matrix is diagonally dominant
 // |a[i][i]| >= sum(|a[i][j]|) for j != i, for every row i
-bool Matrix::isDiagonallyDominant() {
+bool Matrix::isDiagonallyDominant() const {
   if (rows != cols)
     return false;
 
@@ -345,25 +353,36 @@ Matrix Matrix::makeDiagonallyDominant() {
   int n = rows;
   Matrix result(*this); // copy the matrix
 
-  // for each column, find which row has the largest value in that column
-  // and swap it to the diagonal position
-  for (int col = 0; col < n; col++) {
-    // find the row with the max absolute value in this column
-    int bestRow = col;
-    double bestVal = fabs(result.data[col][col]);
+  // for each column i, find a row r (from i onward) where
+  // |a[r][i]| >= sum of |a[r][j]| for j != i
+  // (i.e. that row would be diagonally dominant if placed at position i)
+  for (int i = 0; i < n; i++) {
+    bool found = false;
 
-    for (int row = col; row < n; row++) {
-      if (fabs(result.data[row][col]) > bestVal) {
-        bestVal = fabs(result.data[row][col]);
-        bestRow = row;
+    for (int r = i; r < n; r++) {
+      double diag = fabs(result.data[r][i]);
+      double sum = 0.0;
+
+      for (int j = 0; j < n; j++) {
+        if (j != i)
+          sum += fabs(result.data[r][j]);
+      }
+
+      if (diag >= sum) {
+        // swap row r with row i
+        if (r != i) {
+          double *temp = result.data[i];
+          result.data[i] = result.data[r];
+          result.data[r] = temp;
+        }
+        found = true;
+        break;
       }
     }
 
-    // swap rows if needed
-    if (bestRow != col) {
-      double *temp = result.data[col];
-      result.data[col] = result.data[bestRow];
-      result.data[bestRow] = temp;
+    if (!found) {
+      // no row can make position i dominant — can't fix it
+      break;
     }
   }
 

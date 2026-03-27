@@ -55,6 +55,17 @@ Matrix::Matrix(const Matrix &other) {
   }
 }
 
+// move constructor (Rule of 5) — steal the guts, leave other empty
+Matrix::Matrix(Matrix &&other) noexcept {
+  rows = other.rows;
+  cols = other.cols;
+  data = other.data;
+
+  other.data = nullptr;
+  other.rows = 0;
+  other.cols = 0;
+}
+
 // destructor
 Matrix::~Matrix() {
   if (data != nullptr) {
@@ -66,10 +77,10 @@ Matrix::~Matrix() {
 }
 
 // getters
-int Matrix::getRows() { return rows; }
-int Matrix::getCols() { return cols; }
+int Matrix::getRows() const { return rows; }
+int Matrix::getCols() const { return cols; }
 
-double Matrix::getData(int i, int j) {
+double Matrix::getData(int i, int j) const {
   if (i < 0 || i >= rows || j < 0 || j >= cols)
     throw MatrixException(
         "bruh you went out of bounds... matrix ain't that big");
@@ -228,7 +239,7 @@ Matrix Matrix::inputMatrix(string label) {
 // ===== OPERATIONS =====
 
 // copy from another matrix
-void Matrix::copyFrom(Matrix &other) {
+void Matrix::copyFrom(const Matrix &other) {
   if (data != nullptr) {
     for (int i = 0; i < rows; i++)
       delete[] data[i];
@@ -264,8 +275,29 @@ Matrix &Matrix::operator=(const Matrix &other) {
   return *this;
 }
 
+// move assignment operator (Rule of 5) — steal the guts
+Matrix &Matrix::operator=(Matrix &&other) noexcept {
+  if (this == &other)
+    return *this;
+  // free our old data
+  if (data != nullptr) {
+    for (int i = 0; i < rows; i++)
+      delete[] data[i];
+    delete[] data;
+  }
+  // steal from other
+  rows = other.rows;
+  cols = other.cols;
+  data = other.data;
+  // leave other empty
+  other.data = nullptr;
+  other.rows = 0;
+  other.cols = 0;
+  return *this;
+}
+
 // addition
-Matrix Matrix::add(Matrix other) {
+Matrix Matrix::add(const Matrix &other) const {
   if (rows != other.rows || cols != other.cols)
     throw MatrixException(
         "can't add these matrices... they don't even match bro");
@@ -299,13 +331,12 @@ Matrix Matrix::add(Matrix other) {
   return result;
 }
 
-Matrix Matrix::operator+(const Matrix &other) {
-  Matrix temp(other);
-  return add(temp);
+Matrix Matrix::operator+(const Matrix &other) const {
+  return add(other);
 }
 
 // subtraction
-Matrix Matrix::subtract(Matrix other) {
+Matrix Matrix::subtract(const Matrix &other) const {
   if (rows != other.rows || cols != other.cols)
     throw MatrixException(
         "subtraction needs same size matrices... this ain't it chief");
@@ -339,13 +370,12 @@ Matrix Matrix::subtract(Matrix other) {
   return result;
 }
 
-Matrix Matrix::operator-(const Matrix &other) {
-  Matrix temp(other);
-  return subtract(temp);
+Matrix Matrix::operator-(const Matrix &other) const {
+  return subtract(other);
 }
 
 // multiplication
-Matrix Matrix::multiply(Matrix other) {
+Matrix Matrix::multiply(const Matrix &other) const {
   if (cols != other.rows)
     throw MatrixException("matrix multiplication dimensions don't work... go "
                           "back to math class");
@@ -383,13 +413,12 @@ Matrix Matrix::multiply(Matrix other) {
   return result;
 }
 
-Matrix Matrix::operator*(const Matrix &other) {
-  Matrix temp(other);
-  return multiply(temp);
+Matrix Matrix::operator*(const Matrix &other) const {
+  return multiply(other);
 }
 
 // determinant using gaussian elimination style
-double Matrix::determinant() {
+double Matrix::determinant() const {
   if (rows != cols)
     throw MatrixException(
         "determinant only works on square matrices... you knew that right?");
@@ -457,7 +486,7 @@ double *Matrix::getRowPointer(int i) {
 }
 
 // display matrix
-void Matrix::display() {
+void Matrix::display() const {
   cout << fixed << setprecision(6);
   for (int i = 0; i < rows; i++) {
     for (int j = 0; j < cols; j++)

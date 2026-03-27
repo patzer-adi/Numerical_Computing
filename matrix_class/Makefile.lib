@@ -46,6 +46,7 @@ CPU_SRCS = src/Matrix.cpp \
            src/Crout.cpp \
            src/Cholesky.cpp \
            src/GaussJacobi.cpp \
+           src/GaussSeidel.cpp \
            src/MatrixOperations.cpp
 
 CUDA_SRCS = cuda/src/gpu_kernels.cu \
