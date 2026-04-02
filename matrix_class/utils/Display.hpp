@@ -18,8 +18,14 @@ void displaySolution(double *x, int n);
 // write solution to a file
 void writeSolutionToFile(double *x, int n, string filename);
 
+// write a matrix to a file
+void writeMatrixToFile(double **data, int n, string filename);
+
 // ask user if they want to save, and save if yes
 void askToSaveSolution(double *x, int n);
+
+// ask user if they want to save L and U matrices to files
+void askToSaveLU(SolverResult &res);
 
 // === Complete solve workflows (handles everything internally) ===
 

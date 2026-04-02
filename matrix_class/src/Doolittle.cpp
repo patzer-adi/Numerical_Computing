@@ -104,12 +104,6 @@ SolverResult Doolittle::solve(double *b, int n, int maxIter, double tol) {
     x[i] = (y[i] - sum) / U[i][i];
   }
 
-  for (int i = 0; i < n; i++) {
-    delete[] L[i];
-    delete[] U[i];
-  }
-  delete[] L;
-  delete[] U;
   delete[] y;
 
   SolverResult result;
@@ -119,5 +113,8 @@ SolverResult Doolittle::solve(double *b, int n, int maxIter, double tol) {
   result.converged = true;
   result.dominanceAchieved = true;
   result.error = maxError;
+  result.L = L;
+  result.U = U;
+  result.luSize = n;
   return result;
 }

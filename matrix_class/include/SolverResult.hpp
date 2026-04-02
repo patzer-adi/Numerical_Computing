@@ -17,6 +17,31 @@ struct SolverResult {
   bool converged;         // did it converge? (always true for direct methods)
   double error;           // max residual or max diff (0.0 if not computed)
   bool dominanceAchieved; // was diagonal dominance achieved? (true for direct methods)
+
+  // LU decomposition matrices (only set by LU solvers, nullptr otherwise)
+  double **L;             // lower triangular (caller must freeLU())
+  double **U;             // upper triangular (caller must freeLU())
+  int luSize;             // size of L and U (0 if not set)
+
+  // initialize LU fields to safe defaults
+  SolverResult() : x(nullptr), n(0), iterations(0), converged(false),
+                   error(0.0), dominanceAchieved(false),
+                   L(nullptr), U(nullptr), luSize(0) {}
+
+  // free L and U memory
+  void freeLU() {
+    if (L) {
+      for (int i = 0; i < luSize; i++) delete[] L[i];
+      delete[] L;
+      L = nullptr;
+    }
+    if (U) {
+      for (int i = 0; i < luSize; i++) delete[] U[i];
+      delete[] U;
+      U = nullptr;
+    }
+    luSize = 0;
+  }
 };
 
 #endif

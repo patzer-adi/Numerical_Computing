@@ -79,9 +79,14 @@ SolverResult Cholesky::solve(double *b, int n, int maxIter, double tol) {
     x[i] = (y[i] - sum) / L[i][i];
   }
 
-  for (int i = 0; i < n; i++)
-    delete[] L[i];
-  delete[] L;
+  // build U = L^T for storage
+  double **U = new double *[n];
+  for (int i = 0; i < n; i++) {
+    U[i] = new double[n];
+    for (int j = 0; j < n; j++)
+      U[i][j] = L[j][i]; // transpose
+  }
+
   delete[] y;
 
   SolverResult result;
@@ -91,5 +96,8 @@ SolverResult Cholesky::solve(double *b, int n, int maxIter, double tol) {
   result.converged = true;
   result.dominanceAchieved = true;
   result.error = maxError;
+  result.L = L;
+  result.U = U;
+  result.luSize = n;
   return result;
 }

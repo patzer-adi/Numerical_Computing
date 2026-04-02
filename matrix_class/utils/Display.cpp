@@ -37,6 +37,24 @@ void writeSolutionToFile(double *x, int n, string filename) {
   cout << "Solution written to " << filename << endl;
 }
 
+void writeMatrixToFile(double **data, int n, string filename) {
+  ofstream fout(filename);
+  if (!fout) {
+    cout << "could not open file for writing... oh well" << endl;
+    return;
+  }
+  fout << fixed << setprecision(6);
+  for (int i = 0; i < n; i++) {
+    for (int j = 0; j < n; j++) {
+      if (j > 0) fout << " ";
+      fout << setw(14) << data[i][j];
+    }
+    fout << endl;
+  }
+  fout.close();
+  cout << "Matrix written to " << filename << endl;
+}
+
 void askToSaveSolution(double *x, int n) {
   cout << "Save solution to file? (1=yes, 0=no): ";
   int save;
@@ -46,6 +64,29 @@ void askToSaveSolution(double *x, int n) {
     cout << "Enter output filename: ";
     cin >> outFile;
     writeSolutionToFile(x, n, outFile);
+  }
+}
+
+void askToSaveLU(SolverResult &res) {
+  if (!res.L || !res.U || res.luSize == 0) return;
+
+  cout << "\n--- L and U matrices are available! ---" << endl;
+  cout << "\nL (Lower triangular):" << endl;
+  displayMatrix(res.L, res.luSize, res.luSize);
+  cout << "U (Upper triangular):" << endl;
+  displayMatrix(res.U, res.luSize, res.luSize);
+
+  cout << "Save L and U matrices to files? (1=yes, 0=no): ";
+  int save;
+  cin >> save;
+  if (save == 1) {
+    string lFile, uFile;
+    cout << "Enter filename for L matrix: ";
+    cin >> lFile;
+    writeMatrixToFile(res.L, res.luSize, lFile);
+    cout << "Enter filename for U matrix: ";
+    cin >> uFile;
+    writeMatrixToFile(res.U, res.luSize, uFile);
   }
 }
 
@@ -70,7 +111,7 @@ void solveGaussian(GaussianElimination &ge, bool withPivoting) {
   delete[] b;
 }
 
-// handles: input -> solve -> display -> save -> cleanup
+// handles: input -> solve -> display -> save L/U -> save solution -> cleanup
 void solveLU(LUDecomposition &solver) {
   double *b = nullptr;
   int n;
@@ -84,9 +125,13 @@ void solveLU(LUDecomposition &solver) {
   else
     cout << "LU verification FAILED (max error: " << res.error << ")" << endl;
 
+  // show L and U and offer to save them
+  askToSaveLU(res);
+
   displaySolution(res.x, res.n);
   askToSaveSolution(res.x, res.n);
 
+  res.freeLU();
   delete[] res.x;
   delete[] b;
 }

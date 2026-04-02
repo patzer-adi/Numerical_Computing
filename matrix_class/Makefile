@@ -24,6 +24,7 @@ SRCS = main.cpp \
        src/GaussJacobi.cpp \
        src/GaussSeidel.cpp \
        src/MatrixOperations.cpp \
+       src/EigenSolver.cpp \
        utils/Input.cpp \
        utils/Display.cpp \
        app/Menu.cpp

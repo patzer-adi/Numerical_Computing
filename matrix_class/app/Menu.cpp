@@ -1,4 +1,5 @@
 #include "Menu.hpp"
+#include "../include/EigenSolver.hpp"
 #include "../include/GaussJacobi.hpp"
 #include "../include/GaussSeidel.hpp"
 #include "../include/GaussianElimination.hpp"
@@ -256,6 +257,14 @@ static void handleEquality() {
     cout << "\nnope, the matrices are not equal" << endl;
 }
 
+static void handleGershgorin() {
+  cout << "\n--- Enter square matrix for eigenvalue analysis ---" << endl;
+  Matrix A;
+  getMatrixInput(A);
+  EigenSolver eigen(A);
+  eigen.printGershgorinAnalysis();
+}
+
 // === Main menu loop ===
 
 void runMenu() {
@@ -299,7 +308,8 @@ void runMenu() {
     cout << "23. Check if Diagonally Dominant" << endl;
     cout << "24. Make Diagonally Dominant" << endl;
     cout << "25. Check Equality (A == B)" << endl;
-    cout << "26. Exit" << endl;
+    cout << "26. Gershgorin Eigenvalue Analysis" << endl;
+    cout << "27. Exit" << endl;
     cout << "Enter choice: ";
     cin >> choice;
 
@@ -330,7 +340,8 @@ void runMenu() {
       case 23: handleCheckDiagDominant(); break;
       case 24: handleMakeDiagDominant(); break;
       case 25: handleEquality(); break;
-      case 26:
+      case 26: handleGershgorin(); break;
+      case 27:
         cout << "\nbye bye!" << endl;
         running = false;
         break;
