@@ -1,0 +1,113 @@
+GNU Octave (x86_64-pc-linux-gnu) version 11.1.0
+Copyright (C) 1993-2026 The Octave Project Developers.
+License GPLv3+: GNU GPL version 3 or later <https://gnu.org/licenses/gpl.html>
+
+This is free software; see the source code for copying conditions.
+There is NO WARRANTY, to the extent permitted by law.  For details, type 'warranty'.
+
+Home page:            <https://octave.org>
+Support resources:    <https://octave.org/support>
+Improve Octave:       <https://octave.org/get-involved>
+
+For changes from previous versions, type 'news'.
+
+octave:1> A = [10 7 8 7; 7 5 6 5; 8 6 10 9; 7 5 9 10]
+A =
+
+   10    7    8    7
+    7    5    6    5
+    8    6   10    9
+    7    5    9   10
+
+octave:2> eig(A)
+ans =
+
+   1.0150e-02
+   8.4311e-01
+   3.8581e+00
+   3.0289e+01
+
+octave:3> [V, D] = eig(A)
+V =
+
+   0.501565  -0.301652   0.614861   0.528568
+  -0.830444   0.093305   0.396306   0.380262
+   0.208554   0.760318  -0.271601   0.551955
+  -0.123697  -0.567641  -0.625396   0.520925
+
+D =
+
+Diagonal Matrix
+
+   1.0150e-02            0            0            0
+            0   8.4311e-01            0            0
+            0            0   3.8581e+00            0
+            0            0            0   3.0289e+01
+
+octave:4> eigenvalues = eig(A)
+eigenvalues =
+
+   1.0150e-02
+   8.4311e-01
+   3.8581e+00
+   3.0289e+01
+
+octave:5> [L, U, P] = lu(A)
+L =
+
+   1.0000        0        0        0
+   0.8000   1.0000        0        0
+   0.7000   0.2500   1.0000        0
+   0.7000   0.2500  -0.2000   1.0000
+
+U =
+
+   10.0000    7.0000    8.0000    7.0000
+         0    0.4000    3.6000    3.4000
+         0         0    2.5000    4.2500
+         0         0         0    0.1000
+
+P =
+
+Permutation Matrix
+
+   1   0   0   0
+   0   0   1   0
+   0   0   0   1
+   0   1   0   0
+
+octave:6> format short
+eig(A)
+ans =
+
+   1.0150e-02
+   8.4311e-01
+   3.8581e+00
+   3.0289e+01
+
+octave:8> format long
+eig(A)
+ans =
+
+   1.015004839789237e-02
+   8.431071498550322e-01
+   3.858057455944951e+00
+   3.028868534580212e+01
+
+octave:10> format bank
+eig(A)
+ans =
+
+    0.01
+    0.84
+    3.86
+   30.29
+
+octave:12> e = eig(A);
+
+fprintf('%f\n', e)
+0.010150
+0.843107
+3.858057
+30.288685
+octave:14>
