@@ -174,3 +174,109 @@ void solveIterative(SystemOfLinearEquationSolver &solver, const string &methodNa
   delete[] res.x;
   delete[] b;
 }
+
+// === Interpolation workflow ===
+// handles: data input -> mode selection -> evaluate -> display/save
+
+void solveInterpolation(Interpolation &interp, const string &methodName) {
+  // step 1: get X data points using Matrix
+  cout << "\n--- Enter X data points (as a single-row matrix) ---" << endl;
+  Matrix xMat;
+  getMatrixInput(xMat);
+
+  // step 2: get Y data points using Matrix
+  cout << "\n--- Enter Y data points (as a single-row matrix) ---" << endl;
+  Matrix yMat;
+  getMatrixInput(yMat);
+
+  // validate: both must be single-row and same number of columns
+  int xSize = xMat.getRows() * xMat.getCols();
+  int ySize = yMat.getRows() * yMat.getCols();
+
+  if (xSize != ySize)
+    throw MatrixException("X and Y must have the same number of data points");
+  if (xSize < 2)
+    throw MatrixException("need at least 2 data points for interpolation");
+
+  int n = xSize;
+
+  // extract data into double* arrays (flatten row-major)
+  double *xArr = new double[n];
+  double *yArr = new double[n];
+
+  int idx = 0;
+  for (int i = 0; i < xMat.getRows(); i++)
+    for (int j = 0; j < xMat.getCols(); j++)
+      xArr[idx++] = xMat.getData(i, j);
+
+  idx = 0;
+  for (int i = 0; i < yMat.getRows(); i++)
+    for (int j = 0; j < yMat.getCols(); j++)
+      yArr[idx++] = yMat.getData(i, j);
+
+  // load data into the interpolation object
+  interp.loadData(xArr, yArr, n);
+
+  // print loaded data
+  cout << "\nLoaded " << n << " data points:" << endl;
+  cout << fixed << setprecision(6);
+  for (int i = 0; i < n; i++)
+    cout << "  (" << xArr[i] << ", " << yArr[i] << ")" << endl;
+
+  // step 3: choose mode
+  int mode;
+  cout << "\n--- " << methodName << " ---" << endl;
+  cout << "1. Full interpolation (evaluate over entire range)" << endl;
+  cout << "2. Query a specific point" << endl;
+  cout << "Enter choice: ";
+  cin >> mode;
+
+  if (mode == 1) {
+    // full interpolation
+    int samples;
+    cout << "Enter number of sample points (e.g. 100): ";
+    cin >> samples;
+
+    // ask save or print
+    int saveChoice;
+    cout << "Output option:\n1. Print to console\n2. Save to file\nEnter choice: ";
+    cin >> saveChoice;
+
+    if (saveChoice == 2) {
+      string filename;
+      cout << "Enter output filename: ";
+      cin >> filename;
+      interp.interpolate(samples, true, filename);
+    } else {
+      interp.interpolate(samples, false, "");
+    }
+
+  } else if (mode == 2) {
+    // query specific point
+    double queryX;
+    cout << "Enter query x value: ";
+    cin >> queryX;
+
+    // ask save or print
+    int saveChoice;
+    cout << "Output option:\n1. Print to console\n2. Save to file\nEnter choice: ";
+    cin >> saveChoice;
+
+    if (saveChoice == 2) {
+      string filename;
+      cout << "Enter output filename: ";
+      cin >> filename;
+      interp.interpolate(queryX, true, filename);
+    } else {
+      interp.interpolate(queryX, false, "");
+    }
+
+  } else {
+    delete[] xArr;
+    delete[] yArr;
+    throw MatrixException("invalid choice... it was 1 or 2 bro");
+  }
+
+  delete[] xArr;
+  delete[] yArr;
+}

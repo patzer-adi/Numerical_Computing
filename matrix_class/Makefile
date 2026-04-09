@@ -25,6 +25,9 @@ SRCS = main.cpp \
        src/GaussSeidel.cpp \
        src/MatrixOperations.cpp \
        src/EigenSolver.cpp \
+       src/GershgorinAnalyzer.cpp \
+       src/Interpolation.cpp \
+       src/Lagrange.cpp \
        utils/Input.cpp \
        utils/Display.cpp \
        app/Menu.cpp

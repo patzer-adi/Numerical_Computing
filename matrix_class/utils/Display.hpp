@@ -2,6 +2,7 @@
 #define DISPLAY_HPP
 
 #include "../include/GaussianElimination.hpp"
+#include "../include/Interpolation.hpp"
 #include "../include/LUDecomposition.hpp"
 #include "../include/SolverResult.hpp"
 #include "../include/SystemOfLinearEquationSolver.hpp"
@@ -38,5 +39,8 @@ void solveLU(LUDecomposition &solver);
 // solve using any iterative method (polymorphic) — handles input, solve, display, save
 // also prints solver status (converged/diverged, iterations, etc.)
 void solveIterative(SystemOfLinearEquationSolver &solver, const string &methodName);
+
+// interpolation workflow — handles data input, mode selection, display/save
+void solveInterpolation(Interpolation &interp, const string &methodName);
 
 #endif

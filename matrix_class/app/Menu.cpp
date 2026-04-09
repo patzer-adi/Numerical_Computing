@@ -1,8 +1,9 @@
 #include "Menu.hpp"
-#include "../include/EigenSolver.hpp"
+#include "../include/GershgorinAnalyzer.hpp"
 #include "../include/GaussJacobi.hpp"
 #include "../include/GaussSeidel.hpp"
 #include "../include/GaussianElimination.hpp"
+#include "../include/Lagrange.hpp"
 #include "../include/LUDecomposition.hpp"
 #include "../include/Matrix.hpp"
 #include "../utils/Display.hpp"
@@ -261,8 +262,14 @@ static void handleGershgorin() {
   cout << "\n--- Enter square matrix for eigenvalue analysis ---" << endl;
   Matrix A;
   getMatrixInput(A);
-  EigenSolver eigen(A);
-  eigen.printGershgorinAnalysis();
+  GershgorinAnalyzer ga(A);
+  ga.solve();
+  ga.printAnalysis();
+}
+
+static void handleLagrange() {
+  Lagrange lag;
+  solveInterpolation(lag, "Lagrange Interpolation");
 }
 
 // === Main menu loop ===
@@ -309,7 +316,8 @@ void runMenu() {
     cout << "24. Make Diagonally Dominant" << endl;
     cout << "25. Check Equality (A == B)" << endl;
     cout << "26. Gershgorin Eigenvalue Analysis" << endl;
-    cout << "27. Exit" << endl;
+    cout << "27. Lagrange Interpolation" << endl;
+    cout << "28. Exit" << endl;
     cout << "Enter choice: ";
     cin >> choice;
 
@@ -341,7 +349,8 @@ void runMenu() {
       case 24: handleMakeDiagDominant(); break;
       case 25: handleEquality(); break;
       case 26: handleGershgorin(); break;
-      case 27:
+      case 27: handleLagrange(); break;
+      case 28:
         cout << "\nbye bye!" << endl;
         running = false;
         break;
