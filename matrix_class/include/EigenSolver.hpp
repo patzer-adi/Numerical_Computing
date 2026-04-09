@@ -2,10 +2,10 @@
 #define EIGENSOLVER_HPP
 
 #include "Matrix.hpp"
-#include <vector>
 using namespace std;
 
-// represents one Gershgorin disc for a single row
+// GershgorinDisc — represents one Gershgorin disc for a single row
+// kept here since it's a shared data structure for eigenvalue analysis
 struct GershgorinDisc {
   int row;       // which row this disc comes from (0-indexed)
   double center; // diagonal element a_ii
@@ -14,28 +14,30 @@ struct GershgorinDisc {
   double high;   // center + radius
 };
 
-// EigenSolver — eigenvalue analysis tools
-// currently supports: Gershgorin Circle Theorem
+// EigenSolver — abstract base class for eigenvalue analysis methods
 //
-// usage:
-//   Matrix A;
-//   // ... fill A ...
-//   EigenSolver eigen(A);
-//   eigen.printGershgorinAnalysis();
+// DESIGN: uses COMPOSITION (holds a Matrix reference), does NOT inherit Matrix.
+// Same philosophy as Interpolation — eigenvalue analysis USES a matrix,
+// it is NOT a matrix.
+//
+// Each derived class implements a different eigenvalue method:
+//   - GershgorinAnalyzer  (Gershgorin Circle Theorem)
+//   - PowerMethod         (future)
+//   - QRMethod            (future)
 //
 class EigenSolver {
-private:
+protected:
   const Matrix &mat;
 
 public:
   EigenSolver(const Matrix &m);
+  virtual ~EigenSolver();
 
-  // compute Gershgorin discs — one per row
-  vector<GershgorinDisc> computeGershgorinDiscs() const;
+  // every eigenvalue method must implement this
+  virtual void solve() = 0;
 
-  // pretty-print full Gershgorin analysis
-  // shows: each disc, union interval, diagonal dominance insight
-  void printGershgorinAnalysis() const;
+  // every method should be able to print its results
+  virtual void printAnalysis() const = 0;
 };
 
 #endif
