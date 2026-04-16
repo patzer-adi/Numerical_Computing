@@ -6,62 +6,80 @@ using namespace std;
 
 // default constructor
 Interpolation::Interpolation() {
-  xData = nullptr;
-  yData = nullptr;
   numPoints = 0;
 }
 
-// parameterized constructor — copies the input arrays
-Interpolation::Interpolation(double *x, double *y, int n) {
-  numPoints = n;
-  xData = new double[n];
-  yData = new double[n];
-  for (int i = 0; i < n; i++) {
-    xData[i] = x[i];
-    yData[i] = y[i];
-  }
+// parameterized constructor — takes two Matrix objects (1×n row vectors)
+Interpolation::Interpolation(const Matrix &x, const Matrix &y) {
+  // flatten: total elements = rows * cols
+  int xSize = x.getRows() * x.getCols();
+  int ySize = y.getRows() * y.getCols();
+
+  if (xSize != ySize)
+    throw MatrixException("X and Y must have the same number of data points");
+  if (xSize < 2)
+    throw MatrixException("need at least 2 data points for interpolation");
+
+  numPoints = xSize;
+
+  // store as 1×n row vectors using Matrix
+  xData = Matrix(1, numPoints);
+  yData = Matrix(1, numPoints);
+
+  int idx = 0;
+  for (int i = 0; i < x.getRows(); i++)
+    for (int j = 0; j < x.getCols(); j++)
+      xData.setData(0, idx++, x.getData(i, j));
+
+  idx = 0;
+  for (int i = 0; i < y.getRows(); i++)
+    for (int j = 0; j < y.getCols(); j++)
+      yData.setData(0, idx++, y.getData(i, j));
 }
 
-// destructor — clean up owned arrays
-Interpolation::~Interpolation() {
-  if (xData != nullptr) {
-    delete[] xData;
-    xData = nullptr;
-  }
-  if (yData != nullptr) {
-    delete[] yData;
-    yData = nullptr;
-  }
+// destructor — Matrix members clean up themselves (Rule of 5 in Matrix)
+Interpolation::~Interpolation() {}
+
+// load data points from Matrix objects — replaces any existing data
+void Interpolation::loadData(const Matrix &x, const Matrix &y) {
+  int xSize = x.getRows() * x.getCols();
+  int ySize = y.getRows() * y.getCols();
+
+  if (xSize != ySize)
+    throw MatrixException("X and Y must have the same number of data points");
+  if (xSize < 2)
+    throw MatrixException("need at least 2 data points for interpolation");
+
+  numPoints = xSize;
+
+  // store as 1×n row vectors
+  xData = Matrix(1, numPoints);
+  yData = Matrix(1, numPoints);
+
+  int idx = 0;
+  for (int i = 0; i < x.getRows(); i++)
+    for (int j = 0; j < x.getCols(); j++)
+      xData.setData(0, idx++, x.getData(i, j));
+
+  idx = 0;
+  for (int i = 0; i < y.getRows(); i++)
+    for (int j = 0; j < y.getCols(); j++)
+      yData.setData(0, idx++, y.getData(i, j));
 }
 
-// load data points — replaces any existing data
-void Interpolation::loadData(double *x, double *y, int n) {
-  // free old data
-  if (xData != nullptr) delete[] xData;
-  if (yData != nullptr) delete[] yData;
-
-  numPoints = n;
-  xData = new double[n];
-  yData = new double[n];
-  for (int i = 0; i < n; i++) {
-    xData[i] = x[i];
-    yData[i] = y[i];
-  }
-}
-
-// getters
+// getters — access data through Matrix methods
 int Interpolation::getNumPoints() const { return numPoints; }
 
 double Interpolation::getX(int i) const {
   if (i < 0 || i >= numPoints)
     throw MatrixException("index out of bounds in getX()");
-  return xData[i];
+  return xData.getData(0, i);
 }
 
 double Interpolation::getY(int i) const {
   if (i < 0 || i >= numPoints)
     throw MatrixException("index out of bounds in getY()");
-  return yData[i];
+  return yData.getData(0, i);
 }
 
 // interpolate over the full range [xMin, xMax]
@@ -71,8 +89,8 @@ void Interpolation::interpolate(int samples, bool saveToFile, string filename) {
   if (numPoints < 2)
     throw MatrixException("need at least 2 data points to interpolate");
 
-  double xMin = xData[0];
-  double xMax = xData[numPoints - 1];
+  double xMin = xData.getData(0, 0);
+  double xMax = xData.getData(0, numPoints - 1);
   double step = (xMax - xMin) / (samples - 1);
 
   if (saveToFile) {
@@ -102,7 +120,7 @@ void Interpolation::interpolate(int samples, bool saveToFile, string filename) {
     // original data points
     fout << "# Original data points" << endl;
     for (int i = 0; i < numPoints; i++) {
-      fout << xData[i] << "  " << yData[i] << endl;
+      fout << xData.getData(0, i) << "  " << yData.getData(0, i) << endl;
     }
 
     fout.close();
@@ -123,7 +141,8 @@ void Interpolation::interpolate(int samples, bool saveToFile, string filename) {
 
     cout << "\n--- Original Data Points ---" << endl;
     for (int i = 0; i < numPoints; i++) {
-      cout << left << setw(16) << xData[i] << setw(16) << yData[i] << endl;
+      cout << left << setw(16) << xData.getData(0, i)
+           << setw(16) << yData.getData(0, i) << endl;
     }
     cout << endl;
   }

@@ -180,48 +180,24 @@ void solveIterative(SystemOfLinearEquationSolver &solver, const string &methodNa
 
 void solveInterpolation(Interpolation &interp, const string &methodName) {
   // step 1: get X data points using Matrix
-  cout << "\n--- Enter X data points (as a single-row matrix) ---" << endl;
+  cout << "\n--- Enter X data points (as a matrix) ---" << endl;
   Matrix xMat;
   getMatrixInput(xMat);
 
   // step 2: get Y data points using Matrix
-  cout << "\n--- Enter Y data points (as a single-row matrix) ---" << endl;
+  cout << "\n--- Enter Y data points (as a matrix) ---" << endl;
   Matrix yMat;
   getMatrixInput(yMat);
 
-  // validate: both must be single-row and same number of columns
-  int xSize = xMat.getRows() * xMat.getCols();
-  int ySize = yMat.getRows() * yMat.getCols();
-
-  if (xSize != ySize)
-    throw MatrixException("X and Y must have the same number of data points");
-  if (xSize < 2)
-    throw MatrixException("need at least 2 data points for interpolation");
-
-  int n = xSize;
-
-  // extract data into double* arrays (flatten row-major)
-  double *xArr = new double[n];
-  double *yArr = new double[n];
-
-  int idx = 0;
-  for (int i = 0; i < xMat.getRows(); i++)
-    for (int j = 0; j < xMat.getCols(); j++)
-      xArr[idx++] = xMat.getData(i, j);
-
-  idx = 0;
-  for (int i = 0; i < yMat.getRows(); i++)
-    for (int j = 0; j < yMat.getCols(); j++)
-      yArr[idx++] = yMat.getData(i, j);
-
-  // load data into the interpolation object
-  interp.loadData(xArr, yArr, n);
+  // load Matrix objects directly into the interpolation object
+  interp.loadData(xMat, yMat);
 
   // print loaded data
+  int n = interp.getNumPoints();
   cout << "\nLoaded " << n << " data points:" << endl;
   cout << fixed << setprecision(6);
   for (int i = 0; i < n; i++)
-    cout << "  (" << xArr[i] << ", " << yArr[i] << ")" << endl;
+    cout << "  (" << interp.getX(i) << ", " << interp.getY(i) << ")" << endl;
 
   // step 3: choose mode
   int mode;
@@ -272,11 +248,6 @@ void solveInterpolation(Interpolation &interp, const string &methodName) {
     }
 
   } else {
-    delete[] xArr;
-    delete[] yArr;
     throw MatrixException("invalid choice... it was 1 or 2 bro");
   }
-
-  delete[] xArr;
-  delete[] yArr;
 }

@@ -6,21 +6,22 @@
 using namespace std;
 
 // Interpolation — abstract base class for all interpolation methods
+// uses Matrix objects to store x and y data points (composition)
 
 class Interpolation {
 protected:
-  double *xData;   // x coordinates of data points
-  double *yData;   // y coordinates of data points
+  Matrix xData;    // 1×n row vector of x coordinates
+  Matrix yData;    // 1×n row vector of y coordinates
   int numPoints;   // number of data points
 
 public:
   // constructors
   Interpolation();
-  Interpolation(double *x, double *y, int n);
+  Interpolation(const Matrix &x, const Matrix &y);
   virtual ~Interpolation();
 
-  // load data points (copies the arrays internally)
-  void loadData(double *x, double *y, int n);
+  // load data points from Matrix objects
+  void loadData(const Matrix &x, const Matrix &y);
 
   // getters
   int getNumPoints() const;

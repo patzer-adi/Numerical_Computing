@@ -1,62 +1,16 @@
-# Interpolation Module — Design & Usage
+# Interpolation Module
 
 ## What This Module Does
 
-The Interpolation module adds **numerical interpolation** capabilities to the
-Matrix Operations Library. Given a set of known data points `(x₀, y₀), (x₁, y₁), ..., (xₙ₋₁, yₙ₋₁)`,
-it constructs a polynomial that passes through all the points and can evaluate it
-at any x value — including points between, before, or after the given data.
+Given a set of known data points (x₀, y₀), (x₁, y₁), ..., (xₙ₋₁, yₙ₋₁), the
+Interpolation module constructs a polynomial that passes through all points and
+evaluates it at any x value.
 
-Currently implemented:
-- **Lagrange Interpolation** — uses the Lagrange basis polynomial formula
+Currently implemented: **Lagrange Interpolation**
 
 ---
 
-## Architecture: Why Composition, Not Inheritance
-
-### The Existing Hierarchy
-
-The Matrix class has a well-defined inheritance tree for solving systems of
-linear equations:
-
-```
-Matrix
-  └── SystemOfLinearEquationSolver (abstract)
-        ├── GaussianElimination
-        ├── LUDecomposition (abstract)
-        │     ├── Doolittle
-        │     ├── Crout
-        │     └── Cholesky
-        ├── GaussJacobi
-        └── GaussSeidel
-```
-
-Each solver **IS-A** Matrix — it holds the coefficient matrix `A` as its own data,
-extends the Matrix class, and operates on `this->data` directly. This makes sense
-because the solvers literally ARE matrices with extra behavior.
-
-### Why Interpolation Does NOT Inherit Matrix
-
-Interpolation is **fundamentally different** from a system solver:
-
-1. **An interpolation is NOT a matrix.** It's a set of `(x, y)` data points and
-   a polynomial. Saying a Lagrange interpolation "is-a" Matrix would be
-   semantically wrong.
-
-2. **It USES matrices.**  The Interpolation class creates and uses `Matrix`
-   objects to read data points from console or file using the existing I/O
-   infrastructure (`getMatrixInput`, `readFromFile`, etc.). This is the textbook
-   definition of **composition**: "has-a" vs "is-a".
-
-3. **It doesn't pollute the Matrix hierarchy.** Adding interpolation into the
-   `Matrix → SystemOfLinearEquationSolver` tree would confuse the abstraction.
-   Interpolation has nothing to do with solving `Ax = b`.
-
-4. **It keeps the Matrix class clean.** The Matrix class is the foundation of
-   the entire library. Adding unrelated methods (like `evaluate(x)`) to it
-   would violate the Single Responsibility Principle.
-
-### The Interpolation Hierarchy
+## Class Hierarchy
 
 ```
 Interpolation (abstract base)
@@ -64,117 +18,157 @@ Interpolation (abstract base)
   └── (future: Newton, Hermite, Spline, etc.)
 ```
 
-This is a **separate, parallel hierarchy** that lives alongside the Matrix
-hierarchy. It can be extended independently without touching any existing code.
+This is a **separate hierarchy** from the solver tree. It does not touch or
+extend the Matrix → SystemOfLinearEquationSolver chain.
 
 ---
 
-## Data Storage: Raw `double*`, Not `std::vector`
+## How Matrix Class Is Used
 
-The library uses raw `double*` arrays with manual `new[]`/`delete[]` throughout:
+The Interpolation module uses the Matrix class through **composition**. This means
+Interpolation creates and holds Matrix objects as members — it does not inherit
+from Matrix.
 
-- `Matrix::data` is `double**`
-- `SolverResult::x` is `double*`
-- All solver methods take `double* b`
-
-The Interpolation module follows the same convention:
+### Data Storage
 
 ```cpp
 class Interpolation {
 protected:
-  double *xData;   // x coordinates (owned, new[])
-  double *yData;   // y coordinates (owned, new[])
+  Matrix xData;    // 1×n row vector of x coordinates
+  Matrix yData;    // 1×n row vector of y coordinates
   int numPoints;
 };
 ```
 
-This ensures consistency across the library and avoids mixing paradigms.
-The destructor handles cleanup:
+`xData` and `yData` are **Matrix objects**, not raw `double*` arrays. Every
+data access goes through Matrix methods:
+
+| Operation | How it's done |
+|-----------|---------------|
+| Read x[i] | `xData.getData(0, i)` |
+| Read y[i] | `yData.getData(0, i)` |
+| Write x[i] | `xData.setData(0, i, value)` |
+| Create storage | `xData = Matrix(1, numPoints)` |
+| Memory cleanup | Automatic — Matrix destructor handles it |
+
+### Data Input
+
+The user enters X and Y values as matrices using the existing `getMatrixInput()`:
 
 ```cpp
-Interpolation::~Interpolation() {
-  if (xData != nullptr) delete[] xData;
-  if (yData != nullptr) delete[] yData;
+Matrix xMat;
+getMatrixInput(xMat);   // manual or from file — Matrix handles both
+
+Matrix yMat;
+getMatrixInput(yMat);
+
+interp.loadData(xMat, yMat);  // pass Matrix objects directly
+```
+
+This reuses the entire Matrix I/O infrastructure — console input, file reading,
+auto-format detection — without writing any new I/O code.
+
+### In Lagrange::evaluate()
+
+The Lagrange formula accesses data through Matrix getters:
+
+```cpp
+double Lagrange::evaluate(double x) {
+  for (int i = 0; i < numPoints; i++) {
+    double Li = 1.0;
+    for (int j = 0; j < numPoints; j++) {
+      if (j != i) {
+        Li *= (x - xData.getData(0, j)) / (xData.getData(0, i) - xData.getData(0, j));
+      }
+    }
+    result += yData.getData(0, i) * Li;
+  }
 }
 ```
 
----
-
-## Class Reference
-
-### `Interpolation` (abstract base class)
-
-| Method | Description |
-|--------|-------------|
-| `Interpolation()` | Default constructor — empty data |
-| `Interpolation(double *x, double *y, int n)` | Constructor — copies `n` data points |
-| `~Interpolation()` | Destructor — frees xData and yData |
-| `loadData(double *x, double *y, int n)` | Load/replace data points |
-| `getNumPoints()` | Returns number of data points |
-| `getX(int i)` / `getY(int i)` | Get individual data point values |
-| `evaluate(double x)` | **Pure virtual** — evaluate polynomial at x |
-| `interpolate(int samples, bool save, string file)` | Evaluate over full range |
-| `interpolate(double queryX, bool save, string file)` | Evaluate at one point |
-
-### `Lagrange` (concrete class)
-
-| Method | Description |
-|--------|-------------|
-| `Lagrange()` | Default constructor |
-| `Lagrange(double *x, double *y, int n)` | Constructor with data |
-| `evaluate(double x)` | Lagrange polynomial evaluation |
-
-The Lagrange formula:
-
-```
-P(x) = Σᵢ yᵢ · Lᵢ(x)
-
-where Lᵢ(x) = Πⱼ≠ᵢ (x - xⱼ) / (xᵢ - xⱼ)
-```
+Every `xData[j]` and `yData[i]` access goes through `Matrix::getData()` which
+includes bounds checking — no raw pointer arithmetic.
 
 ---
 
-## Usage
+## Why Composition, Not Inheritance
 
-### From the Menu
+### What is composition?
 
-Select option **27. Lagrange Interpolation** from the main menu. You will be
-prompted to:
+Composition means: "Interpolation **HAS-A** Matrix" (it contains Matrix objects
+as members). Inheritance would mean: "Interpolation **IS-A** Matrix".
 
-1. Enter X data points (as a matrix — manually or from file)
-2. Enter Y data points (as a matrix — manually or from file)
-3. Choose mode:
-   - **Full interpolation** — evaluates over the entire range with N sample points
-   - **Query point** — evaluates at a single specific x
-4. Choose output:
-   - Print to console
-   - Save to file (gnuplot-compatible format)
+### Why this choice?
 
-### From Code
+An Interpolation is **not** a matrix. It doesn't have rows, columns, determinants,
+or inverses. It has data points and a polynomial. Making Interpolation inherit from
+Matrix would be semantically wrong:
 
 ```cpp
-double x[] = {1, 2, 3, 4, 5};
-double y[] = {1, 8, 27, 64, 125};
+// If Interpolation inherited Matrix, this would compile:
+Lagrange lag(xMat, yMat);
+lag.determinant();    // meaningless — an interpolation doesn't have a determinant
+lag.inverse();        // meaningless — what is the inverse of an interpolation?
+lag + someMatrix;     // meaningless — can't add an interpolation to a matrix
+```
 
-Lagrange lag(x, y, 5);
+By using composition instead:
 
-// evaluate at a single point
-double val = lag.evaluate(2.5);  // ≈ 15.625
+- Interpolation only exposes methods that make sense for interpolation
+- Matrix stays clean — no interpolation-specific methods pollute it
+- The Matrix hierarchy (`Matrix → SystemOfLinearEquationSolver → GE/LU/...`)
+  remains untouched
 
-// generate full curve to file
-lag.interpolate(100, true, "output/lagrange.txt");
+### Compare with the solver hierarchy
 
-// query a specific point to console
-lag.interpolate(2.5, false, "");
+The solvers DO inherit from Matrix because a solver **IS** a matrix. The `data[][]`
+inside a GaussianElimination object IS the coefficient matrix A. The solver reads
+data into itself via `getMatrixInput(ge)` and operates on `this->data` directly.
+
+Interpolation is different — it USES matrices to store data points but it is not
+itself a matrix.
+
+---
+
+## Why the Destructor Is Empty
+
+```cpp
+Interpolation::~Interpolation() {}
+```
+
+Because `xData` and `yData` are Matrix objects (not pointers). When Interpolation
+is destroyed, the compiler automatically calls the destructor for each member.
+Matrix's destructor frees the `double**` data. No manual cleanup needed.
+
+This is one of the benefits of composition with proper classes — the Rule of 5
+implemented in Matrix handles everything.
+
+---
+
+## Function Overloading
+
+Two versions of `interpolate()`:
+
+```cpp
+void interpolate(int samples, bool saveToFile, string filename);    // full range
+void interpolate(double queryX, bool saveToFile, string filename);  // single point
+```
+
+Same name, different first parameter type. The compiler picks the right one based
+on the argument:
+
+```cpp
+interp.interpolate(100, true, "output.txt");     // calls int version
+interp.interpolate(2.5, false, "");              // calls double version
 ```
 
 ---
 
 ## Output Format (gnuplot-Compatible)
 
-The output text file has two blocks separated by blank lines:
+### Full interpolation output
 
-### Block 1: Interpolated Curve
+Two blocks separated by blank lines (gnuplot `index` feature):
 
 ```
 # Interpolation Result
@@ -184,14 +178,10 @@ The output text file has two blocks separated by blank lines:
 # x  y
 1.000000  1.000000
 1.040816  1.125095
-1.081633  1.258652
 ...
 5.000000  125.000000
-```
 
-### Block 2: Original Data Points
 
-```
 # Original data points
 1.000000  1.000000
 2.000000  8.000000
@@ -200,34 +190,44 @@ The output text file has two blocks separated by blank lines:
 5.000000  125.000000
 ```
 
-### gnuplot Commands
-
-Plot both the curve and data points:
+### gnuplot commands
 
 ```gnuplot
 set title "Lagrange Interpolation"
 set xlabel "x"
 set ylabel "y"
-plot "output/lagrange.txt" index 0 with lines title "Interpolation", \
-     "output/lagrange.txt" index 1 with points pt 7 ps 2 title "Data Points"
+plot "output.txt" index 0 with lines title "Interpolation", \
+     "output.txt" index 1 with points pt 7 ps 2 title "Data Points"
 ```
 
 ---
 
-## File Layout
+## File Map
 
 ```
 include/
-  Interpolation.hpp    — abstract base class
-  Lagrange.hpp         — Lagrange method
+  Interpolation.hpp   — abstract base class (Matrix xData, Matrix yData)
+  Lagrange.hpp        — Lagrange derived class
 
 src/
-  Interpolation.cpp    — base class: loadData, interpolate overloads
-  Lagrange.cpp         — Lagrange: evaluate() implementation
-
-app/
-  Menu.cpp             — menu option 27
+  Interpolation.cpp   — loadData, interpolate overloads, getters
+  Lagrange.cpp        — evaluate() using Lagrange formula
 
 utils/
-  Display.hpp/cpp      — solveInterpolation() workflow
+  Display.cpp         — solveInterpolation() workflow
+
+app/
+  Menu.cpp            — menu option 27
 ```
+
+---
+
+## Menu Integration
+
+Option **27. Lagrange Interpolation** in the main menu.
+
+Flow:
+1. Enter X data points (manual or from file — via Matrix I/O)
+2. Enter Y data points (manual or from file — via Matrix I/O)
+3. Choose mode: full range interpolation or single query point
+4. Choose output: print to console or save to file

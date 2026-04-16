@@ -10,11 +10,10 @@
 // where
 //   L_i(x) = product_{j=0, j!=i}^{n-1} (x - x_j) / (x_i - x_j)
 
-
 class Lagrange : public Interpolation {
 public:
   Lagrange();
-  Lagrange(double *x, double *y, int n);
+  Lagrange(const Matrix &x, const Matrix &y);
 
   // evaluate the Lagrange polynomial at a single x
   double evaluate(double x) override;

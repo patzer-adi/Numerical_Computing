@@ -4,8 +4,8 @@ using namespace std;
 // default constructor
 Lagrange::Lagrange() : Interpolation() {}
 
-// parameterized constructor
-Lagrange::Lagrange(double *x, double *y, int n) : Interpolation(x, y, n) {}
+// parameterized constructor — takes Matrix objects
+Lagrange::Lagrange(const Matrix &x, const Matrix &y) : Interpolation(x, y) {}
 
 // evaluate the Lagrange polynomial at a single x
 //
@@ -21,10 +21,10 @@ double Lagrange::evaluate(double x) {
     double Li = 1.0;
     for (int j = 0; j < numPoints; j++) {
       if (j != i) {
-        Li *= (x - xData[j]) / (xData[i] - xData[j]);
+        Li *= (x - xData.getData(0, j)) / (xData.getData(0, i) - xData.getData(0, j));
       }
     }
-    result += yData[i] * Li;
+    result += yData.getData(0, i) * Li;
   }
 
   return result;
