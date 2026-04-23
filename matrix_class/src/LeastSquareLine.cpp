@@ -13,14 +13,7 @@ LeastSquareLine::LeastSquareLine()
 LeastSquareLine::LeastSquareLine(const Matrix &x, const Matrix &y)
     : Interpolation(x, y), coeffA(0.0), coeffB(0.0), fitted(false) {}
 
-// compute coefficients using normal equations via Matrix class
-//
-// normal equations for y = a + bx:
-//   [n      Σx ] [a]   [Σy ]
-//   [Σx    Σx²] [b] = [Σxy]
-//
-// solved as: coefficients = A^(-1) * rhs
-//
+
 void LeastSquareLine::fit() const {
   if (fitted) return;
 
@@ -66,7 +59,6 @@ void LeastSquareLine::fit() const {
 }
 
 // evaluate the fitted line at a single x
-// y = a + bx
 double LeastSquareLine::evaluate(double x) const {
   if (!fitted) fit();
   return coeffA + coeffB * x;

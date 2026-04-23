@@ -9,11 +9,6 @@ Lagrange::Lagrange() : Interpolation() {}
 Lagrange::Lagrange(const Matrix &x, const Matrix &y) : Interpolation(x, y) {}
 
 // evaluate the Lagrange polynomial at a single x
-//
-// formula:
-//   P(x) = sum_{i=0}^{n-1} y_i * L_i(x)
-//   L_i(x) = product_{j=0, j!=i}^{n-1} (x - x_j) / (x_i - x_j)
-//
 double Lagrange::evaluate(double x) const {
   // check for duplicate x values — would cause division by zero
   for (int i = 0; i < numPoints; i++) {

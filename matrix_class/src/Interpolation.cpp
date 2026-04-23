@@ -11,7 +11,6 @@ Interpolation::Interpolation() {
 
 // parameterized constructor — takes two Matrix objects (1×n row vectors)
 Interpolation::Interpolation(const Matrix &x, const Matrix &y) {
-  // flatten: total elements = rows * cols
   int xSize = x.getRows() * x.getCols();
   int ySize = y.getRows() * y.getCols();
 

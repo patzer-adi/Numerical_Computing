@@ -14,15 +14,6 @@ LeastSquareParabola::LeastSquareParabola(const Matrix &x, const Matrix &y)
     : Interpolation(x, y), coeffA(0.0), coeffB(0.0), coeffC(0.0),
       fitted(false) {}
 
-// compute coefficients using normal equations via Matrix class
-//
-// normal equations for y = a + bx + cx²:
-//   [n      Σx     Σx² ] [a]   [Σy   ]
-//   [Σx     Σx²    Σx³ ] [b] = [Σxy  ]
-//   [Σx²    Σx³    Σx⁴ ] [c]   [Σx²y ]
-//
-// solved as: coefficients = A^(-1) * rhs
-//
 void LeastSquareParabola::fit() const {
   if (fitted) return;
 
@@ -84,7 +75,6 @@ void LeastSquareParabola::fit() const {
 }
 
 // evaluate the fitted parabola at a single x
-// y = a + bx + cx²
 double LeastSquareParabola::evaluate(double x) const {
   if (!fitted) fit();
   return coeffA + coeffB * x + coeffC * x * x;
