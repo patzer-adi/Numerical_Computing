@@ -1,529 +1,609 @@
-# Matrix Operations Program
+# Matrix Operations Program — Complete Technical Reference
 
-## What This Program Does
-
-This is a menu-based C++ program for working with matrices. It can:
-
-- **Add, subtract, multiply** matrices of any size
-- **Calculate determinants** of square matrices
-- **Solve systems of linear equations** (Ax = b) using:
-  - Gaussian elimination (with/without pivoting)
-  - LU Decomposition (Doolittle, Crout, Cholesky)
-  - Gauss-Jacobi iteration
-  - Gauss-Seidel iteration (with automatic diagonal dominance fix)
-- **Matrix properties**: transpose, inverse, cofactor, adjoint, minor
-- **Check properties**: square, symmetric, identity, null, diagonal, diagonally dominant
-- **Read matrices from files** or let you type them in manually
-- **Save solutions** to a file
-- **GPU acceleration** with CUDA (optional)
-
-Everything runs in a loop — pick an option, do the operation, go back to the menu.
+A menu-driven C++ numerical computing library built from scratch with **zero external dependencies**. Implements matrix operations, linear system solvers, eigenvalue analysis, interpolation, and curve fitting — all using OOP principles and the Matrix class as the foundation.
 
 ---
 
-## Compiling
+## Table of Contents
 
-```bash
-make clean && make
+1. [Project Architecture](#project-architecture)
+2. [C++ Concepts Used](#c-concepts-used)
+3. [Class Hierarchy](#class-hierarchy)
+4. [Numerical Methods Implemented](#numerical-methods-implemented)
+5. [How to Build and Run](#how-to-build-and-run)
+6. [Detailed README Index](#detailed-readme-index)
+
+---
+
+## Project Architecture
+
+### Three-Layer Design
+
+```
+┌─────────────────────────────────────────────────────┐
+│  APP LAYER (app/)                                   │
+│  Menu.cpp — menu display, routing, handler functions│
+│  This is the ONLY layer that knows about the menu.  │
+└────────────────────┬────────────────────────────────┘
+                     │ calls
+┌────────────────────▼────────────────────────────────┐
+│  UTILS LAYER (utils/)                               │
+│  Input.cpp  — reading matrices from console/files   │
+│  Display.cpp — printing results, solver workflows   │
+│  Raw I/O only. No menu logic. No math.              │
+└────────────────────┬────────────────────────────────┘
+                     │ calls
+┌────────────────────▼────────────────────────────────┐
+│  CORE LIBRARY (include/ + src/)                     │
+│  Matrix, Solvers, Interpolation, EigenSolver        │
+│  Pure computation. NO cin/cout. NO user interaction.│
+└─────────────────────────────────────────────────────┘
 ```
 
-Or manually:
-```bash
-g++ -std=c++11 -Wall -o matrix_program \
-    main.cpp \
-    src/Matrix.cpp \
-    src/MatrixException.cpp \
-    src/SystemOfLinearEquationSolver.cpp \
-    src/GaussianElimination.cpp \
-    src/LUDecomposition.cpp \
-    src/Doolittle.cpp \
-    src/Crout.cpp \
-    src/Cholesky.cpp \
-    src/GaussJacobi.cpp \
-    src/GaussSeidel.cpp \
-    src/MatrixOperations.cpp \
-    utils/Input.cpp \
-    utils/Display.cpp \
-    app/Menu.cpp
+### Directory Structure
+
 ```
-
-This compiles everything into one executable called `matrix_program`.
-
-Or, if you've filled in the Makefile:
-```bash
-make          # or make cpu
-make verify   # builds the verification test suite
+matrix_class/
+├── main.cpp                    ← entry point (6 lines — just calls runMenu())
+├── Makefile                    ← build system (CPU + GPU targets)
+├── README.md                   ← this file
+│
+├── include/                    ← headers (class declarations)
+│   ├── Matrix.hpp                  base class (Rule of 5, const-correct)
+│   ├── MatrixException.hpp         custom exception class
+│   ├── SolverResult.hpp            struct returned by all solvers
+│   ├── SystemOfLinearEquationSolver.hpp   abstract solver base
+│   ├── GaussianElimination.hpp     GE (with/without pivoting)
+│   ├── LUDecomposition.hpp         LU base + Doolittle/Crout/Cholesky
+│   ├── GaussJacobi.hpp             iterative solver
+│   ├── GaussSeidel.hpp             iterative solver
+│   ├── EigenSolver.hpp             abstract eigen base + GershgorinDisc struct
+│   ├── GershgorinAnalyzer.hpp      Gershgorin circle theorem
+│   ├── Interpolation.hpp           abstract interpolation base
+│   ├── Lagrange.hpp                Lagrange polynomial
+│   ├── LeastSquareLine.hpp         least squares line fit
+│   └── LeastSquareParabola.hpp     least squares parabola fit
+│
+├── src/                        ← implementations
+│   ├── Matrix.cpp                  constructors, I/O, add/sub/mul, determinant
+│   ├── MatrixOperations.cpp        transpose, inverse, property checks
+│   ├── MatrixException.cpp         (empty — header-only class)
+│   ├── SystemOfLinearEquationSolver.cpp   base + diagonal dominance helpers
+│   ├── GaussianElimination.cpp     forward elim + back substitution
+│   ├── LUDecomposition.cpp         base class constructors
+│   ├── Doolittle.cpp               Doolittle LU decomposition
+│   ├── Crout.cpp                   Crout LU decomposition
+│   ├── Cholesky.cpp                Cholesky LU decomposition
+│   ├── GaussJacobi.cpp             Gauss-Jacobi iterative solver
+│   ├── GaussSeidel.cpp             Gauss-Seidel iterative solver
+│   ├── EigenSolver.cpp             base class constructor
+│   ├── GershgorinAnalyzer.cpp      disc computation + analysis
+│   ├── Interpolation.cpp           data loading, interpolate overloads
+│   ├── Lagrange.cpp                Lagrange formula
+│   ├── LeastSquareLine.cpp         normal equations (2×2) + error analysis
+│   └── LeastSquareParabola.cpp     normal equations (3×3) + error analysis
+│
+├── utils/                      ← I/O helpers
+│   ├── Input.hpp / Input.cpp       matrix/system input from console or files
+│   └── Display.hpp / Display.cpp   result display, solver workflows
+│
+├── app/                        ← application layer
+│   ├── Menu.hpp / Menu.cpp         menu loop + handler functions
+│
+├── cuda/                       ← GPU acceleration (optional)
+│   ├── include/                    GPU function declarations
+│   └── src/                        CUDA kernels
+│
+├── examples/                   ← example data files
+├── Readme/                     ← detailed documentation (18 files)
+├── 49/ , 225/                  ← test data (49×49, 225×225 systems)
+└── output/                     ← saved solution outputs
 ```
 
 ---
 
-## Running
+## C++ Concepts Used
+
+### 1. Classes and Objects
+
+Every component is a class. The `Matrix` class encapsulates a 2D dynamic array (`double**`) with its dimensions (`rows`, `cols`), hiding raw pointer manipulation behind clean methods.
+
+```cpp
+class Matrix {
+protected:
+  double **data;    // 2D heap array
+  int rows, cols;
+public:
+  void setData(int i, int j, double val);
+  double getData(int i, int j) const;
+  void display() const;
+  // ...
+};
+```
+
+**Where used:** Every single file in the project.
+
+### 2. Constructors — Five Types
+
+| Type | Signature | Purpose |
+|------|-----------|---------|
+| Default | `Matrix()` | Creates empty matrix (data=nullptr, rows=cols=0) |
+| Parameterized | `Matrix(int r, int c)` | Allocates r×c, fills with zeros |
+| Copy | `Matrix(const Matrix &other)` | Deep copy of another matrix |
+| Move | `Matrix(Matrix &&other) noexcept` | Steals resources, leaves other empty |
+| File | `Matrix(string filename)` | Reads matrix from file |
+
+```cpp
+Matrix A;                  // default
+Matrix B(3, 3);            // parameterized
+Matrix C(B);               // copy
+Matrix D(std::move(C));    // move — C is now empty
+Matrix E("data.txt");      // file
+```
+
+**Constructor Overloading:** Same class name `Matrix()`, different parameter lists. The compiler picks the right one based on arguments passed.
+
+### 3. Rule of 5
+
+Since `Matrix` manages raw heap memory (`new double*[]`), it must implement all five special members to prevent memory leaks and dangling pointers:
+
+| Member | What It Does |
+|--------|-------------|
+| **Destructor** `~Matrix()` | `delete[]` every row, then `delete[] data` |
+| **Copy Constructor** `Matrix(const Matrix&)` | Allocates new memory, copies every element |
+| **Copy Assignment** `operator=(const Matrix&)` | Frees old memory, then deep copies |
+| **Move Constructor** `Matrix(Matrix&&)` | Steals `data` pointer, sets other to nullptr |
+| **Move Assignment** `operator=(Matrix&&)` | Frees old, steals from other |
+
+**Why move semantics?** When returning a Matrix from a function (`return result;`), the move constructor avoids copying the entire 2D array — it just transfers the pointer.
+
+### 4. Operator Overloading
+
+| Operator | Type | Signature | Usage |
+|----------|------|-----------|-------|
+| `+` | Binary arithmetic | `Matrix operator+(const Matrix&) const` | `C = A + B` |
+| `-` | Binary arithmetic | `Matrix operator-(const Matrix&) const` | `C = A - B` |
+| `*` | Matrix multiply | `Matrix operator*(const Matrix&) const` | `C = A * B` |
+| `*` | Scalar multiply | `Matrix operator*(double) const` | `C = A * 2.5` |
+| `==` | Equality | `bool operator==(const Matrix&) const` | `if (A == B)` |
+| `()` | Element access | `double& operator()(int, int)` | `A(i,j) = 5.0` |
+| `()` | Const access | `double operator()(int, int) const` | `val = A(i,j)` |
+| `=` | Copy assign | `Matrix& operator=(const Matrix&)` | `A = B` |
+| `=` | Move assign | `Matrix& operator=(Matrix&&)` | `A = std::move(B)` |
+| `<<` | Stream insert | `friend ostream& operator<<(...)` | `cout << A` |
+| `>>` | Stream extract | `friend istream& operator>>(...)` | `cin >> A` |
+
+**Friend functions:** `<<` and `>>` are declared `friend` because the left operand is `ostream`/`istream`, not `Matrix`. A member function's first operand is always `this`.
+
+### 5. Function Overloading
+
+Same function name, different parameter types:
+
+```cpp
+// In Interpolation — same name, different first parameter type
+void interpolate(int samples, bool saveToFile, string filename);     // full range
+void interpolate(double queryX, bool saveToFile, string filename);   // single point
+
+// In Matrix — operator* overloaded for different right operands
+Matrix operator*(const Matrix &other) const;    // matrix × matrix
+Matrix operator*(double scalar) const;          // matrix × scalar
+```
+
+The compiler resolves which to call based on argument types at the call site.
+
+### 6. Inheritance
+
+Three inheritance hierarchies in the project:
+
+**Hierarchy 1: Matrix → Solvers (IS-A relationship)**
+```
+Matrix
+  └── SystemOfLinearEquationSolver (abstract)
+        ├── GaussianElimination
+        └── LUDecomposition (abstract)
+              ├── Doolittle
+              ├── Crout
+              └── Cholesky
+        ├── GaussJacobi
+        └── GaussSeidel
+```
+
+A solver **IS-A** matrix — the coefficient matrix A is stored in `this->data`. The solver operates directly on its own inherited data.
+
+**Hierarchy 2: Interpolation → Methods (IS-A relationship via abstraction)**
+```
+Interpolation (abstract, uses Matrix via composition)
+  ├── Lagrange
+  ├── LeastSquareLine
+  └── LeastSquareParabola
+```
+
+**Hierarchy 3: EigenSolver → Analyzers (IS-A with composition)**
+```
+EigenSolver (abstract, holds const Matrix& reference)
+  └── GershgorinAnalyzer
+```
+
+### 7. Abstract Base Classes and Pure Virtual Functions
+
+A class with at least one **pure virtual function** (`= 0`) cannot be instantiated — it's abstract. Derived classes MUST override it.
+
+```cpp
+// In SystemOfLinearEquationSolver:
+virtual SolverResult solve(double *b, int n, int maxIter, double tol) = 0;
+
+// In Interpolation:
+virtual double evaluate(double x) const = 0;
+
+// In EigenSolver:
+virtual void solve() = 0;
+virtual void printAnalysis() const = 0;
+```
+
+**Why?** Forces every derived class to implement the core algorithm while sharing common infrastructure (data storage, I/O, validation).
+
+### 8. Polymorphism
+
+Virtual functions enable runtime dispatch — calling the right method based on the actual object type:
+
+```cpp
+// solveInterpolation takes any Interpolation& — works with Lagrange,
+// LeastSquareLine, LeastSquareParabola, or any future method
+void solveInterpolation(Interpolation &interp, const string &methodName) {
+  interp.loadData(xMat, yMat);      // base class method
+  interp.printFitInfo();             // virtual — dispatches to derived
+  interp.interpolate(samples, ...);  // calls evaluate() — virtual dispatch
+}
+
+// In Menu.cpp — same workflow, different objects:
+Lagrange lag;
+solveInterpolation(lag, "Lagrange");
+
+LeastSquareLine lsl;
+solveInterpolation(lsl, "Least Squares Line");
+```
+
+The `solveInterpolation` function doesn't know or care which specific method it's using. It calls `evaluate()`, and polymorphism routes to the correct implementation.
+
+### 9. Composition vs Inheritance
+
+| Pattern | Relationship | Used By | Why |
+|---------|-------------|---------|-----|
+| **Inheritance** | IS-A | Solvers inherit Matrix | A solver IS a matrix — operates on `this->data` directly |
+| **Composition** | HAS-A | Interpolation holds Matrix members | Interpolation HAS data points stored in Matrix objects |
+| **Composition** | HAS-A (reference) | EigenSolver holds `const Matrix&` | Analyzer USES a matrix but doesn't own or modify it |
+
+**Key design decision:** Interpolation uses composition because an interpolation is NOT a matrix — it doesn't have a determinant, inverse, or dimensions. It USES matrices to store (x,y) data and to solve normal equations.
+
+### 10. const Correctness
+
+Three levels of const used throughout:
+
+```cpp
+// 1. const member functions — promise not to modify the object
+double getData(int i, int j) const;
+bool isSquare() const;
+double evaluate(double x) const;    // interpolation evaluation
+
+// 2. const parameters — promise not to modify the argument
+Matrix add(const Matrix &other) const;
+void loadData(const Matrix &x, const Matrix &y);
+
+// 3. const references — efficient pass-by-reference without copy risk
+EigenSolver(const Matrix &m);     // stores a const reference
+```
+
+### 11. mutable Keyword
+
+Used in least squares classes for lazy initialization:
+
+```cpp
+class LeastSquareLine : public Interpolation {
+protected:
+  mutable double coeffA, coeffB;   // cache — not part of logical state
+  mutable bool fitted;
+  void fit() const;                // modifies mutable members only
+public:
+  double evaluate(double x) const override;  // calls fit() on first use
+};
+```
+
+`evaluate()` is `const` (semantically correct — evaluation doesn't change the object). But the first call needs to compute coefficients. `mutable` allows this cache to be filled from a `const` method — the standard C++ pattern for lazy initialization.
+
+### 12. Encapsulation and Access Specifiers
+
+```cpp
+class Matrix {
+protected:      // accessible by this class AND derived classes
+  double **data;
+  int rows, cols;
+
+public:         // accessible by everyone
+  int getRows() const;
+  double getData(int i, int j) const;   // bounds-checked access
+  void setData(int i, int j, double val);
+};
+```
+
+`data` is `protected` so that solver classes (which inherit Matrix) can access it directly for performance. External code uses `getData()`/`setData()` which include bounds checking.
+
+### 13. Static Methods and Members
+
+```cpp
+// In Matrix — static factory method (doesn't need an object to call)
+static Matrix inputMatrix(string label);
+
+// In SystemOfLinearEquationSolver — shared utility for all solvers
+static bool makeDiagDominant(double **A, double *b, int n);
+static bool checkDiagDominant(double **A, int n);
+```
+
+Static methods belong to the class, not to any specific object. `makeDiagDominant` is shared by both Jacobi and Seidel without duplication.
+
+### 14. Structs vs Classes
+
+```cpp
+// SolverResult — plain data container, all fields public
+struct SolverResult {
+  double *x;
+  int n, iterations;
+  bool converged;
+  double error;
+  bool dominanceAchieved;
+  double **L, **U;     // LU decomposition matrices
+  int luSize;
+  void freeLU();       // cleanup helper
+};
+
+// GershgorinDisc — simple data holder
+struct GershgorinDisc {
+  int row;
+  double center, radius, low, high;
+};
+```
+
+`struct` is used when the type is a simple data container with no invariants to protect. `class` is used when the type has complex state that needs encapsulation.
+
+### 15. Exception Handling
+
+Custom exception class with descriptive messages:
+
+```cpp
+class MatrixException {
+  string message;
+public:
+  MatrixException(string msg) { message = msg; }
+  void printError() { cout << "Error: " << message << endl; }
+};
+
+// Throwing:
+throw MatrixException("matrix is singular... inverse doesn't exist");
+
+// Catching (in Menu.cpp — catches ALL operations):
+try {
+  switch (choice) { /* ... */ }
+} catch (MatrixException &e) {
+  e.printError();    // prints error, returns to menu — never crashes
+}
+```
+
+Every menu operation is wrapped in try-catch. The program **never crashes** — errors print a message and return to the menu.
+
+### 16. Dynamic Memory Management
+
+All memory uses raw `new`/`delete` (no smart pointers, no STL containers in core):
+
+```cpp
+// Allocation (in Matrix constructor):
+data = new double*[rows];
+for (int i = 0; i < rows; i++)
+  data[i] = new double[cols];
+
+// Deallocation (in destructor):
+for (int i = 0; i < rows; i++)
+  delete[] data[i];
+delete[] data;
+
+// Solver results — caller must free:
+double *x = ge.solveWithPivoting(b, n);
+// ... use x ...
+delete[] x;
+delete[] b;
+```
+
+### 17. File I/O
+
+Two directions, with auto-format detection:
+
+```cpp
+// READING — auto-detects header vs no-header format:
+void Matrix::readFromFile(string filename);
+// Handles: "3 3\n1 2 3\n..." (with header) or "1 2 3\n4 5 6\n..." (no header)
+
+// WRITING — gnuplot-compatible output:
+void Matrix::saveToFile(string filename);
+
+// File constructor — one-line matrix creation from file:
+Matrix A("data.txt");
+```
+
+### 18. Header Guards
+
+Every header file uses include guards to prevent double-inclusion:
+
+```cpp
+#ifndef MATRIX_HPP
+#define MATRIX_HPP
+// ... class declaration ...
+#endif
+```
+
+### 19. Virtual Destructors
+
+Base classes with virtual functions have virtual destructors:
+
+```cpp
+virtual ~Matrix();
+virtual ~Interpolation() = default;
+virtual ~EigenSolver();
+virtual ~SystemOfLinearEquationSolver() {}
+```
+
+This ensures proper cleanup when deleting through a base pointer — the derived class destructor runs first, then the base.
+
+### 20. Default Function Arguments
+
+```cpp
+virtual SolverResult solve(double *b, int n,
+                           int maxIter = 10000,    // default if not specified
+                           double tol = 1e-10) = 0;
+```
+
+Callers can write `solver.solve(b, n)` without specifying iteration limits.
+
+---
+
+## Class Hierarchy
+
+### Complete Hierarchy Diagram
+
+```
+Matrix (base class)
+│  Rule of 5, operator overloading, file I/O
+│  double** data, int rows, int cols
+│
+├── SystemOfLinearEquationSolver (abstract, inherits Matrix)
+│   │  pure virtual: solve(b, n) → SolverResult
+│   │  static helpers: makeDiagDominant(), checkDiagDominant()
+│   │
+│   ├── GaussianElimination
+│   │     solveWithPivoting(), solveWithoutPivoting()
+│   │
+│   ├── LUDecomposition (abstract)
+│   │   ├── Doolittle    (L has unit diagonal)
+│   │   ├── Crout        (U has unit diagonal)
+│   │   └── Cholesky     (symmetric positive definite, A = LLᵀ)
+│   │
+│   ├── GaussJacobi      (iterative, uses old values)
+│   └── GaussSeidel      (iterative, uses newest values)
+
+Interpolation (abstract, uses Matrix via COMPOSITION)
+│  Matrix xData (1×n), Matrix yData (1×n)
+│  pure virtual: evaluate(x) → double
+│  virtual: printFitInfo(), hasErrorAnalysis(), printErrorTable()
+│
+├── Lagrange              (exact polynomial interpolation)
+├── LeastSquareLine       (y = a + bx, normal equations via Matrix)
+└── LeastSquareParabola   (y = a + bx + cx², normal equations via Matrix)
+
+EigenSolver (abstract, holds const Matrix& via COMPOSITION)
+│  pure virtual: solve(), printAnalysis()
+│
+└── GershgorinAnalyzer    (Gershgorin Circle Theorem)
+```
+
+---
+
+## Numerical Methods Implemented
+
+### Matrix Operations (Menu 1–4, 12–25)
+
+| Operation | Method | Menu |
+|-----------|--------|------|
+| Addition | Element-wise A[i][j] + B[i][j] | 1 |
+| Subtraction | Element-wise A[i][j] - B[i][j] | 2 |
+| Multiplication | Row × Column dot product | 3 |
+| Determinant | Gaussian elimination to upper triangular | 4 |
+| Transpose | Swap rows and columns | 12 |
+| Scalar Multiply | Every element × scalar | 13 |
+| Inverse | adj(A) / det(A) | 14 |
+| Minor Matrix | Remove row r, col c | 15 |
+| Cofactor | (-1)^(r+c) × det(minor) | 16 |
+| Adjoint | Transpose of cofactor matrix | 17 |
+| Property Checks | Square, symmetric, identity, null, diagonal, diag. dominant | 18–24 |
+| Equality | Element-wise comparison with tolerance | 25 |
+
+### Linear System Solvers (Menu 5–11)
+
+| Method | Type | Key Feature |
+|--------|------|-------------|
+| Gaussian Elimination (pivoting) | Direct | Partial pivoting for stability |
+| Gaussian Elimination (no pivoting) | Direct | For comparison — less stable |
+| Doolittle LU | Direct | L has unit diagonal |
+| Crout LU | Direct | U has unit diagonal |
+| Cholesky LU | Direct | For symmetric positive definite (A = LLᵀ) |
+| Gauss-Jacobi | Iterative | Uses old values only, auto diag. dominance fix |
+| Gauss-Seidel | Iterative | Uses newest values, faster convergence |
+
+### Eigenvalue Analysis (Menu 26)
+
+| Method | What It Does |
+|--------|-------------|
+| Gershgorin Circle Theorem | Bounds eigenvalues using disc regions |
+
+### Interpolation & Curve Fitting (Menu 27–29)
+
+| Method | Equation | Fit Type | Min Points |
+|--------|----------|----------|------------|
+| Lagrange | Degree n-1 polynomial | Exact (through all points) | 2 |
+| Least Squares Line | y = a + bx | Approximate (minimizes SSE) | 2 |
+| Least Squares Parabola | y = a + bx + cx² | Approximate (minimizes SSE) | 3 |
+
+---
+
+## How to Build and Run
+
+### Build
+
+```bash
+cd matrix_class
+make clean && make cpu
+```
+
+### Run
 
 ```bash
 ./matrix_program
 ```
 
-**Important:** Run this from the `matrix_class/` directory. If you're in a different directory, file paths like `49/49l.txt` won't work.
-
----
-
-## The Main Menu
-
-When you start the program, you see:
+### Menu
 
 ```
-=== Matrix Operations Program ===
-
 === Menu ===
-1.  Add (A + B)
-2.  Subtract (A - B)
-3.  Multiply (A * B)
-4.  Determinant
-5.  Gaussian elimination (with pivoting)
-6.  Gaussian elimination (without pivoting)
-7.  LU - Doolittle
-8.  LU - Crout
-9.  LU - Cholesky
-10. Gauss-Jacobi (iterative)
-11. Gauss-Seidel (iterative)
-12. Transpose
-13. Scalar Multiply
-14. Inverse
-15. Minor Matrix
-16. Cofactor
-17. Adjoint
-18. Check if Square
-19. Check if Symmetric
-20. Check if Identity
-21. Check if Null
-22. Check if Diagonal
-23. Check if Diagonally Dominant
-24. Make Diagonally Dominant
-25. Check Equality (A == B)
-26. Exit
-Enter choice:
+1.  Add (A + B)              12. Transpose              23. Check Diag. Dominant
+2.  Subtract (A - B)         13. Scalar Multiply         24. Make Diag. Dominant
+3.  Multiply (A * B)         14. Inverse                 25. Check Equality
+4.  Determinant              15. Minor Matrix            26. Gershgorin Analysis
+5.  GE (with pivoting)       16. Cofactor                27. Lagrange Interpolation
+6.  GE (without pivoting)    17. Adjoint                 28. Least Squares Line
+7.  LU - Doolittle           18. Check Square            29. Least Squares Parabola
+8.  LU - Crout               19. Check Symmetric         30. Exit
+9.  LU - Cholesky            20. Check Identity
+10. Gauss-Jacobi             21. Check Null
+11. Gauss-Seidel             22. Check Diagonal
 ```
-
-Type a number and press Enter.
-
-After each operation finishes, the menu appears again. This continues until you choose 26 (Exit).
 
 ---
 
-## How Input Works
-
-Every operation needs matrix data. The program always asks:
-
-```
-How do you want to enter the matrix?
-1. Enter manually
-2. Load from file
-Enter choice:
-```
-
-### Manual Entry
-
-If you choose 1, you type in the size and then each row:
-
-```
-Enter rows: 3
-Enter cols: 3
-Enter matrix elements row by row:
-Row 1: 1 2 3
-Row 2: 4 5 6
-Row 3: 7 8 9
-```
-
-- Type all values for one row on the same line, separated by spaces
-- Press Enter after each row
-- You must enter exactly `rows × cols` numbers
-
-### File Input
-
-If you choose 2, you give a filename:
-
-```
-Enter filename: 49/49l.txt
-Loaded 49x49 matrix from 49/49l.txt
-```
-
-The program reads the file and figures out the dimensions automatically. It handles two formats:
-
-1. **With header:** First line has `rows cols`, remaining lines have the data
-2. **Without header:** Every line is data, dimensions come from counting rows and columns
-
----
-
-## Each Option in Detail
-
-### Option 1: Addition
-
-**What it does:** Takes matrices A and B, computes A + B.
-
-**Requirements:** A and B must have the **same dimensions** (same rows and same cols).
-
-**Flow:**
-```
-1. Program asks for Matrix A (manual or file)
-2. Program asks for Matrix B (manual or file)
-3. Computes A + B element by element
-4. Prints the result
-```
-
-**Example with 2×2 matrices:**
-
-```
---- Matrix A ---
-Enter rows: 2  Enter cols: 2
-Row 1: 1 2
-Row 2: 3 4
-
---- Matrix B ---
-Enter rows: 2  Enter cols: 2
-Row 1: 5 6
-Row 2: 7 8
-
-Result (A + B):
-      6.000000      8.000000
-     10.000000     12.000000
-```
-
-**What happens inside:** For each position (i,j), it simply does `result[i][j] = A[i][j] + B[i][j]`.
-
-**Error case:** If A is 2×3 and B is 3×2, you get:
-```
-Error: can't add these matrices... they don't even match bro 😂
-```
-
-### Option 2: Subtraction
-
-Exactly like addition, but computes A - B. Same dimension requirement.
-
-### Option 3: Multiplication
-
-**What it does:** Takes matrices A and B, computes A × B.
-
-**Requirements:** A's column count must equal B's row count. If A is m×n and B is n×p, the result is m×p.
-
-**Flow:**
-```
-1. Program asks for Matrix A
-2. Program asks for Matrix B
-3. Checks that A.cols == B.rows
-4. Computes A × B using the standard formula
-5. Prints the result
-```
-
-**Inside:** For each entry in the result:
-```
-result[i][j] = sum of A[i][k] * B[k][j]  for all k
-```
-
-This is the standard row-times-column multiplication.
-
-**Example:**
-```
-A = [1 2]    B = [5 6]    Result = [1×5+2×7  1×6+2×8] = [19 22]
-    [3 4]        [7 8]             [3×5+4×7  3×6+4×8]   [43 50]
-```
-
-### Option 4: Determinant
-
-**What it does:** Takes one square matrix, returns a single number (the determinant).
-
-**Requirements:** The matrix must be square (rows == cols).
-
-**Flow:**
-```
-1. Program asks for one matrix
-2. Checks it's square
-3. Uses Gaussian elimination (with pivoting) to reduce to upper triangular form
-4. Multiplies the diagonal entries to get the determinant
-5. Prints the result
-```
-
-**How the algorithm works:**
-
-1. Make a copy of the matrix (so we don't destroy the original)
-2. For each column k:
-   - Find the row below (or at) k with the largest value in column k (pivoting)
-   - Swap that row with row k (if needed — and flip the sign of det)
-   - Eliminate all entries below the diagonal in column k
-3. The determinant = product of all diagonal entries × sign flips from swapping
-
-**Example:**
-```
-Enter rows: 3   Enter cols: 3
-Row 1: 6 1 1
-Row 2: 4 -2 5
-Row 3: 2 8 7
-
-Determinant = -306.000000
-```
-
-**Special case:** If the matrix is singular (det = 0), it means the rows are linearly dependent — no unique solution exists for Ax = b.
-
-### Option 5: Gaussian Elimination WITH Pivoting
-
-**What it does:** Solves the system Ax = b for x.
-
-**This is the most important option in the program.** It's what you use for the 49×49 and 225×225 systems.
-
-**Flow:**
-```
-1. Program asks how to input the system:
-   - Manual (type A and b)
-   - Augmented file [A|b] in one file
-   - Left file (A) + Right file (b) separately
-
-2. Loads the data into A and b
-
-3. Forward Elimination (with partial pivoting):
-   - For each column k from 0 to n-1:
-     a. Look at all entries from row k downward in column k
-     b. Find the one with the LARGEST absolute value → call it the pivot
-     c. Swap row k with the pivot row (so the biggest value is on the diagonal)
-     d. For each row i below k:
-        - Compute factor = A[i][k] / A[k][k]
-        - Subtract factor × (row k) from row i
-        - This makes A[i][k] = 0
-     e. Apply the same operation to b
-
-4. Back Substitution:
-   - Now A is upper triangular (all zeros below diagonal)
-   - Solve from the bottom up:
-     x[n-1] = b[n-1] / A[n-1][n-1]
-     x[n-2] = (b[n-2] - A[n-2][n-1]*x[n-1]) / A[n-2][n-2]
-     ...and so on upward
-
-5. Print solution
-6. Optionally save to file
-```
-
-**Why pivoting matters:**
-
-Without pivoting, if `A[k][k]` is zero or very small, dividing by it gives infinity or huge errors. Pivoting swaps in the largest available value, keeping the math stable.
-
-**Example with files:**
-```
-Enter choice: 5
-
-How do you want to input the system Ax = b?
-3. Load A from left file and b from right file
-Enter matrix (left) file: 49/49l.txt
-Enter RHS (right) file: 49/49r.txt
-Loaded 49x49 system
-
---- Solution ---
-x[0] = ...
-x[1] = ...
-...
-x[48] = ...
-
-Save solution to file? (1=yes, 0=no): 1
-Enter output filename: solution_49.txt
-Solution written to solution_49.txt
-```
-
-### Option 6: Gaussian Elimination WITHOUT Pivoting
-
-Same as option 5, but **skips the pivoting step**. It just uses whatever value is on the diagonal, even if it's zero.
-
-- If the diagonal value is zero → the program throws an error
-- If the diagonal value is very small → the solution will be inaccurate
-- **Only use this if your professor specifically asks for it**, to compare accuracy with vs without pivoting
-
-### Options 7, 8, 9: LU Decomposition
-
-**All implemented!** Doolittle, Crout, and Cholesky LU decomposition methods.
-
-Each decomposes A into L×U (or L×L^T for Cholesky), then solves via forward/back substitution. The solver returns a `SolverResult` containing the solution, iteration count, and verification error (max |L*U - A|).
-
-### Options 10-11: Iterative Solvers
-
-**Option 10 (Gauss-Jacobi):** Solves Ax = b using the Jacobi iterative method. Each x[i] is updated using values from the previous iteration only. Automatically checks and tries to fix diagonal dominance.
-
-**Option 11 (Gauss-Seidel):** Solves Ax = b using the Gauss-Seidel method. More efficient than Jacobi because it uses updated values as soon as they're computed. Also automatically checks and fixes diagonal dominance.
-
-**Both methods:**
-- Return a `SolverResult` with `{x, iterations, converged, error}`
-- Accept configurable `maxIter` and `tol` (defaults: 10000, 1e-10)
-- Work on copies of the matrix (original is never modified)
-- Print status messages (converged/diverged) from the UI layer, not from the solver itself
-
-**Important:** Both methods require the matrix to be diagonally dominant (or have spectral radius < 1) for convergence.
-
-### Options 12-25: Matrix Operations & Property Checks
-
-Transpose, scalar multiply, inverse, minor, cofactor, adjoint, and various property checks (square, symmetric, identity, null, diagonal, diagonally dominant, equality).
-
-### Option 26: Exit
-
-Prints `bye bye!` and quits.
-
----
-
-## Error Handling
-
-The program **never crashes**. Every operation is wrapped in a try-catch:
-
-```cpp
-try {
-    // do the operation
-} catch (MatrixException &e) {
-    e.printError();  // prints the error, goes back to the menu
-}
-```
-
-**Types of errors you might see:**
-
-| Error | When it happens |
-|-------|----------------|
-| `can't add these matrices... they don't even match bro 😂` | Addition/subtraction with different-sized matrices |
-| `matrix multiplication dimensions don't work... go back to math class 📐` | A.cols ≠ B.rows |
-| `determinant only works on square matrices... you knew that right? 🤔` | Non-square matrix for det |
-| `matrix is singular... it has no solution, just like my love life 💔` | Zero pivot during GE |
-| `can't open file 'xyz'... did you spell it right? 🤦` | File not found |
-| `zero pivot found without pivoting... shoulda used pivoting bro 😬` | Zero on diagonal in option 6 |
-
-After any error, the program goes right back to the menu — you don't need to restart.
-
----
-
-## How the Code is Organized
-
-### Project Structure
-
-```
-matrix_class/
-├── main.cpp                 ← entry point (just calls runMenu(), 6 lines)
-├── app/                     ← application layer (menu + routing)
-│   ├── Menu.hpp                 runMenu() declaration
-│   └── Menu.cpp                 all menu logic + handler functions
-├── include/                 ← core library (NO cin/cout, pure logic)
-│   ├── Matrix.hpp               base Matrix class (Rule of 5, const-correct)
-│   ├── SolverResult.hpp         return type for all solvers
-│   ├── MatrixException.hpp      error message class
-│   ├── SystemOfLinearEquationSolver.hpp  abstract base for solvers
-│   ├── GaussianElimination.hpp  GE class declaration
-│   ├── LUDecomposition.hpp      LU + Doolittle/Crout/Cholesky declarations
-│   ├── GaussJacobi.hpp          Gauss-Jacobi iterative solver
-│   └── GaussSeidel.hpp          Gauss-Seidel iterative solver
-├── src/                     ← core implementations (NO cin/cout)
-│   ├── Matrix.cpp               constructors, add/sub/mul, det, display
-│   ├── MatrixOperations.cpp     transpose, inverse, property checks
-│   ├── MatrixException.cpp      (empty — everything is in the header)
-│   ├── SystemOfLinearEquationSolver.cpp  base class + consolidated makeDiagDominant
-│   ├── GaussianElimination.cpp  solveWithPivoting / solveWithoutPivoting
-│   ├── LUDecomposition.cpp      base class constructors
-│   ├── Doolittle.cpp            Doolittle LU decomposition
-│   ├── Crout.cpp                Crout LU decomposition
-│   ├── Cholesky.cpp             Cholesky LU decomposition
-│   ├── GaussJacobi.cpp          Gauss-Jacobi iterative solver
-│   └── GaussSeidel.cpp          Gauss-Seidel with diagonal dominance fix
-├── cuda/                    ← GPU-accelerated implementations
-│   ├── include/gpu_backend.cuh  GPU function declarations
-│   └── src/gpu_kernels.cu       GPU kernels (Jacobi, Seidel, etc.)
-├── utils/                   ← I/O helpers (read/write only, no menus)
-│   ├── Input.hpp / Input.cpp    reading matrices from console or files
-│   └── Display.hpp / Display.cpp printing results, solver status, saving
-├── 49/                      ← test data (49×49 system)
-├── 225/                     ← test data (225×225 system)
-├── output/                  ← saved solution outputs
-├── Makefile                 ← build for CPU-only version (+ verify target)
-├── Makefile.lib             ← build as shared/static library
-├── verify.cpp               ← automated verification test suite
-├── README.md                ← this file
-├── ALGORITHMS.md            ← algorithm explanations
-└── CHANGELOG_2026-03-27.md  ← detailed refactoring changelog
-```
-
-### Class Hierarchy
-
-```
-Matrix                                ← base class (Rule of 5, const-correct)
-│  stores: data[][], rows, cols
-│  can do:  add, subtract, multiply, determinant, display (all const)
-│  can do:  transpose, inverse, cofactor, adjoint, minor (all const)
-│  checks:  isSquare, isSymmetric, isIdentity, isNull, isDiagonal (all const)
-│  checks:  isDiagonallyDominant, makeDiagonallyDominant
-│  move:    move constructor, move assignment (Rule of 5)
-│
-└── SystemOfLinearEquationSolver       ← inherits from Matrix
-    │    abstract base: solve(b, n, maxIter, tol) → SolverResult
-    │    shared: makeDiagDominant() → bool (consolidated helper)
-    │    shared: checkDiagDominant() → bool
-    │
-    ├── GaussianElimination            ← direct solver
-    │      solve() → SolverResult (converged=true, iterations=0)
-    │      solveWithPivoting(b, n) → double*
-    │      solveWithoutPivoting(b, n) → double*
-    │
-    ├── LUDecomposition                ← abstract base for LU methods
-    │   ├── Doolittle → SolverResult (error = max|L*U-A|)
-    │   ├── Crout → SolverResult (error = max|L*U-A|)
-    │   └── Cholesky → SolverResult (error = max|L*L^T-A|)
-    │
-    ├── GaussJacobi                    ← iterative (two-array, old values only)
-    │      solve() → SolverResult {x, iterations, converged, error, dominanceAchieved}
-    │
-    └── GaussSeidel                    ← iterative (in-place, newest values)
-           solve() → SolverResult {x, iterations, converged, error, dominanceAchieved}
-```
-
-**Why inheritance?** All these algorithms need a matrix to work on. Instead of copying the matrix storage code into every class, they all inherit from `Matrix`. This means `GaussianElimination` can use `data[i][j]`, `rows`, `cols`, `setData()`, etc. — all from the parent class.
-
-### How Data Flows Through the Program
-
-```
-User Input → main.cpp → getMatrixInput() → creates Matrix/GE object
-                              ↓
-             calls add/subtract/multiply/solve on the object
-                              ↓
-             prints result via display() or displaySolution()
-                              ↓
-             optionally saves via writeSolutionToFile()
-                              ↓
-             catches any MatrixException → prints error
-                              ↓
-             loops back to menu
-```
-
-### Memory Management
-
-The matrices use raw `double**` pointers (2D arrays on the heap):
-
-- **Constructor** allocates memory: `data = new double*[rows]`, then each `data[i] = new double[cols]`
-- **Destructor** frees it: loops through deleting each `data[i]`, then `delete[] data`
-- **Copy constructor** makes a deep copy (new memory, copies every element)
-- **Move constructor** steals the pointer (no copy, just takes ownership — Rule of 5)
-- **Move assignment** same as move constructor but for assignment
-- **copyFrom()** delegates to operator= (kept for backward compatibility)
-
-Solvers work on **copies** of the matrix data (original matrix is never modified). Caller must `delete[]` the solution vector from `SolverResult.x`.
-
----
-
-## What's Implemented vs What's Left
-
-| Feature | Status | File |
-|---------|--------|------|
-| Matrix storage & constructors | ✅ | `Matrix.cpp` |
-| Add / Subtract / Multiply | ✅ | `Matrix.cpp` |
-| Operator overloading (+, -, *, ==, <<, >>) | ✅ | `Matrix.cpp` |
-| Determinant | ✅ | `Matrix.cpp` |
-| Transpose / Inverse / Cofactor / Adjoint | ✅ | `MatrixOperations.cpp` |
-| Property checks (square, symmetric, etc.) | ✅ | `MatrixOperations.cpp` |
-| Diagonal dominance check & fix | ✅ | `MatrixOperations.cpp` |
-| GE with pivoting | ✅ | `GaussianElimination.cpp` |
-| GE without pivoting | ✅ | `GaussianElimination.cpp` |
-| Doolittle LU | ✅ | `Doolittle.cpp` |
-| Crout LU | ✅ | `Crout.cpp` |
-| Cholesky LU | ✅ | `Cholesky.cpp` |
-| Gauss-Jacobi (iterative) | ✅ | `GaussJacobi.cpp` |
-| Gauss-Seidel (iterative, with diag. dominance fix) | ✅ | `GaussSeidel.cpp` |
-| GPU kernels (Jacobi, Seidel, operations) | ✅ | `gpu_kernels.cu` |
-| Console input | ✅ | `Input.cpp` |
-| File input (matrix + RHS + augmented) | ✅ | `Input.cpp` |
-| Solution display & file save | ✅ | `Display.cpp` |
-| Error handling | ✅ | `MatrixException.hpp` |
+## Detailed README Index
+
+All detailed documentation is in the `Readme/` directory:
+
+| File | Contents |
+|------|----------|
+| `ALGORITHMS.md` | Step-by-step algorithm explanations for all solvers |
+| `BUILD.md` | Detailed build instructions and compiler flags |
+| `INTERPOLATION_README.md` | Interpolation module: Lagrange + composition design |
+| `LEAST_SQUARES_README.md` | Least squares: algorithms, Matrix usage, error analysis |
+| `MATRIX_CLASS_INTERNALS.md` | Deep dive into Matrix class internals |
+| `MATRIX_CLASS_README.md` | Matrix class overview and capabilities |
+| `MATRIX_FILES.md` | File format documentation |
+| `OOP_AND_CPP_DEEP_DIVE.md` | OOP concepts and C++ design patterns explained |
+| `UNDER_THE_HOOD.md` | How each algorithm works internally |
+| `LIBRARY_DEEP_DIVE.md` | Library architecture deep dive |
+| `LIBRARY_BUILD.md` | Building as a shared/static library |
+| `LIBRARY_USAGE.md` | Using the library in other projects |
+| `CUDA_README.md` | GPU acceleration documentation |
+| `TEST_CASES_README.md` | Test case descriptions |
+| `CHANGELOG_2026-03-27.md` | Major refactoring changelog |
+| `README_FULL.md` | Extended README with all options explained |

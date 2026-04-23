@@ -28,6 +28,8 @@ SRCS = main.cpp \
        src/GershgorinAnalyzer.cpp \
        src/Interpolation.cpp \
        src/Lagrange.cpp \
+       src/LeastSquareLine.cpp \
+       src/LeastSquareParabola.cpp \
        utils/Input.cpp \
        utils/Display.cpp \
        app/Menu.cpp

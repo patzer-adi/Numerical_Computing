@@ -1,433 +1,274 @@
-# How to Share and Use This Library
+# How to Use the Numerical Computing Library (`libnumcomp`)
 
-This guide explains how someone else can download your library, build it, and use it in their own C++ projects.
+This guide explains how to download, build, link, and use the unified numerical computing library in your own C++ projects. Works on **macOS** and **Linux** — the Makefile auto-detects your OS and builds the correct library format (`.dylib` on macOS, `.so` on Linux).
 
 ---
 
 ## Table of Contents
 
-1. [Sharing the Library (How to Give It to Someone)](#1-sharing-the-library)
-2. [What the Receiver Gets](#2-what-the-receiver-gets)
-3. [Quick Start — Build and Run the Menu Program](#3-quick-start--build-and-run-the-menu-program)
-4. [Using the Library in Your Own Code](#4-using-the-library-in-your-own-code)
-5. [What to Include and Why](#5-what-to-include-and-why)
-6. [Compiling Your Own Program — Manual Way](#6-compiling-your-own-program--manual-way)
-7. [Compiling Your Own Program — Makefile Way](#7-compiling-your-own-program--makefile-way)
-8. [Complete Example Programs](#8-complete-example-programs)
-9. [Common Mistakes and Fixes](#9-common-mistakes-and-fixes)
-10. [File-by-File Reference — What Each File Does](#10-file-by-file-reference)
+1. [What You Get](#1-what-you-get)
+2. [Requirements](#2-requirements)
+3. [Quick Start — Build Everything in 2 Commands](#3-quick-start)
+4. [Three Ways to Use the Library](#4-three-ways-to-use-the-library)
+   - [Way 1: Link Against the Dynamic Library (.dylib)](#way-1-dynamic-library-recommended)
+   - [Way 2: Link Against the Static Library (.a)](#way-2-static-library)
+   - [Way 3: Compile Source Files Directly](#way-3-compile-sources-directly)
+5. [The Unified Header — numcomp.hpp](#5-the-unified-header)
+6. [What to Include and Why](#6-what-to-include-and-why)
+7. [Complete Example Programs](#7-complete-example-programs)
+   - [Example 1: Matrix Operations](#example-1-matrix-operations)
+   - [Example 2: Solving Ax = b](#example-2-solving-ax--b)
+   - [Example 3: Complex Arithmetic](#example-3-complex-arithmetic)
+   - [Example 4: Root-Finding](#example-4-root-finding)
+   - [Example 5: Property Checks & Diagonal Dominance](#example-5-property-checks)
+   - [Example 6: File I/O & Stream Operators](#example-6-file-io)
+   - [Example 7: Error Handling](#example-7-error-handling)
+8. [Installing System-Wide](#8-installing-system-wide)
+9. [Sharing the Library](#9-sharing-the-library)
+10. [Common Mistakes and Fixes](#10-common-mistakes-and-fixes)
+11. [Full API Quick Reference](#11-full-api-quick-reference)
 
 ---
 
-## 1. Sharing the Library
+## 1. What You Get
 
-### Option A: GitHub (recommended)
+The `libnumcomp` library compiles **19 source files** from 3 modules into a single linkable library:
 
-Push to GitHub, then tell them:
-```bash
-git clone https://github.com/your-username/matrix_class.git
-cd matrix_class
-make cpu
-./matrix_program
-```
-
-### Option B: ZIP file
-
-Zip the folder and send it:
-```bash
-zip -r matrix_library.zip matrix_class/
-```
-
-They unzip and run:
-```bash
-unzip matrix_library.zip
-cd matrix_class
-make cpu
-./matrix_program
-```
-
-### Option C: Just the library files (no menu program)
-
-If someone only wants to use the library in their own code, they need these files:
-
-```
-MINIMUM files needed:
-├── include/                          ← ALL header files (required)
-│   ├── Matrix.hpp
-│   ├── MatrixException.hpp
-│   ├── SystemOfLinearEquationSolver.hpp
-│   ├── GaussianElimination.hpp
-│   ├── LUDecomposition.hpp
-│   └── GaussJacobi.hpp
-├── src/                              ← ALL source files (required)
-│   ├── Matrix.cpp
-│   ├── MatrixException.cpp
-│   ├── SystemOfLinearEquationSolver.cpp
-│   ├── GaussianElimination.cpp
-│   ├── LUDecomposition.cpp
-│   ├── Doolittle.cpp
-│   ├── Crout.cpp
-│   ├── Cholesky.cpp
-│   ├── GaussJacobi.cpp
-│   └── MatrixOperations.cpp
-└── utils/                            ← OPTIONAL (only for I/O helpers)
-    ├── Input.hpp / Input.cpp
-    └── Display.hpp / Display.cpp
-```
-
-They do NOT need: `main.cpp`, `cuda/`, `test_cases/`, `49/`, `225/`, `Makefile`, any `.o` files, or the documentation files.
-
----
-
-## 2. What the Receiver Gets
-
-When someone downloads or clones your project, here is every file and what it does:
-
-```
-matrix_class/
-│
-├── main.cpp                    ← THE menu-driven program (they can run this or ignore it)
-│
-├── include/                    ← HEADER FILES (class declarations)
-│   ├── Matrix.hpp                  base Matrix class: data storage, arithmetic, display
-│   ├── MatrixException.hpp         custom exception class with meme error messages
-│   ├── SystemOfLinearEquationSolver.hpp   abstract base: has virtual solve()
-│   ├── GaussianElimination.hpp     GE solver (with/without pivoting)
-│   ├── LUDecomposition.hpp         LU base + Doolittle + Crout + Cholesky classes
-│   └── GaussJacobi.hpp            iterative solver
-│
-├── src/                        ← SOURCE FILES (function implementations)
-│   ├── Matrix.cpp                  constructors, add/sub/mul, determinant, I/O
-│   ├── MatrixOperations.cpp        transpose, inverse, minor, cofactor, adjoint
-│   ├── MatrixException.cpp         exception constructor + printError()
-│   ├── SystemOfLinearEquationSolver.cpp   base class constructors
-│   ├── GaussianElimination.cpp     GE with/without pivoting
-│   ├── LUDecomposition.cpp         LU base constructors
-│   ├── Doolittle.cpp               Doolittle decomposition + L*U=A verification
-│   ├── Crout.cpp                   Crout decomposition + verification
-│   ├── Cholesky.cpp                Cholesky decomposition + verification
-│   └── GaussJacobi.cpp            Jacobi iteration
-│
-├── utils/                      ← UTILITY FUNCTIONS (optional helpers)
-│   ├── Input.hpp / Input.cpp       read matrices from console or file
-│   └── Display.hpp / Display.cpp   display solutions, save to file
-│
-├── cuda/                       ← GPU BACKEND (optional, needs NVIDIA GPU)
-│   ├── include/
-│   │   ├── gpu_backend.cuh         GPU function declarations
-│   │   └── gpu_dispatch.hpp        BackendDispatcher class
-│   └── src/
-│       ├── gpu_kernels.cu          CUDA kernels
-│       └── gpu_dispatch.cu         CPU/GPU decision logic
-│
-├── Makefile                    ← BUILD SCRIPT (type "make cpu" to build)
-├── 49/ , 225/                  ← TEST DATA (49×49 and 225×225 systems)
-├── test_cases/                 ← TEST GENERATOR (SageMath script)
-├── examples/                   ← EXAMPLE PROGRAMS (for learning how to use the library)
-│
-└── DOCUMENTATION:
-    ├── README.md               ← original readme
-    ├── README_FULL.md          ← complete library reference
-    ├── ALGORITHMS.md           ← how each algorithm works with examples
-    ├── CUDA_README.md          ← GPU backend deep dive
-    ├── UNDER_THE_HOOD.md       ← compiler/linker/loader internals
-    ├── LIBRARY_USAGE.md        ← THIS FILE — how to use in your own code
-    └── LICENSE                 ← MIT license
-```
-
----
-
-## 3. Quick Start — Build and Run the Menu Program
-
-```bash
-cd matrix_class
-make cpu
-./matrix_program
-```
-
-That's it. The menu program lets you try everything interactively.
-
----
-
-## 4. Using the Library in Your Own Code
-
-Say you want to write your OWN program that uses the Matrix library. Here's how.
-
-### Step 1: Create your file
-
-Create a file called `my_program.cpp` **inside the `matrix_class/` folder**:
-
-```cpp
-// my_program.cpp
-#include "include/Matrix.hpp"
-#include <iostream>
-using namespace std;
-
-int main() {
-    // create a 3x3 matrix
-    Matrix A(3, 3);
-    A.setData(0, 0, 1);  A.setData(0, 1, 2);  A.setData(0, 2, 3);
-    A.setData(1, 0, 4);  A.setData(1, 1, 5);  A.setData(1, 2, 6);
-    A.setData(2, 0, 7);  A.setData(2, 1, 8);  A.setData(2, 2, 9);
-
-    cout << "Matrix A:" << endl;
-    A.display();
-
-    cout << "\nTranspose:" << endl;
-    Matrix T = A.transpose();
-    T.display();
-
-    cout << "\nDeterminant = " << A.determinant() << endl;
-
-    return 0;
-}
-```
-
-### Step 2: Compile it
-
-You need to compile your file AND all the library source files, then link them:
-
-```bash
-g++ -std=c++11 -o my_program \
-    my_program.cpp \
-    src/Matrix.cpp \
-    src/MatrixException.cpp \
-    src/MatrixOperations.cpp
-```
-
-**Why those 3 files?** Because your code uses `Matrix`, which is implemented in `Matrix.cpp`. `Matrix.cpp` uses `MatrixException`, which is in `MatrixException.cpp`. `transpose()` is in `MatrixOperations.cpp`.
-
-### Step 3: Run it
-
-```bash
-./my_program
-```
-
-Output:
-```
-Matrix A:
-1.000000  2.000000  3.000000
-4.000000  5.000000  6.000000
-7.000000  8.000000  9.000000
-
-Transpose:
-1.000000  4.000000  7.000000
-2.000000  5.000000  8.000000
-3.000000  6.000000  9.000000
-
-Determinant = 0
-```
-
----
-
-## 5. What to Include and Why
-
-### Rule: Include the header for what you use
-
-| If you want to use... | Include this header | Also compile these .cpp files |
+| Module | Classes | What It Does |
 |---|---|---|
-| `Matrix` (add/sub/mul/det/display) | `include/Matrix.hpp` | `src/Matrix.cpp`, `src/MatrixException.cpp` |
-| `transpose`, `inverse`, `adjoint`... | `include/Matrix.hpp` | + `src/MatrixOperations.cpp` |
-| `GaussianElimination` | `include/GaussianElimination.hpp` | + `src/GaussianElimination.cpp`, `src/SystemOfLinearEquationSolver.cpp` |
-| `Doolittle`, `Crout`, `Cholesky` | `include/LUDecomposition.hpp` | + `src/LUDecomposition.cpp`, `src/Doolittle.cpp` (or `Crout.cpp` or `Cholesky.cpp`), `src/SystemOfLinearEquationSolver.cpp` |
-| `GaussJacobi` | `include/GaussJacobi.hpp` | + `src/GaussJacobi.cpp`, `src/SystemOfLinearEquationSolver.cpp` |
-| `getMatrixInput`, `getSystemInput` | `utils/Input.hpp` | + `utils/Input.cpp` |
-| `displaySolution`, `solveLU` | `utils/Display.hpp` | + `utils/Display.cpp` |
+| **Matrix** | `Matrix`, `GaussianElimination`, `Doolittle`, `Crout`, `Cholesky`, `GaussJacobi` | Matrix arithmetic, linear algebra, system-of-equation solvers |
+| **Root-Finding** | `Bisection`, `NewtonRaphson`, `FixedPoint` | Numerical root-finding algorithms |
+| **Complex** | `Complex` | Complex number arithmetic with operator overloading |
 
-### Why you need to compile the .cpp files too
+**Output files after building:**
 
-The `.hpp` files only contain **declarations** (telling the compiler "these functions exist"):
-```cpp
-// Matrix.hpp — declaration only
-class Matrix {
-    Matrix add(Matrix other);  // "this function exists" — but WHERE is the code?
-};
-```
+| File | Size | Description |
+|---|---|---|
+| `lib/libnumcomp.dylib` | ~180 KB | Dynamic shared library (**macOS**) |
+| `lib/libnumcomp.so` | ~180 KB | Dynamic shared library (**Linux**) |
+| `lib/libnumcomp.a` | ~534 KB | Static archive (**both platforms**) |
 
-The actual code is in the `.cpp` files:
-```cpp
-// Matrix.cpp — implementation
-Matrix Matrix::add(Matrix other) {
-    // ... 20 lines of actual code ...
-}
-```
-
-If you only include the `.hpp` but don't compile the `.cpp`, you get:
-```
-undefined reference to `Matrix::add(Matrix)'
-```
-This means: "I know the function exists (from the header) but I can't find the machine code for it (because you didn't compile the .cpp)."
+> Only one of `.dylib` / `.so` is built — whichever matches your OS.
 
 ---
 
-## 6. Compiling Your Own Program — Manual Way
+## 2. Requirements
 
-### Just Matrix operations (no solvers):
+- **C++ compiler** with C++11 support — GCC (`g++`) or Clang (`clang++`)
+- **GNU Make**
 
+**macOS:**
 ```bash
-g++ -std=c++11 -o my_program \
-    my_program.cpp \
-    src/Matrix.cpp \
-    src/MatrixException.cpp \
-    src/MatrixOperations.cpp
+xcode-select --install    # installs clang++ and make
 ```
 
-### Matrix + Gaussian Elimination:
-
+**Linux (Ubuntu/Debian):**
 ```bash
-g++ -std=c++11 -o my_program \
-    my_program.cpp \
-    src/Matrix.cpp \
-    src/MatrixException.cpp \
-    src/MatrixOperations.cpp \
-    src/SystemOfLinearEquationSolver.cpp \
-    src/GaussianElimination.cpp
+sudo apt install build-essential    # installs g++ and make
 ```
 
-### Everything (all solvers):
-
+**Linux (Fedora/RHEL):**
 ```bash
-g++ -std=c++11 -o my_program \
-    my_program.cpp \
-    src/Matrix.cpp \
-    src/MatrixException.cpp \
-    src/MatrixOperations.cpp \
-    src/SystemOfLinearEquationSolver.cpp \
-    src/GaussianElimination.cpp \
-    src/LUDecomposition.cpp \
-    src/Doolittle.cpp \
-    src/Crout.cpp \
-    src/Cholesky.cpp \
-    src/GaussJacobi.cpp
+sudo dnf groupinstall "Development Tools"
 ```
 
-### With the I/O utilities too:
+That's it. No external libraries, no package managers, no Python, no Java.
 
+**Check if you're ready:**
 ```bash
-g++ -std=c++11 -o my_program \
-    my_program.cpp \
-    src/Matrix.cpp \
-    src/MatrixException.cpp \
-    src/MatrixOperations.cpp \
-    src/SystemOfLinearEquationSolver.cpp \
-    src/GaussianElimination.cpp \
-    src/LUDecomposition.cpp \
-    src/Doolittle.cpp \
-    src/Crout.cpp \
-    src/Cholesky.cpp \
-    src/GaussJacobi.cpp \
-    utils/Input.cpp \
-    utils/Display.cpp
+g++ --version    # should print version info
+make --version   # should print GNU Make info
 ```
 
 ---
 
-## 7. Compiling Your Own Program — Makefile Way
+## 3. Quick Start
 
-Instead of typing that long command every time, create a `Makefile` for your project.
+```bash
+# 1. Get the code
+git clone <repo-url> Numerical_Computing
+cd Numerical_Computing
 
-### Simple Makefile (put this in the `matrix_class/` folder as `Makefile.user`):
+# 2. Build the library (auto-detects macOS/Linux)
+make all
 
-```makefile
-# Makefile.user — for building YOUR program against the matrix library
-
-CXX = g++
-CXXFLAGS = -std=c++11 -Wall
-
-# your source file
-USER_SRC = my_program.cpp
-
-# library source files (include ALL that you need)
-LIB_SRCS = src/Matrix.cpp \
-           src/MatrixException.cpp \
-           src/MatrixOperations.cpp \
-           src/SystemOfLinearEquationSolver.cpp \
-           src/GaussianElimination.cpp \
-           src/LUDecomposition.cpp \
-           src/Doolittle.cpp \
-           src/Crout.cpp \
-           src/Cholesky.cpp \
-           src/GaussJacobi.cpp
-
-# output binary name
-TARGET = my_program
-
-# build
-$(TARGET): $(USER_SRC) $(LIB_SRCS)
-	$(CXX) $(CXXFLAGS) -o $(TARGET) $(USER_SRC) $(LIB_SRCS)
-
-# clean
-clean:
-	rm -f $(TARGET)
+# 3. Build and run the example
+make example
+./examples/example_usage
 ```
 
-Then build with:
+That's it — three commands. You now have `lib/libnumcomp.dylib` and `lib/libnumcomp.a` ready to link against.
+
+---
+
+## 4. Three Ways to Use the Library
+
+### Way 1: Dynamic Library (recommended)
+
+Build the shared library once (`.dylib` on macOS, `.so` on Linux), then link any program against it:
+
 ```bash
-make -f Makefile.user
-./my_program
+# Step 1: Build the library (only need to do this once)
+make dylib    # produces .dylib on macOS, .so on Linux
+
+# Step 2: Write your code (my_app.cpp)
+# Step 3: Compile and link
+g++ -std=c++11 -I. my_app.cpp -Llib -lnumcomp -o my_app
+
+# Step 4: Run (library must be findable at runtime)
+./my_app
+```
+
+**When to use:** Your main use case. Fast compile times (only your code recompiles), small binary, easy to update the library without recompiling your app.
+
+**Runtime note:** The shared library must be findable when you run the program. The Makefile embeds an rpath for the example, but for your own programs, either:
+- Run from the `Numerical_Computing/` directory, or
+- Set the library path:
+  - **macOS:** `export DYLD_LIBRARY_PATH=./lib:$DYLD_LIBRARY_PATH`
+  - **Linux:** `export LD_LIBRARY_PATH=./lib:$LD_LIBRARY_PATH`
+- Install system-wide with `sudo make install` (runs `ldconfig` on Linux)
+
+---
+
+### Way 2: Static Library
+
+The entire library gets baked into your executable — no `.dylib`/`.so` needed at runtime:
+
+```bash
+# Build
+make static
+
+# Link
+g++ -std=c++11 -I. my_app.cpp lib/libnumcomp.a -o my_app
+
+# Run anywhere — no shared library files needed
+./my_app
+```
+
+**When to use:** When you want a self-contained binary that works without the library files present. Larger binary, but zero runtime dependencies. Works identically on macOS and Linux.
+
+---
+
+### Way 3: Compile Sources Directly
+
+No library build step needed — just compile your code alongside the source files:
+
+```bash
+g++ -std=c++11 \
+    -Imatrix_class -Iroot_finding_methods -IComplex_class_assignment \
+    my_app.cpp \
+    matrix_class/src/Matrix.cpp \
+    matrix_class/src/MatrixOperations.cpp \
+    matrix_class/src/MatrixException.cpp \
+    -o my_app
+```
+
+**When to use:** Quick one-off programs, or when you only need a few classes and don't want to build the full library. Just include the `.cpp` files you actually use.
+
+---
+
+## 5. The Unified Header
+
+Instead of remembering which headers to include, just use:
+
+```cpp
+#include "numcomp.hpp"    // includes EVERYTHING
+```
+
+This pulls in all classes from all 3 modules. It's defined at the repository root:
+
+```cpp
+// numcomp.hpp includes:
+// Matrix, MatrixException, GaussianElimination, Doolittle, Crout, Cholesky, GaussJacobi
+// RootHunter, Bisection, NewtonRaphson, FixedPoint
+// Complex
+```
+
+Or include only what you need:
+
+```cpp
+#include "matrix_class/include/Matrix.hpp"                    // Matrix only
+#include "matrix_class/include/GaussianElimination.hpp"       // + GE solver
+#include "matrix_class/include/LUDecomposition.hpp"           // + Doolittle/Crout/Cholesky
+#include "matrix_class/include/GaussJacobi.hpp"               // + iterative solver
+#include "root_finding_methods/include/Bisection.hpp"         // root-finding
+#include "Complex_class_assignment/complexClass_header.hpp"   // complex numbers
 ```
 
 ---
 
-## 8. Complete Example Programs
+## 6. What to Include and Why
 
-### Example 1: Basic Matrix Operations
+### When linking against the library (.dylib or .a)
+
+You just need the headers — the `.cpp` implementations are already compiled into the library:
 
 ```cpp
-// example_basic.cpp — basic matrix operations demo
-#include "include/Matrix.hpp"
+#include "numcomp.hpp"    // that's all you need
+```
+
+Compile with: `g++ -std=c++11 -I. my_app.cpp -Llib -lnumcomp -o my_app`
+
+### When compiling sources directly (Way 3)
+
+You need both the headers AND the corresponding `.cpp` files:
+
+| If you use... | Include this header | Also compile these `.cpp` files |
+|---|---|---|
+| `Matrix` (basic ops) | `matrix_class/include/Matrix.hpp` | `Matrix.cpp`, `MatrixException.cpp` |
+| `transpose`, `inverse`, `adjoint` | same | + `MatrixOperations.cpp` |
+| `GaussianElimination` | `matrix_class/include/GaussianElimination.hpp` | + `SystemOfLinearEquationSolver.cpp`, `GaussianElimination.cpp` |
+| `Doolittle` / `Crout` / `Cholesky` | `matrix_class/include/LUDecomposition.hpp` | + `LUDecomposition.cpp`, `Doolittle.cpp` (etc.) |
+| `GaussJacobi` | `matrix_class/include/GaussJacobi.hpp` | + `GaussJacobi.cpp` |
+| `Bisection` / `NewtonRaphson` / etc. | `root_finding_methods/include/Bisection.hpp` | All root-finding `.cpp` files |
+| `Complex` | `Complex_class_assignment/complexClass_header.hpp` | `complexClass.cpp` |
+
+---
+
+## 7. Complete Example Programs
+
+### Example 1: Matrix Operations
+
+```cpp
+// matrix_demo.cpp
+#include "numcomp.hpp"
 #include <iostream>
 using namespace std;
 
 int main() {
-    // === CREATE MATRICES ===
-    Matrix A(2, 2);
-    A.setData(0, 0, 1);  A.setData(0, 1, 2);
-    A.setData(1, 0, 3);  A.setData(1, 1, 4);
+    // Create matrices using operator() for element access
+    Matrix A(3, 3);
+    A(0,0) = 1;  A(0,1) = 2;  A(0,2) = 3;
+    A(1,0) = 4;  A(1,1) = 5;  A(1,2) = 6;
+    A(2,0) = 7;  A(2,1) = 8;  A(2,2) = 10;
 
-    Matrix B(2, 2);
-    B.setData(0, 0, 5);  B.setData(0, 1, 6);
-    B.setData(1, 0, 7);  B.setData(1, 1, 8);
+    // Print using stream operator (friend function)
+    cout << "Matrix A:" << endl << A;
 
-    // === ADDITION ===
-    cout << "A + B:" << endl;
-    Matrix C = A + B;
-    C.display();
-    // Output: 6 8 / 10 12
+    // Arithmetic via operator overloading
+    Matrix B = A.transpose();
+    Matrix C = A + B;              // addition
+    Matrix D = A - B;              // subtraction
+    Matrix E = A * B;              // matrix multiplication
+    Matrix S = A * 2.5;            // scalar multiplication
 
-    // === SUBTRACTION ===
-    cout << "\nA - B:" << endl;
-    Matrix D = A - B;
-    D.display();
-    // Output: -4 -4 / -4 -4
+    cout << "A + A^T:" << endl << C;
+    cout << "A * 2.5:" << endl << S;
 
-    // === MULTIPLICATION ===
-    cout << "\nA * B:" << endl;
-    Matrix E = A * B;
-    E.display();
-    // Output: 19 22 / 43 50
+    // Determinant and inverse
+    double det = A.determinant();
+    cout << "det(A) = " << det << endl;
 
-    // === SCALAR MULTIPLY ===
-    cout << "\nA * 3:" << endl;
-    Matrix F = A * 3.0;
-    F.display();
-    // Output: 3 6 / 9 12
-
-    // === TRANSPOSE ===
-    cout << "\nTranspose of A:" << endl;
-    Matrix T = A.transpose();
-    T.display();
-    // Output: 1 3 / 2 4
-
-    // === DETERMINANT ===
-    cout << "\ndet(A) = " << A.determinant() << endl;
-    // Output: -2
-
-    // === INVERSE ===
-    cout << "\nInverse of A:" << endl;
     Matrix inv = A.inverse();
-    inv.display();
-    // Output: -2 1 / 1.5 -0.5
+    cout << "Inverse:" << endl << inv;
+
+    // Verify: A * A⁻¹ should be identity
+    Matrix I = A * inv;
+    cout << "is A * A⁻¹ identity? " << (I.isIdentity() ? "YES" : "NO") << endl;
+
+    // Equality check (floating-point tolerant)
+    Matrix A_copy = A;
+    cout << "A == copy(A)? " << (A == A_copy ? "YES" : "NO") << endl;
 
     return 0;
 }
@@ -435,353 +276,503 @@ int main() {
 
 **Compile:**
 ```bash
-g++ -std=c++11 -o example_basic example_basic.cpp \
-    src/Matrix.cpp src/MatrixException.cpp src/MatrixOperations.cpp
+g++ -std=c++11 -I. matrix_demo.cpp -Llib -lnumcomp -o matrix_demo
+./matrix_demo
 ```
 
 ---
 
-### Example 2: Solving a System with Gaussian Elimination
+### Example 2: Solving Ax = b
 
 ```cpp
-// example_gauss.cpp — solve Ax = b using Gaussian Elimination
-#include "include/GaussianElimination.hpp"
+// solver_demo.cpp
+#include "numcomp.hpp"
 #include <iostream>
 using namespace std;
 
 int main() {
-    // System:
-    //  2x + y - z  =  8
-    // -3x - y + 2z = -11
-    // -2x + y + 2z = -3
+    // System: 2x + y - z = 8,  -3x - y + 2z = -11,  -2x + y + 2z = -3
 
+    // --- Method 1: Gaussian Elimination with pivoting ---
     GaussianElimination ge;
-
-    // set up the 3x3 coefficient matrix A
-    ge.setRows(3);
-    ge.setCols(3);
-    // allocate and fill data manually
-    double **data = new double*[3];
-    for (int i = 0; i < 3; i++)
-        data[i] = new double[3];
-
-    data[0][0] = 2;  data[0][1] = 1;  data[0][2] = -1;
-    data[1][0] = -3; data[1][1] = -1; data[1][2] = 2;
-    data[2][0] = -2; data[2][1] = 1;  data[2][2] = 2;
-
-    // use readFromConsole or readFromFile instead for real use
-    // but for this example we'll use the internal copy method
-    Matrix temp(3, 3);
-    for (int i = 0; i < 3; i++)
-        for (int j = 0; j < 3; j++)
-            temp.setData(i, j, data[i][j]);
-    ge.copyFrom(temp);
-
-    // RHS vector b
-    double b[] = {8, -11, -3};
-
-    // solve!
-    double *x = ge.solve(b, 3);
-
-    // print solution
-    cout << "Solution:" << endl;
-    for (int i = 0; i < 3; i++)
-        cout << "x[" << i << "] = " << x[i] << endl;
-    // Expected: x = 2, y = 3, z = -1
-
-    // cleanup
-    delete[] x;
-    for (int i = 0; i < 3; i++)
-        delete[] data[i];
-    delete[] data;
-
-    return 0;
-}
-```
-
-**Compile:**
-```bash
-g++ -std=c++11 -o example_gauss example_gauss.cpp \
-    src/Matrix.cpp src/MatrixException.cpp src/MatrixOperations.cpp \
-    src/SystemOfLinearEquationSolver.cpp src/GaussianElimination.cpp
-```
-
----
-
-### Example 3: Solving with Doolittle LU (with verification)
-
-```cpp
-// example_lu.cpp — solve Ax = b using LU Doolittle with verification
-#include "include/LUDecomposition.hpp"
-#include <iostream>
-using namespace std;
-
-int main() {
-    // same system as above but using LU
-    Doolittle solver;
-
-    Matrix temp(3, 3);
-    temp.setData(0, 0, 2);  temp.setData(0, 1, 1);  temp.setData(0, 2, -1);
-    temp.setData(1, 0, -3); temp.setData(1, 1, -1); temp.setData(1, 2, 2);
-    temp.setData(2, 0, -2); temp.setData(2, 1, 1);  temp.setData(2, 2, 2);
-    solver.copyFrom(temp);
+    Matrix A(3, 3);
+    A(0,0)=2; A(0,1)=1; A(0,2)=-1;
+    A(1,0)=-3; A(1,1)=-1; A(1,2)=2;
+    A(2,0)=-2; A(2,1)=1; A(2,2)=2;
+    ge.copyFrom(A);
 
     double b[] = {8, -11, -3};
+    double *x = ge.solveWithPivoting(b, 3);
 
-    // this will print "Doolittle LU verification PASSED ✅" automatically
-    double *x = solver.solve(b, 3);
-
-    cout << "Solution:" << endl;
+    cout << "--- Gaussian Elimination ---" << endl;
     for (int i = 0; i < 3; i++)
         cout << "x[" << i << "] = " << x[i] << endl;
-
+    // Expected: x=2, y=3, z=-1
     delete[] x;
-    return 0;
-}
-```
 
-**Compile:**
-```bash
-g++ -std=c++11 -o example_lu example_lu.cpp \
-    src/Matrix.cpp src/MatrixException.cpp src/MatrixOperations.cpp \
-    src/SystemOfLinearEquationSolver.cpp src/LUDecomposition.cpp src/Doolittle.cpp
-```
+    // --- Method 2: Doolittle LU ---
+    Doolittle d;
+    d.copyFrom(A);
+    double b2[] = {8, -11, -3};
+    x = d.solve(b2, 3);  // prints verification automatically
 
----
+    cout << "\n--- Doolittle LU ---" << endl;
+    for (int i = 0; i < 3; i++)
+        cout << "x[" << i << "] = " << x[i] << endl;
+    delete[] x;
 
-### Example 4: Loading from File (like the 49×49 test)
-
-```cpp
-// example_file.cpp — load a system from files and solve
-#include "include/LUDecomposition.hpp"
-#include "utils/Input.hpp"
-#include "utils/Display.hpp"
-#include <iostream>
-using namespace std;
-
-int main() {
+    // --- Method 3: Load from file ---
     Doolittle solver;
-    double *b = NULL;
-    int n = 0;
-
-    // load from files (same as menu option 3)
-    getSystemInput(solver, b, n);
-
-    // solve
-    double *x = solver.solve(b, n);
-
-    // display
-    displaySolution(x, n);
-
-    // save
-    saveSolution(x, n, "my_solution.txt");
-
-    // cleanup
-    delete[] x;
-    delete[] b;
+    solver.readFromFile("matrix_class/49/49l.txt");  // 49×49 system
+    // load b from file, solve, etc.
 
     return 0;
 }
 ```
 
-**Compile (needs everything including utils):**
-```bash
-g++ -std=c++11 -o example_file example_file.cpp \
-    src/Matrix.cpp src/MatrixException.cpp src/MatrixOperations.cpp \
-    src/SystemOfLinearEquationSolver.cpp src/LUDecomposition.cpp src/Doolittle.cpp \
-    utils/Input.cpp utils/Display.cpp
-```
-
 ---
 
-### Example 5: Error Handling
+### Example 3: Complex Arithmetic
 
 ```cpp
-// example_errors.cpp — showing how errors work
-#include "include/Matrix.hpp"
-#include "include/LUDecomposition.hpp"
+// complex_demo.cpp
+#include "numcomp.hpp"
 #include <iostream>
 using namespace std;
 
 int main() {
-    // --- Error 1: dimension mismatch ---
+    Complex a(3.0, 4.0);    // 3 + 4i
+    Complex b(1.0, -2.0);   // 1 - 2i
+
+    cout << "a = "; a.display();
+    cout << "b = "; b.display();
+
+    // Arithmetic (both methods and operators work)
+    Complex sum  = a + b;     //  4 + 2i
+    Complex diff = a - b;     //  2 + 6i
+    Complex prod = a * b;     // 11 - 2i
+    Complex quot = a / b;     // -1 + 2i
+    Complex conj = a.conjugate();  // 3 - 4i
+    float   norm = a.Norm();       // 5.0
+
+    cout << "\na + b = "; sum.display();
+    cout << "a - b = "; diff.display();
+    cout << "a * b = "; prod.display();
+    cout << "a / b = "; quot.display();
+    cout << "conj(a) = "; conj.display();
+    cout << "|a| = " << norm << endl;
+
+    return 0;
+}
+```
+
+---
+
+### Example 4: Root-Finding
+
+```cpp
+// root_demo.cpp
+#include "numcomp.hpp"
+#include <iostream>
+using namespace std;
+
+int main() {
+    // Note: f(x) = x³ - 2x - 5 is hardcoded in the library
+    // To change the function, edit root_finding_methods/src/RootHunter.cpp
+
+    // --- Bisection Method ---
+    Bisection bis(1e-6);
+    bis.input();    // prompts: start value, step size, max steps
+    bis.solve();
+    cout << "Bisection root: " << bis.getRoot()
+         << " (iterations: " << bis.getIterations() << ")" << endl;
+
+    // --- Newton-Raphson ---
+    NewtonRaphson nr(1e-6);
+    nr.input();     // prompts: initial guess
+    nr.solve();
+    cout << "Newton-Raphson root: " << nr.getRoot()
+         << " (iterations: " << nr.getIterations() << ")" << endl;
+
+    // --- Fixed Point ---
+    FixedPoint fp(1e-6);
+    fp.input();     // prompts: initial guess
+    fp.solve();
+    cout << "Fixed Point root: " << fp.getRoot()
+         << " (iterations: " << fp.getIterations() << ")" << endl;
+
+    return 0;
+}
+```
+
+> **Important:** The target function `f(x)`, derivative `df(x)`, and transformation `g(x)` are **hardcoded** in `root_finding_methods/src/RootHunter.cpp`. To solve a different equation, edit those functions and rebuild with `make dylib`.
+
+---
+
+### Example 5: Property Checks
+
+```cpp
+// property_demo.cpp
+#include "numcomp.hpp"
+#include <iostream>
+using namespace std;
+
+int main() {
+    Matrix A(3, 3);
+    A(0,0)=10; A(0,1)=1; A(0,2)=2;
+    A(1,0)=3;  A(1,1)=8; A(1,2)=1;
+    A(2,0)=1;  A(2,1)=2; A(2,2)=7;
+
+    cout << "Matrix A:" << endl << A;
+
+    // Check all properties
+    cout << "isSquare?              " << (A.isSquare() ? "YES" : "NO") << endl;
+    cout << "isSymmetric?           " << (A.isSymmetric() ? "YES" : "NO") << endl;
+    cout << "isIdentity?            " << (A.isIdentity() ? "YES" : "NO") << endl;
+    cout << "isNull?                " << (A.isNull() ? "YES" : "NO") << endl;
+    cout << "isDiagonal?            " << (A.isDiagonal() ? "YES" : "NO") << endl;
+    cout << "isDiagonallyDominant?  " << (A.isDiagonallyDominant() ? "YES" : "NO") << endl;
+
+    // Try to make a matrix diagonally dominant
+    Matrix B(3, 3);
+    B(0,0)=1; B(0,1)=5; B(0,2)=2;
+    B(1,0)=3; B(1,1)=2; B(1,2)=6;
+    B(2,0)=7; B(2,1)=1; B(2,2)=3;
+
+    cout << "\nOriginal B:" << endl << B;
+    Matrix D = B.makeDiagonallyDominant();  // rearranges rows
+    cout << "After makeDiagonallyDominant:" << endl << D;
+
+    return 0;
+}
+```
+
+---
+
+### Example 6: File I/O
+
+```cpp
+// file_demo.cpp
+#include "numcomp.hpp"
+#include <iostream>
+using namespace std;
+
+int main() {
+    // Read a matrix from file
+    Matrix A("matrix_class/49/49l.txt");
+    cout << "Loaded " << A.getRows() << "x" << A.getCols() << " matrix" << endl;
+
+    // Also works via stream operator
+    Matrix B;
+    cin >> B;    // prompts: rows, cols, then elements row by row
+    cout << "\nYou entered:" << endl << B;
+
+    // Save to file
+    A.saveToFile("output_matrix.txt");
+
+    return 0;
+}
+```
+
+---
+
+### Example 7: Error Handling
+
+```cpp
+// error_demo.cpp
+#include "numcomp.hpp"
+#include <iostream>
+using namespace std;
+
+int main() {
+    // All errors are caught via MatrixException — the program won't crash
+
+    // Dimension mismatch
     try {
         Matrix A(2, 3);
         Matrix B(4, 5);
-        Matrix C = A + B;    // BOOM — dimensions don't match
+        Matrix C = A + B;    // BOOM
     } catch (MatrixException &e) {
         e.printError();
-        // prints: "can't add these matrices... they don't even match bro"
+        // "can't add these matrices... they don't even match bro"
     }
 
-    // --- Error 2: singular inverse ---
+    // Singular inverse
     try {
         Matrix A(2, 2);
-        A.setData(0, 0, 1); A.setData(0, 1, 2);
-        A.setData(1, 0, 2); A.setData(1, 1, 4);  // det = 0!
+        A(0,0)=1; A(0,1)=2; A(1,0)=2; A(1,1)=4;  // det = 0
         Matrix inv = A.inverse();
     } catch (MatrixException &e) {
         e.printError();
-        // prints: "matrix is singular... inverse doesn't exist, just like my social life"
+        // "matrix is singular (det = 0)... inverse doesn't exist"
     }
 
-    // --- Error 3: Cholesky on non-symmetric ---
+    // Out of bounds
     try {
-        Cholesky ch;
-        Matrix temp(2, 2);
-        temp.setData(0, 0, 1); temp.setData(0, 1, 2);
-        temp.setData(1, 0, 3); temp.setData(1, 1, 4);  // NOT symmetric
-        ch.copyFrom(temp);
-
-        double b[] = {1, 2};
-        double *x = ch.solve(b, 2);
+        Matrix A(2, 2);
+        double x = A(5, 5);  // doesn't exist
     } catch (MatrixException &e) {
         e.printError();
-        // prints: "matrix is not symmetric..."
+        // "bruh you went out of bounds with ()..."
     }
 
-    cout << "\nAll errors handled gracefully!" << endl;
+    cout << "\nAll errors handled — program kept running!" << endl;
     return 0;
 }
 ```
 
 ---
 
-## 9. Common Mistakes and Fixes
+## 8. Installing System-Wide
 
-### Mistake 1: "undefined reference to Matrix::transpose()"
+To use the library from anywhere on your system (without `-I` and `-L` flags):
 
-**Cause:** You forgot to compile `MatrixOperations.cpp`.
-
-**Fix:** Add `src/MatrixOperations.cpp` to your compile command:
 ```bash
-g++ ... src/MatrixOperations.cpp ...
+# Install
+sudo make install
+
+# Linux only — update the linker cache:
+sudo ldconfig
+
+# Now compile from anywhere:
+g++ -std=c++11 -I/usr/local/include/numcomp my_app.cpp -lnumcomp -o my_app
 ```
 
-### Mistake 2: "undefined reference to MatrixException::MatrixException..."
-
-**Cause:** You forgot to compile `MatrixException.cpp`.
-
-**Fix:** Always include `src/MatrixException.cpp` — almost everything needs it.
-
-### Mistake 3: "undefined reference to SystemOfLinearEquationSolver::..."
-
-**Cause:** You're using a solver but forgot `SystemOfLinearEquationSolver.cpp`.
-
-**Fix:** Any solver (GE, LU, GJ) needs:
-```bash
-src/SystemOfLinearEquationSolver.cpp
+Headers are installed to:
+```
+/usr/local/include/numcomp/
+├── matrix/          ← Matrix.hpp, GaussianElimination.hpp, etc.
+├── rootfinding/     ← RootHunter.hpp, Bisection.hpp, etc.
+├── complex/         ← complexClass_header.hpp
+└── numcomp.hpp      ← unified header
 ```
 
-### Mistake 4: "No such file or directory: include/Matrix.hpp"
-
-**Cause:** You're running the compile command from the wrong directory.
-
-**Fix:** `cd` into the `matrix_class/` folder first:
+To remove:
 ```bash
-cd matrix_class
-g++ -std=c++11 -o my_program my_program.cpp src/Matrix.cpp ...
+sudo make uninstall
 ```
 
-### Mistake 5: "multiple definition of Matrix::add()"
+---
 
-**Cause:** You included a `.cpp` file with `#include` instead of the `.hpp`:
+## 9. Sharing the Library
+
+### Option A: GitHub (recommended)
+
+```bash
+git clone <your-repo-url>
+cd Numerical_Computing
+make all
+make example
+./examples/example_usage
+```
+
+### Option B: ZIP the whole thing
+
+```bash
+zip -r numerical_computing_library.zip Numerical_Computing/
+```
+
+They unzip, run `make all`, done.
+
+### Option C: Pre-built library only
+
+Ship just the built library + headers. They need:
+
+```
+MINIMUM files someone needs to use the library:
+├── lib/
+│   └── libnumcomp.dylib (or .a)
+├── matrix_class/include/       ← all .hpp files
+├── root_finding_methods/include/
+├── Complex_class_assignment/complexClass_header.hpp
+└── numcomp.hpp
+```
+
+---
+
+## 10. Common Mistakes and Fixes
+
+### "undefined reference to Matrix::transpose()"
+
+**Cause:** Not linking against the library.
+
+**Fix:**
+```bash
+# Add -Llib -lnumcomp
+g++ -std=c++11 -I. my_app.cpp -Llib -lnumcomp -o my_app
+```
+
+### "dyld: Library not loaded" (macOS) or "cannot open shared object file" (Linux)
+
+**Cause:** OS can't find the shared library at runtime.
+
+**Fix (pick one):**
+```bash
+# Option 1: Set the library path
+# macOS:
+export DYLD_LIBRARY_PATH=$(pwd)/lib:$DYLD_LIBRARY_PATH
+# Linux:
+export LD_LIBRARY_PATH=$(pwd)/lib:$LD_LIBRARY_PATH
+
+./my_app
+
+# Option 2: Install system-wide
+sudo make install
+# Linux only: sudo ldconfig
+./my_app
+
+# Option 3: Use the static library instead (no runtime dependency, works on both platforms)
+g++ -std=c++11 -I. my_app.cpp lib/libnumcomp.a -o my_app
+```
+
+### "No such file or directory: numcomp.hpp"
+
+**Cause:** Compiling from the wrong directory.
+
+**Fix:** Either `cd` into `Numerical_Computing/` first, or use `-I/path/to/Numerical_Computing`:
+```bash
+g++ -std=c++11 -I/path/to/Numerical_Computing my_app.cpp -L/path/to/Numerical_Computing/lib -lnumcomp -o my_app
+```
+
+### "multiple definition of ..."
+
+**Cause:** You `#include`d a `.cpp` file instead of a `.hpp` file.
+
+**Fix:**
 ```cpp
-#include "src/Matrix.cpp"    // WRONG — never include .cpp files!
-#include "include/Matrix.hpp" // CORRECT
+#include "numcomp.hpp"                    // ✅ CORRECT
+// #include "matrix_class/src/Matrix.cpp" // ❌ NEVER do this
 ```
 
-### Mistake 6: Segfault when using solver
+### Segfault when calling solve()
 
-**Cause:** You forgot to set up the matrix data before calling `solve()`.
+**Cause:** You didn't load data into the solver before calling `solve()`.
 
-**Fix:** Either `readFromFile()` or `copyFrom()` before solving:
+**Fix:** Always `readFromFile()` or `copyFrom()` first:
 ```cpp
 Doolittle d;
-// d.solve(b, n);          ← CRASH! data is NULL
-d.readFromFile("matrix.txt"); // or d.copyFrom(someMatrix);
-double *x = d.solve(b, n);   // now it works
+// d.solve(b, n);              // ❌ crash — data is NULL
+d.readFromFile("data.txt");    // ✅ load data first
+double *x = d.solve(b, n);     // ✅ now it works
 ```
 
 ---
 
-## 10. File-by-File Reference
+## 11. Full API Quick Reference
 
-### Header files (what they declare)
+### Matrix
 
-| File | Classes / Functions Declared |
-|---|---|
-| `Matrix.hpp` | `Matrix` — constructors, add, subtract, multiply, operator+/-/*, determinant, transpose, inverse, minorMatrix, cofactor, adjoint, isSymmetric, display, readFromFile, saveToFile, setData, getData |
-| `MatrixException.hpp` | `MatrixException` — constructor(string), printError() |
-| `SystemOfLinearEquationSolver.hpp` | `SystemOfLinearEquationSolver` — abstract class, pure virtual solve() |
-| `GaussianElimination.hpp` | `GaussianElimination` — solve(), solveWithPivoting(), solveWithoutPivoting() |
-| `LUDecomposition.hpp` | `LUDecomposition` (abstract), `Doolittle`, `Crout`, `Cholesky` — each has solve() |
-| `GaussJacobi.hpp` | `GaussJacobi` — solve() with max iterations and tolerance |
-| `utils/Input.hpp` | `getMatrixInput()`, `getSystemInput()` — console/file I/O |
-| `utils/Display.hpp` | `displaySolution()`, `saveSolution()`, `solveGaussian()`, `solveLU()`, `solveIterative()` |
+```cpp
+// Construction
+Matrix()                        // empty
+Matrix(int r, int c)           // r×c zeros
+Matrix(string filename)        // from file
+Matrix(const Matrix &other)    // copy
 
-### Source files (what they implement)
+// Element access
+A(i, j)                        // read/write via operator()
+A.getData(i, j)                // read
+A.setData(i, j, val)           // write
 
-| File | Functions Implemented |
-|---|---|
-| `src/Matrix.cpp` | All Matrix constructors, destructor, operator=, add/subtract/multiply, operator+/-/*(Matrix), determinant, isSymmetric, readFromConsole, readFromFile, saveToFile, display, getRowPointer, copyFrom |
-| `src/MatrixOperations.cpp` | operator*(double scalar), transpose(), minorMatrix(), cofactor(), adjoint(), inverse() |
-| `src/MatrixException.cpp` | MatrixException constructor, printError() |
-| `src/SystemOfLinearEquationSolver.cpp` | SLE constructors |
-| `src/GaussianElimination.cpp` | solve(), solveWithPivoting(), solveWithoutPivoting() |
-| `src/LUDecomposition.cpp` | LU base constructors |
-| `src/Doolittle.cpp` | Doolittle::solve() with L*U=A verification |
-| `src/Crout.cpp` | Crout::solve() with L*U=A verification |
-| `src/Cholesky.cpp` | Cholesky::solve() with L*L^T=A verification + symmetry check |
-| `src/GaussJacobi.cpp` | GaussJacobi::solve() with convergence check |
-| `utils/Input.cpp` | All I/O input functions |
-| `utils/Display.cpp` | All display/save/workflow functions |
+// Arithmetic
+A + B, A - B, A * B            // operator overloading
+A * 2.5                        // scalar multiply
 
-### Dependency chain (what needs what)
+// Linear algebra
+A.transpose()
+A.determinant()
+A.inverse()
+A.adjoint()
+A.cofactor(r, c)
+A.minorMatrix(r, c)
 
+// Properties
+A.isSquare()
+A.isSymmetric()
+A.isIdentity()
+A.isNull()
+A.isDiagonal()
+A.isDiagonallyDominant()
+A.makeDiagonallyDominant()
+
+// I/O
+cout << A                      // stream output
+cin >> A                       // stream input
+A.readFromFile("file.txt")
+A.saveToFile("file.txt")
+A.display()
+
+// Comparison
+A == B                         // with floating-point tolerance
+
+// Assignment
+A = B                          // deep copy
 ```
-If you use...          You MUST compile...
-─────────────────────────────────────────────────
-Matrix                 Matrix.cpp, MatrixException.cpp
- + operations          + MatrixOperations.cpp
- + GE                  + SystemOfLinearEquationSolver.cpp, GaussianElimination.cpp
- + Doolittle           + SystemOfLinearEquationSolver.cpp, LUDecomposition.cpp, Doolittle.cpp
- + Crout               + SystemOfLinearEquationSolver.cpp, LUDecomposition.cpp, Crout.cpp
- + Cholesky            + SystemOfLinearEquationSolver.cpp, LUDecomposition.cpp, Cholesky.cpp
- + GaussJacobi         + SystemOfLinearEquationSolver.cpp, GaussJacobi.cpp
- + file I/O            + utils/Input.cpp
- + display/save        + utils/Display.cpp
+
+### Solvers
+
+```cpp
+// All solvers share this interface:
+double* solve(double *b, int n);
+
+// GaussianElimination also has:
+double* solveWithPivoting(double *b, int n);
+double* solveWithoutPivoting(double *b, int n);
+```
+
+### Root-Finding
+
+```cpp
+// All methods share this interface:
+void input();                  // interactive parameter input
+void solve();                  // run the algorithm
+double getRoot();
+int getIterations();
+```
+
+### Complex
+
+```cpp
+Complex(float r, float i)
+c1 + c2, c1 - c2, c1 * c2, c1 / c2
+c.conjugate()
+c.Norm()
+c.getReal(), c.getImag()
+c.display()
 ```
 
 ---
 
-## TL;DR for Someone Who Just Wants to Use It
+## TL;DR
 
 ```bash
-# 1. get the library
-git clone <url>
-cd matrix_class
+# Build
+cd Numerical_Computing
+make all
 
-# 2. write your code
-cat > my_code.cpp << 'EOF'
-#include "include/Matrix.hpp"
+# Use in your code
+cat > my_app.cpp << 'EOF'
+#include "numcomp.hpp"
 #include <iostream>
 using namespace std;
 int main() {
     Matrix A(2, 2);
-    A.setData(0,0,1); A.setData(0,1,2);
-    A.setData(1,0,3); A.setData(1,1,4);
-    A.display();
+    A(0,0)=1; A(0,1)=2; A(1,0)=3; A(1,1)=4;
+    cout << A;
     cout << "det = " << A.determinant() << endl;
+    Complex c(3, 4);
+    cout << "|c| = " << c.Norm() << endl;
     return 0;
 }
 EOF
 
-# 3. compile
-g++ -std=c++11 -o my_code my_code.cpp src/Matrix.cpp src/MatrixException.cpp src/MatrixOperations.cpp
-
-# 4. run
-./my_code
+# Compile and run
+g++ -std=c++11 -I. my_app.cpp -Llib -lnumcomp -o my_app
+./my_app
 ```
 
-Done. That's it. Three commands.
+Four commands, you're done.
+
+---
+
+**License:** MIT © 2025-2026 Aditya Gowari

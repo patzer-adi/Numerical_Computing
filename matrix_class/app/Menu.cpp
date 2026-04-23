@@ -4,6 +4,8 @@
 #include "../include/GaussSeidel.hpp"
 #include "../include/GaussianElimination.hpp"
 #include "../include/Lagrange.hpp"
+#include "../include/LeastSquareLine.hpp"
+#include "../include/LeastSquareParabola.hpp"
 #include "../include/LUDecomposition.hpp"
 #include "../include/Matrix.hpp"
 #include "../utils/Display.hpp"
@@ -272,6 +274,16 @@ static void handleLagrange() {
   solveInterpolation(lag, "Lagrange Interpolation");
 }
 
+static void handleLeastSquareLine() {
+  LeastSquareLine lsl;
+  solveInterpolation(lsl, "Least Squares Line Fit");
+}
+
+static void handleLeastSquareParabola() {
+  LeastSquareParabola lsp;
+  solveInterpolation(lsp, "Least Squares Parabola Fit");
+}
+
 // === Main menu loop ===
 
 void runMenu() {
@@ -317,7 +329,9 @@ void runMenu() {
     cout << "25. Check Equality (A == B)" << endl;
     cout << "26. Gershgorin Eigenvalue Analysis" << endl;
     cout << "27. Lagrange Interpolation" << endl;
-    cout << "28. Exit" << endl;
+    cout << "28. Least Squares Line Fit" << endl;
+    cout << "29. Least Squares Parabola Fit" << endl;
+    cout << "30. Exit" << endl;
     cout << "Enter choice: ";
     cin >> choice;
 
@@ -350,7 +364,9 @@ void runMenu() {
       case 25: handleEquality(); break;
       case 26: handleGershgorin(); break;
       case 27: handleLagrange(); break;
-      case 28:
+      case 28: handleLeastSquareLine(); break;
+      case 29: handleLeastSquareParabola(); break;
+      case 30:
         cout << "\nbye bye!" << endl;
         running = false;
         break;

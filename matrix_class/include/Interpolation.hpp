@@ -18,7 +18,7 @@ public:
   // constructors
   Interpolation();
   Interpolation(const Matrix &x, const Matrix &y);
-  virtual ~Interpolation();
+  virtual ~Interpolation() = default;
 
   // load data points from Matrix objects
   void loadData(const Matrix &x, const Matrix &y);
@@ -27,10 +27,20 @@ public:
   int getNumPoints() const;
   double getX(int i) const;
   double getY(int i) const;
+  bool hasData() const;
 
-  // pure virtual — evaluate the interpolation polynomial at a single x
-  // each derived class (Lagrange, etc.) implements this
-  virtual double evaluate(double x) = 0;
+  // pure virtual — evaluate the interpolation/fitted curve at a single x
+  // each derived class (Lagrange, LeastSquareLine, etc.) implements this
+  virtual double evaluate(double x) const = 0;
+
+  // print fitting info (equation, coefficients) — no-op by default
+  // overridden by curve fitting classes (LeastSquareLine, LeastSquareParabola)
+  virtual void printFitInfo();
+
+  // error analysis — no-op by default, overridden by curve fitting classes
+  virtual bool hasErrorAnalysis() const;
+  virtual void printErrorTable() const;
+  virtual void saveErrorTable(string filename) const;
 
   // interpolate over the full range [xMin, xMax] with given sample count
   void interpolate(int samples, bool saveToFile, string filename);

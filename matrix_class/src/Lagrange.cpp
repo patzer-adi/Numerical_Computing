@@ -1,4 +1,5 @@
 #include "../include/Lagrange.hpp"
+#include <cmath>
 using namespace std;
 
 // default constructor
@@ -13,18 +14,31 @@ Lagrange::Lagrange(const Matrix &x, const Matrix &y) : Interpolation(x, y) {}
 //   P(x) = sum_{i=0}^{n-1} y_i * L_i(x)
 //   L_i(x) = product_{j=0, j!=i}^{n-1} (x - x_j) / (x_i - x_j)
 //
-double Lagrange::evaluate(double x) {
+double Lagrange::evaluate(double x) const {
+  // check for duplicate x values — would cause division by zero
+  for (int i = 0; i < numPoints; i++) {
+    for (int j = i + 1; j < numPoints; j++) {
+      if (fabs(getX(i) - getX(j)) < 1e-10)
+        throw MatrixException(
+            "duplicate x values found... Lagrange can't handle that "
+            "(division by zero)");
+    }
+  }
+
   double result = 0.0;
 
   for (int i = 0; i < numPoints; i++) {
+    double xi = getX(i);
+    double yi = getY(i);
+
     // compute the i-th Lagrange basis polynomial L_i(x)
     double Li = 1.0;
     for (int j = 0; j < numPoints; j++) {
       if (j != i) {
-        Li *= (x - xData.getData(0, j)) / (xData.getData(0, i) - xData.getData(0, j));
+        Li *= (x - getX(j)) / (xi - getX(j));
       }
     }
-    result += yData.getData(0, i) * Li;
+    result += yi * Li;
   }
 
   return result;

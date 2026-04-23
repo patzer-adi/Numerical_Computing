@@ -176,7 +176,7 @@ void solveIterative(SystemOfLinearEquationSolver &solver, const string &methodNa
 }
 
 // === Interpolation workflow ===
-// handles: data input -> mode selection -> evaluate -> display/save
+// handles: data input -> fit info -> error analysis -> mode selection -> evaluate -> display/save
 
 void solveInterpolation(Interpolation &interp, const string &methodName) {
   // step 1: get X data points using Matrix
@@ -198,6 +198,30 @@ void solveInterpolation(Interpolation &interp, const string &methodName) {
   cout << fixed << setprecision(6);
   for (int i = 0; i < n; i++)
     cout << "  (" << interp.getX(i) << ", " << interp.getY(i) << ")" << endl;
+
+  // print fit info (equation, coefficients) — no-op for Lagrange,
+  // prints equation for curve fitting methods
+  interp.printFitInfo();
+
+  // error analysis for curve fitting methods (least squares line/parabola)
+  if (interp.hasErrorAnalysis()) {
+    int errChoice;
+    cout << "\nShow error analysis table? (1=yes, 0=no): ";
+    cin >> errChoice;
+    if (errChoice == 1) {
+      interp.printErrorTable();
+
+      int saveErr;
+      cout << "\nSave error table to file? (1=yes, 0=no): ";
+      cin >> saveErr;
+      if (saveErr == 1) {
+        string errFile;
+        cout << "Enter filename: ";
+        cin >> errFile;
+        interp.saveErrorTable(errFile);
+      }
+    }
+  }
 
   // step 3: choose mode
   int mode;

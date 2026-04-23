@@ -17,8 +17,8 @@ Interpolation::Interpolation(const Matrix &x, const Matrix &y) {
 
   if (xSize != ySize)
     throw MatrixException("X and Y must have the same number of data points");
-  if (xSize < 2)
-    throw MatrixException("need at least 2 data points for interpolation");
+  if (xSize < 1)
+    throw MatrixException("need at least 1 data point");
 
   numPoints = xSize;
 
@@ -37,9 +37,6 @@ Interpolation::Interpolation(const Matrix &x, const Matrix &y) {
       yData.setData(0, idx++, y.getData(i, j));
 }
 
-// destructor — Matrix members clean up themselves (Rule of 5 in Matrix)
-Interpolation::~Interpolation() {}
-
 // load data points from Matrix objects — replaces any existing data
 void Interpolation::loadData(const Matrix &x, const Matrix &y) {
   int xSize = x.getRows() * x.getCols();
@@ -47,8 +44,8 @@ void Interpolation::loadData(const Matrix &x, const Matrix &y) {
 
   if (xSize != ySize)
     throw MatrixException("X and Y must have the same number of data points");
-  if (xSize < 2)
-    throw MatrixException("need at least 2 data points for interpolation");
+  if (xSize < 1)
+    throw MatrixException("need at least 1 data point");
 
   numPoints = xSize;
 
@@ -82,15 +79,34 @@ double Interpolation::getY(int i) const {
   return yData.getData(0, i);
 }
 
+bool Interpolation::hasData() const { return numPoints > 0; }
+
+// default implementations — overridden by curve fitting classes
+void Interpolation::printFitInfo() {}
+bool Interpolation::hasErrorAnalysis() const { return false; }
+void Interpolation::printErrorTable() const {}
+void Interpolation::saveErrorTable(string filename) const {
+  (void)filename; // suppress unused parameter warning
+}
+
 // interpolate over the full range [xMin, xMax]
 // generates evenly spaced sample points and evaluates the polynomial
 // output is gnuplot-compatible: space-separated x y pairs
 void Interpolation::interpolate(int samples, bool saveToFile, string filename) {
   if (numPoints < 2)
     throw MatrixException("need at least 2 data points to interpolate");
+  if (samples < 2)
+    throw MatrixException("samples must be >= 2");
 
-  double xMin = xData.getData(0, 0);
-  double xMax = xData.getData(0, numPoints - 1);
+  // find actual min and max (don't assume sorted input)
+  double xMin = getX(0);
+  double xMax = xMin;
+  for (int i = 1; i < numPoints; i++) {
+    double xi = getX(i);
+    if (xi < xMin) xMin = xi;
+    if (xi > xMax) xMax = xi;
+  }
+
   double step = (xMax - xMin) / (samples - 1);
 
   if (saveToFile) {
@@ -120,7 +136,7 @@ void Interpolation::interpolate(int samples, bool saveToFile, string filename) {
     // original data points
     fout << "# Original data points" << endl;
     for (int i = 0; i < numPoints; i++) {
-      fout << xData.getData(0, i) << "  " << yData.getData(0, i) << endl;
+      fout << getX(i) << "  " << getY(i) << endl;
     }
 
     fout.close();
@@ -141,8 +157,8 @@ void Interpolation::interpolate(int samples, bool saveToFile, string filename) {
 
     cout << "\n--- Original Data Points ---" << endl;
     for (int i = 0; i < numPoints; i++) {
-      cout << left << setw(16) << xData.getData(0, i)
-           << setw(16) << yData.getData(0, i) << endl;
+      cout << left << setw(16) << getX(i)
+           << setw(16) << getY(i) << endl;
     }
     cout << endl;
   }

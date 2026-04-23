@@ -16,7 +16,7 @@ public:
   Lagrange(const Matrix &x, const Matrix &y);
 
   // evaluate the Lagrange polynomial at a single x
-  double evaluate(double x) override;
+  double evaluate(double x) const override;
 };
 
 #endif

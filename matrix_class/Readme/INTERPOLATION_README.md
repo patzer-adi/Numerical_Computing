@@ -6,7 +6,13 @@ Given a set of known data points (x₀, y₀), (x₁, y₁), ..., (xₙ₋₁, y
 Interpolation module constructs a polynomial that passes through all points and
 evaluates it at any x value.
 
-Currently implemented: **Lagrange Interpolation**
+Currently implemented:
+
+- **Lagrange Interpolation** — exact polynomial through all points
+- **Least Squares Line** — best fit straight line (y = a + bx)
+- **Least Squares Parabola** — best fit parabola (y = a + bx + cx²)
+
+See `LEAST_SQUARES_README.md` for detailed documentation on the curve fitting methods.
 
 ---
 
@@ -14,7 +20,9 @@ Currently implemented: **Lagrange Interpolation**
 
 ```
 Interpolation (abstract base)
-  └── Lagrange
+  ├── Lagrange
+  ├── LeastSquareLine
+  ├── LeastSquareParabola
   └── (future: Newton, Hermite, Spline, etc.)
 ```
 
@@ -130,10 +138,10 @@ itself a matrix.
 
 ---
 
-## Why the Destructor Is Empty
+## Why the Destructor Is Defaulted
 
 ```cpp
-Interpolation::~Interpolation() {}
+virtual ~Interpolation() = default;
 ```
 
 Because `xData` and `yData` are Matrix objects (not pointers). When Interpolation
@@ -206,28 +214,36 @@ plot "output.txt" index 0 with lines title "Interpolation", \
 
 ```
 include/
-  Interpolation.hpp   — abstract base class (Matrix xData, Matrix yData)
-  Lagrange.hpp        — Lagrange derived class
+  Interpolation.hpp        — abstract base class (Matrix xData, Matrix yData)
+  Lagrange.hpp             — Lagrange derived class
+  LeastSquareLine.hpp      — least squares line fit
+  LeastSquareParabola.hpp  — least squares parabola fit
 
 src/
   Interpolation.cpp   — loadData, interpolate overloads, getters
   Lagrange.cpp        — evaluate() using Lagrange formula
+  LeastSquareLine.cpp — fit() + evaluate() for y = a + bx
+  LeastSquareParabola.cpp — fit() + evaluate() for y = a + bx + cx²
 
 utils/
   Display.cpp         — solveInterpolation() workflow
 
 app/
-  Menu.cpp            — menu option 27
+  Menu.cpp            — menu options 27, 28, 29
 ```
 
 ---
 
 ## Menu Integration
 
-Option **27. Lagrange Interpolation** in the main menu.
+- Option **27. Lagrange Interpolation**
+- Option **28. Least Squares Line Fit**
+- Option **29. Least Squares Parabola Fit**
 
 Flow:
 1. Enter X data points (manual or from file — via Matrix I/O)
 2. Enter Y data points (manual or from file — via Matrix I/O)
-3. Choose mode: full range interpolation or single query point
-4. Choose output: print to console or save to file
+3. View fit info (for least squares: equation + coefficients)
+4. Optionally view error analysis table (least squares only)
+5. Choose mode: full range interpolation or single query point
+6. Choose output: print to console or save to file
