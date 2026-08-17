@@ -1,4 +1,5 @@
 #include "Menu.hpp"
+#include "../include/Differentiation.hpp"
 #include "../include/GershgorinAnalyzer.hpp"
 #include "../include/GaussJacobi.hpp"
 #include "../include/GaussSeidel.hpp"
@@ -10,6 +11,7 @@
 #include "../include/Matrix.hpp"
 #include "../utils/Display.hpp"
 #include "../utils/Input.hpp"
+#include <cmath>
 #include <iostream>
 
 #ifdef USE_CUDA
@@ -284,6 +286,59 @@ static void handleLeastSquareParabola() {
   solveInterpolation(lsp, "Least Squares Parabola Fit");
 }
 
+// --- helper functions for differentiation ---
+static double f_exp(double x) { return exp(x); }
+static double df_exp(double x) { return exp(x); }
+
+static double f_sin(double x) { return sin(x); }
+static double df_sin(double x) { return cos(x); }
+
+static double f_cos(double x) { return cos(x); }
+static double df_cos(double x) { return -sin(x); }
+
+static double f_poly(double x) { return x*x*x - 2*x + 1; }
+static double df_poly(double x) { return 3*x*x - 2; }
+
+static void handleDifferentiation() {
+  Differentiation diff;
+
+  diff.addFunction("e^x", f_exp, df_exp);
+  diff.addFunction("sin(x)", f_sin, df_sin);
+  diff.addFunction("cos(x)", f_cos, df_cos);
+  diff.addFunction("x^3-2x+1", f_poly, df_poly);
+
+  double x0;
+  cout << "Enter the point x0 to evaluate derivatives at: ";
+  cin >> x0;
+
+  int numH;
+  cout << "How many step sizes (h values)? ";
+  cin >> numH;
+
+  double *h = new double[numH];
+  cout << "Enter " << numH << " step sizes: ";
+  for (int i = 0; i < numH; i++)
+    cin >> h[i];
+
+  diff.setStepSizes(h, numH);
+  diff.computeAll(x0);
+
+  cout << "\n--- Differentiation Results ---" << endl;
+  diff.display();
+
+  int saveChoice;
+  cout << "Save results to file? (1=yes, 0=no): ";
+  cin >> saveChoice;
+  if (saveChoice == 1) {
+    string filename;
+    cout << "Enter filename: ";
+    cin >> filename;
+    diff.saveResults(filename);
+  }
+
+  delete[] h;
+}
+
 // === Main menu loop ===
 
 void runMenu() {
@@ -331,7 +386,8 @@ void runMenu() {
     cout << "27. Lagrange Interpolation" << endl;
     cout << "28. Least Squares Line Fit" << endl;
     cout << "29. Least Squares Parabola Fit" << endl;
-    cout << "30. Exit" << endl;
+    cout << "30. Numerical Differentiation" << endl;
+    cout << "31. Exit" << endl;
     cout << "Enter choice: ";
     cin >> choice;
 
@@ -366,7 +422,8 @@ void runMenu() {
       case 27: handleLagrange(); break;
       case 28: handleLeastSquareLine(); break;
       case 29: handleLeastSquareParabola(); break;
-      case 30:
+      case 30: handleDifferentiation(); break;
+      case 31:
         cout << "\nbye bye!" << endl;
         running = false;
         break;
