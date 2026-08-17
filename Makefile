@@ -75,7 +75,13 @@ MATRIX_SRCS = matrix_class/src/Matrix.cpp \
               matrix_class/src/Doolittle.cpp \
               matrix_class/src/Crout.cpp \
               matrix_class/src/Cholesky.cpp \
-              matrix_class/src/GaussJacobi.cpp
+              matrix_class/src/GaussJacobi.cpp \
+              matrix_class/src/GaussSeidel.cpp \
+              matrix_class/src/Interpolation.cpp \
+              matrix_class/src/Lagrange.cpp \
+              matrix_class/src/LeastSquareLine.cpp \
+              matrix_class/src/LeastSquareParabola.cpp \
+              matrix_class/src/Differentiation.cpp
 
 # --- Matrix utils (2 files) ---
 MATRIX_UTILS_SRCS = matrix_class/utils/Input.cpp \
