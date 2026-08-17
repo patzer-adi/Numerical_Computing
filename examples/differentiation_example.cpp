@@ -1,17 +1,15 @@
-// differentiation_example.cpp — standalone example of the Differentiation class
+// differentiation_example.cpp — demonstrates the polymorphic Differentiation hierarchy
 //
-// Demonstrates:
-//   - registering functions with known derivatives
-//   - setting step sizes
-//   - computing all four differentiation methods
-//   - displaying and saving results
+// Hierarchy:
+//   Matrix
+//     └── Differentiation (abstract base)
+//           ├── ForwardDifference
+//           ├── BackwardDifference
+//           ├── CentralDifference
+//           └── RichardsonExtrapolation
 //
-// Build:
-//   g++ -std=c++11 -I. -Imatrix_class differentiation_example.cpp \
-//       -Llib -lnumcomp -Wl,-rpath,@executable_path/../lib -o diff_example
-//
-// Or after `make dylib`:
-//   make example  (if added to Makefile)
+// Each derived class overrides computeDerivative() with its own formula.
+// The base class computeAll() uses the virtual call to compute results.
 
 #include "numcomp.hpp"
 #include <cmath>
@@ -31,42 +29,49 @@ double df_cos(double x) { return -sin(x); }
 double f_poly(double x) { return x*x*x - 2*x + 1; }
 double df_poly(double x) { return 3*x*x - 2; }
 
+// helper: register all test functions into any Differentiation object
+void setupFunctions(Differentiation &d) {
+    d.addFunction("e^x", f_exp, df_exp);
+    d.addFunction("sin(x)", f_sin, df_sin);
+    d.addFunction("cos(x)", f_cos, df_cos);
+    d.addFunction("x^3-2x+1", f_poly, df_poly);
+}
+
 int main() {
-    cout << "\n=== Numerical Differentiation Example ===" << endl;
+    cout << "\n=== Numerical Differentiation — Polymorphic Design ===" << endl;
 
-    // create the differentiation object
-    Differentiation diff;
-
-    // register functions with their known derivatives
-    diff.addFunction("e^x", f_exp, df_exp);
-    diff.addFunction("sin(x)", f_sin, df_sin);
-    diff.addFunction("cos(x)", f_cos, df_cos);
-    diff.addFunction("x^3-2x+1", f_poly, df_poly);
-
-    // set step sizes
+    // step sizes
     double h[] = {0.1, 0.01, 0.001, 0.0001};
-    diff.setStepSizes(h, 4);
-
-    // compute all derivatives at x0 = 1.0
+    int numH = 4;
     double x0 = 1.0;
+
+    // create all four method objects
+    ForwardDifference fwd;
+    BackwardDifference bwd;
+    CentralDifference cen;
+    RichardsonExtrapolation rich;
+
+    // polymorphism: iterate over base pointers
+    Differentiation *methods[] = {&fwd, &bwd, &cen, &rich};
+    int numMethods = 4;
+
+    for (int m = 0; m < numMethods; m++) {
+        setupFunctions(*methods[m]);
+        methods[m]->setStepSizes(h, numH);
+        methods[m]->computeAll(x0);
+    }
+
+    // display all results
     cout << "\nEvaluating at x0 = " << x0 << endl;
-    diff.computeAll(x0);
+    for (int m = 0; m < numMethods; m++) {
+        methods[m]->display();
+    }
 
-    // display results
-    cout << "\n--- Results Table ---" << endl;
-    diff.display();
-
-    // save to file
-    diff.saveResults("differentiation_output.txt");
-
-    // also demonstrate standalone static method usage
-    cout << "\n--- Standalone Usage ---" << endl;
-    cout << "Forward  diff of sin(x) at x=1, h=0.01: "
-         << Differentiation::forwardDifference(f_sin, 1.0, 0.01) << endl;
-    cout << "Central  diff of sin(x) at x=1, h=0.01: "
-         << Differentiation::centralDifference(f_sin, 1.0, 0.01) << endl;
-    cout << "Exact    derivative:                     "
-         << cos(1.0) << endl;
+    // save each to its own file
+    fwd.saveResults("output_forward.txt");
+    bwd.saveResults("output_backward.txt");
+    cen.saveResults("output_central.txt");
+    rich.saveResults("output_richardson.txt");
 
     cout << "\nDone!" << endl;
     return 0;

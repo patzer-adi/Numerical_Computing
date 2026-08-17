@@ -7,7 +7,8 @@
 using namespace std;
 
 // number of columns in the results table
-static const int NUM_COLS = 11;
+// col 0: func_index, col 1: h, col 2: exact, col 3: approx, col 4: error
+static const int NUM_COLS = 5;
 
 // default constructor — start with room for 10 functions
 Differentiation::Differentiation() : Matrix() {
@@ -60,40 +61,29 @@ void Differentiation::setStepSizes(double *h, int n) {
         hValues[i] = h[i];
 }
 
-// ===== THE FOUR DIFFERENTIATION METHODS =====
+// getters
+int Differentiation::getNumFunctions() const { return numFunctions; }
+int Differentiation::getNumH() const { return numH; }
 
-// forward difference: (f(x+h) - f(x)) / h
-double Differentiation::forwardDifference(MathFunction f, double x, double h) {
-    return (f(x + h) - f(x)) / h;
+FunctionEntry Differentiation::getFunction(int i) const {
+    if (i < 0 || i >= numFunctions)
+        throw MatrixException("function index out of bounds");
+    return functions[i];
 }
 
-// backward difference: (f(x) - f(x-h)) / h
-double Differentiation::backwardDifference(MathFunction f, double x, double h) {
-    return (f(x) - f(x - h)) / h;
-}
-
-// central difference: (f(x+h) - f(x-h)) / (2h)
-double Differentiation::centralDifference(MathFunction f, double x, double h) {
-    return (f(x + h) - f(x - h)) / (2.0 * h);
-}
-
-// richardson extrapolation: (4*D(h/2) - D(h)) / 3
-// where D is central difference
-double Differentiation::richardsonExtrapolation(MathFunction f, double x, double h) {
-    double D_h = centralDifference(f, x, h);
-    double D_h2 = centralDifference(f, x, h / 2.0);
-    return (4.0 * D_h2 - D_h) / 3.0;
+double Differentiation::getH(int i) const {
+    if (i < 0 || i >= numH)
+        throw MatrixException("h index out of bounds");
+    return hValues[i];
 }
 
 // ===== COMPUTE ALL =====
 
-// compute all methods for all registered functions at all h values
-// populates the inherited Matrix data[][] with the results table
+// compute the derivative for all registered functions at all h values
+// uses the virtual computeDerivative() — each derived class provides its formula
 //
-// Matrix layout: (numFunctions * numH) rows × 11 columns
-// Col 0: func_index  Col 1: h       Col 2: exact
-// Col 3: forward     Col 4: fwd_err Col 5: backward   Col 6: bwd_err
-// Col 7: central     Col 8: cen_err Col 9: richardson  Col 10: rich_err
+// Matrix layout: (numFunctions * numH) rows × 5 columns
+// Col 0: func_index  Col 1: h  Col 2: exact  Col 3: approx  Col 4: error
 void Differentiation::computeAll(double x0) {
     if (numFunctions < 1)
         throw MatrixException("no functions registered... add some first");
@@ -134,84 +124,65 @@ void Differentiation::computeAll(double x0) {
         for (int hi = 0; hi < numH; hi++) {
             double h = hValues[hi];
 
-            double fwd = forwardDifference(f, x0, h);
-            double bwd = backwardDifference(f, x0, h);
-            double cen = centralDifference(f, x0, h);
-            double rich = richardsonExtrapolation(f, x0, h);
+            double approx = computeDerivative(f, x0, h);
 
-            // store in Matrix data[][]
-            data[row][0]  = (double)fi;              // func index
-            data[row][1]  = h;                       // step size
-            data[row][2]  = exact;                   // exact derivative
-            data[row][3]  = fwd;                     // forward approx
-            data[row][4]  = fabs(exact - fwd);       // forward error
-            data[row][5]  = bwd;                     // backward approx
-            data[row][6]  = fabs(exact - bwd);       // backward error
-            data[row][7]  = cen;                     // central approx
-            data[row][8]  = fabs(exact - cen);       // central error
-            data[row][9]  = rich;                    // richardson approx
-            data[row][10] = fabs(exact - rich);      // richardson error
+            data[row][0] = (double)fi;              // func index
+            data[row][1] = h;                        // step size
+            data[row][2] = exact;                    // exact derivative
+            data[row][3] = approx;                   // approximation
+            data[row][4] = fabs(exact - approx);     // absolute error
 
-            // store function name for this row
             functionNames[row] = functions[fi].name;
-
             row++;
         }
     }
 
-    cout << "Computed derivatives for " << numFunctions << " functions × "
-         << numH << " step sizes (" << totalRows << " rows)" << endl;
+    cout << getMethodName() << ": computed for " << numFunctions
+         << " functions × " << numH << " step sizes (" << totalRows
+         << " rows)" << endl;
 }
 
 // ===== DISPLAY =====
 
-// display results as a nicely formatted table with function names
+// display results as a nicely formatted table
 void Differentiation::display() const {
     if (rows == 0 || cols == 0) {
         cout << "No results computed yet... call computeAll() first" << endl;
         return;
     }
 
+    cout << "\n=== " << getMethodName() << " ===" << endl;
+
     // column headers
     cout << left << setw(18) << "Function"
          << right
          << setw(14) << "h"
-         << setw(14) << "Exact"
-         << setw(14) << "Forward"
-         << setw(14) << "Fwd_Err"
-         << setw(14) << "Backward"
-         << setw(14) << "Bwd_Err"
-         << setw(14) << "Central"
-         << setw(14) << "Cen_Err"
-         << setw(14) << "Richardson"
-         << setw(14) << "Rich_Err"
+         << setw(16) << "Exact"
+         << setw(16) << "Approx"
+         << setw(16) << "Error"
          << endl;
 
     // separator line
-    cout << string(18 + 14 * 10, '-') << endl;
+    cout << string(18 + 14 + 16 * 3, '-') << endl;
 
     cout << scientific << setprecision(6);
 
     for (int i = 0; i < rows; i++) {
-        // function name (use stored name, not the index)
         string fname = (functionNames != nullptr) ? functionNames[i] : "?";
-        cout << left << setw(18) << fname;
-
-        // h value
-        cout << right << setw(14) << data[i][1];
-
-        // exact through richardson error (cols 2-10)
-        for (int j = 2; j < NUM_COLS; j++) {
-            cout << setw(14) << data[i][j];
-        }
-        cout << endl;
+        cout << left << setw(18) << fname
+             << right
+             << setw(14) << data[i][1]
+             << setw(16) << data[i][2]
+             << setw(16) << data[i][3]
+             << setw(16) << data[i][4]
+             << endl;
     }
     cout << endl;
 }
 
 // ===== SAVE RESULTS =====
 
-// save results to file in scientific notation (matching Python output format)
+// save results to file in scientific notation
 void Differentiation::saveResults(string filename) const {
     if (rows == 0 || cols == 0)
         throw MatrixException("no results to save... call computeAll() first");
@@ -220,33 +191,27 @@ void Differentiation::saveResults(string filename) const {
     if (!fout)
         throw MatrixException("can't write to file '" + filename + "'");
 
-    // write header
+    // header
+    fout << "# " << getMethodName() << endl;
     fout << left << setw(18) << "Function"
          << right
          << setw(14) << "h"
-         << setw(14) << "Exact"
-         << setw(14) << "Forward_approx"
-         << setw(14) << "Forward_error"
-         << setw(14) << "Backward_approx"
-         << setw(14) << "Backward_error"
-         << setw(14) << "Central_approx"
-         << setw(14) << "Central_error"
-         << setw(14) << "Richardson_approx"
-         << setw(14) << "Richardson_error"
+         << setw(16) << "Exact"
+         << setw(16) << "Approx"
+         << setw(16) << "Error"
          << "\n";
 
     fout << scientific << setprecision(8);
 
     for (int i = 0; i < rows; i++) {
         string fname = (functionNames != nullptr) ? functionNames[i] : "?";
-        fout << left << setw(18) << fname;
-
-        fout << right << setw(14) << data[i][1];
-
-        for (int j = 2; j < NUM_COLS; j++) {
-            fout << setw(16) << data[i][j];
-        }
-        fout << "\n";
+        fout << left << setw(18) << fname
+             << right
+             << setw(14) << data[i][1]
+             << setw(16) << data[i][2]
+             << setw(16) << data[i][3]
+             << setw(16) << data[i][4]
+             << "\n";
     }
 
     fout.close();

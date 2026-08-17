@@ -22,6 +22,10 @@
 #include "matrix_class/include/LUDecomposition.hpp"
 #include "matrix_class/include/GaussJacobi.hpp"
 #include "matrix_class/include/Differentiation.hpp"
+#include "matrix_class/include/ForwardDifference.hpp"
+#include "matrix_class/include/BackwardDifference.hpp"
+#include "matrix_class/include/CentralDifference.hpp"
+#include "matrix_class/include/RichardsonExtrapolation.hpp"
 
 // ── Root-Finding Module ─────────────────────
 #include "root_finding_methods/include/RootHunter.hpp"

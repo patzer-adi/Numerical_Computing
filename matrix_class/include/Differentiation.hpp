@@ -15,14 +15,16 @@ struct FunctionEntry {
     MathFunction df;    // exact derivative (for error computation)
 };
 
-// Differentiation — numerical differentiation methods
+// Differentiation — abstract base class for numerical differentiation
 //
 // inherits from Matrix: the inherited data[][] stores the results table
 // each row = one (function, h) pair
-// 11 columns: func_index, h, exact, forward, fwd_err, backward, bwd_err,
-//             central, cen_err, richardson, rich_err
+// 5 columns: func_index, h, exact, approx, error
 //
-// follows the same inheritance pattern as SystemOfLinearEquationSolver
+// each derived class (ForwardDifference, BackwardDifference, etc.)
+// overrides computeDerivative() with its own formula
+//
+// follows the same pattern as SystemOfLinearEquationSolver → GaussianElimination
 
 class Differentiation : public Matrix {
 protected:
@@ -38,7 +40,7 @@ protected:
 public:
     // constructors / destructor
     Differentiation();
-    ~Differentiation();
+    virtual ~Differentiation();
 
     // register a function with its known derivative
     void addFunction(string name, MathFunction f, MathFunction df);
@@ -46,22 +48,27 @@ public:
     // set step sizes to evaluate at
     void setStepSizes(double *h, int n);
 
-    // --- the four numerical differentiation methods ---
-    // static so they can be used standalone without an object
-    static double forwardDifference(MathFunction f, double x, double h);
-    static double backwardDifference(MathFunction f, double x, double h);
-    static double centralDifference(MathFunction f, double x, double h);
-    static double richardsonExtrapolation(MathFunction f, double x, double h);
+    // --- pure virtual: each derived class provides its own formula ---
+    virtual double computeDerivative(MathFunction f, double x, double h) const = 0;
 
-    // compute all methods for all functions at all h values
+    // --- pure virtual: each derived class returns its method name ---
+    virtual string getMethodName() const = 0;
+
+    // compute the derivative for all functions at all h values
     // populates the inherited Matrix data[][] with the results table
     void computeAll(double x0);
 
     // display results with function names and formatted table
     void display() const;
 
-    // save results to file (scientific notation, matching Python output format)
+    // save results to file (scientific notation)
     void saveResults(string filename) const;
+
+    // getters for function data (so derived classes or external code can access)
+    int getNumFunctions() const;
+    int getNumH() const;
+    FunctionEntry getFunction(int i) const;
+    double getH(int i) const;
 };
 
 #endif

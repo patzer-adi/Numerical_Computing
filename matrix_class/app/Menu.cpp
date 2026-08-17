@@ -1,5 +1,8 @@
 #include "Menu.hpp"
-#include "../include/Differentiation.hpp"
+#include "../include/ForwardDifference.hpp"
+#include "../include/BackwardDifference.hpp"
+#include "../include/CentralDifference.hpp"
+#include "../include/RichardsonExtrapolation.hpp"
 #include "../include/GershgorinAnalyzer.hpp"
 #include "../include/GaussJacobi.hpp"
 #include "../include/GaussSeidel.hpp"
@@ -300,13 +303,7 @@ static double f_poly(double x) { return x*x*x - 2*x + 1; }
 static double df_poly(double x) { return 3*x*x - 2; }
 
 static void handleDifferentiation() {
-  Differentiation diff;
-
-  diff.addFunction("e^x", f_exp, df_exp);
-  diff.addFunction("sin(x)", f_sin, df_sin);
-  diff.addFunction("cos(x)", f_cos, df_cos);
-  diff.addFunction("x^3-2x+1", f_poly, df_poly);
-
+  // get x0 and step sizes from user
   double x0;
   cout << "Enter the point x0 to evaluate derivatives at: ";
   cin >> x0;
@@ -320,20 +317,42 @@ static void handleDifferentiation() {
   for (int i = 0; i < numH; i++)
     cin >> h[i];
 
-  diff.setStepSizes(h, numH);
-  diff.computeAll(x0);
+  // create all four method objects
+  ForwardDifference fwd;
+  BackwardDifference bwd;
+  CentralDifference cen;
+  RichardsonExtrapolation rich;
 
+  // register functions in all four (polymorphism via base pointer)
+  Differentiation *methods[] = {&fwd, &bwd, &cen, &rich};
+  int numMethods = 4;
+
+  for (int m = 0; m < numMethods; m++) {
+    methods[m]->addFunction("e^x", f_exp, df_exp);
+    methods[m]->addFunction("sin(x)", f_sin, df_sin);
+    methods[m]->addFunction("cos(x)", f_cos, df_cos);
+    methods[m]->addFunction("x^3-2x+1", f_poly, df_poly);
+    methods[m]->setStepSizes(h, numH);
+    methods[m]->computeAll(x0);
+  }
+
+  // display all results
   cout << "\n--- Differentiation Results ---" << endl;
-  diff.display();
+  for (int m = 0; m < numMethods; m++) {
+    methods[m]->display();
+  }
 
   int saveChoice;
   cout << "Save results to file? (1=yes, 0=no): ";
   cin >> saveChoice;
   if (saveChoice == 1) {
     string filename;
-    cout << "Enter filename: ";
+    cout << "Enter base filename (e.g. 'diff'): ";
     cin >> filename;
-    diff.saveResults(filename);
+    for (int m = 0; m < numMethods; m++) {
+      string fname = filename + "_" + to_string(m + 1) + ".txt";
+      methods[m]->saveResults(fname);
+    }
   }
 
   delete[] h;

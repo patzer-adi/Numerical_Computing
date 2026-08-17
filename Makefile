@@ -81,7 +81,11 @@ MATRIX_SRCS = matrix_class/src/Matrix.cpp \
               matrix_class/src/Lagrange.cpp \
               matrix_class/src/LeastSquareLine.cpp \
               matrix_class/src/LeastSquareParabola.cpp \
-              matrix_class/src/Differentiation.cpp
+              matrix_class/src/Differentiation.cpp \
+              matrix_class/src/ForwardDifference.cpp \
+              matrix_class/src/BackwardDifference.cpp \
+              matrix_class/src/CentralDifference.cpp \
+              matrix_class/src/RichardsonExtrapolation.cpp
 
 # --- Matrix utils (2 files) ---
 MATRIX_UTILS_SRCS = matrix_class/utils/Input.cpp \
