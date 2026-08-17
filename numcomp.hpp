@@ -21,6 +21,7 @@
 #include "matrix_class/include/GaussianElimination.hpp"
 #include "matrix_class/include/LUDecomposition.hpp"
 #include "matrix_class/include/GaussJacobi.hpp"
+#include "matrix_class/include/Differentiation.hpp"
 
 // ── Root-Finding Module ─────────────────────
 #include "root_finding_methods/include/RootHunter.hpp"
