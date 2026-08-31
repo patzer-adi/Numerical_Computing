@@ -40,6 +40,12 @@ Numerical_Computing_codes/NC_in_python/
     ├── eigen/             # Eigenvalue algorithms
     │   ├── base.py
     │   └── gershgorin.py
+    ├── differentiation/   # Numerical differentiation methods
+    │   ├── base.py        # Abstract base class `Differentiation`
+    │   ├── forward.py     # Forward difference — O(h)
+    │   ├── backward.py    # Backward difference — O(h)
+    │   ├── central.py     # Central difference — O(h²)
+    │   └── richardson.py  # Richardson extrapolation — O(h⁴)
     ├── interpolation/     # Interpolation and curve fitting algorithms
     │   ├── base.py
     │   ├── lagrange.py
