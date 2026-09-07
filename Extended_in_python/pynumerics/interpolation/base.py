@@ -49,3 +49,64 @@ class Interpolation(ABC):
         mse = sse / self.num_points if self.num_points > 0 else 0.0
         rmse = math.sqrt(mse)
         return FitResult(coefficients={}, sse=sse, mse=mse, rmse=rmse)
+
+    def plot(self, num_samples: int = 200, title: str | None = None,
+             show_points: bool = True, save_path: str | None = None,
+             func=None, func_label: str | None = None) -> None:
+        """Plot the interpolated curve, original data points, and optionally
+        the actual function for comparison.
+
+        Args:
+            num_samples: Number of points for the smooth curve.
+            title: Plot title (default: class name).
+            show_points: Whether to mark the original data points.
+            save_path: If given, save the figure to this path.
+            func: Optional callable — the actual function for comparison.
+            func_label: Label for the actual function curve.
+        """
+        import matplotlib.pyplot as plt
+        import numpy as np
+
+        if title is None:
+            title = self.__class__.__name__ + " Interpolation"
+
+        x_min = min(self._x)
+        x_max = max(self._x)
+
+        # extend range slightly for visual padding
+        padding = (x_max - x_min) * 0.05
+        x_plot = np.linspace(x_min - padding, x_max + padding, num_samples)
+        y_plot = [self.evaluate(xi) for xi in x_plot]
+
+        fig, ax = plt.subplots(figsize=(10, 6))
+
+        # interpolated curve
+        ax.plot(x_plot, y_plot, '-', linewidth=2, label="Interpolated Curve",
+                color='#2196F3')
+
+        # original data points
+        if show_points:
+            ax.scatter(self._x, self._y, color='#F44336', zorder=5, s=60,
+                       edgecolors='white', linewidths=1.5,
+                       label="Data Points")
+
+        # actual function overlay
+        if func is not None:
+            y_actual = [func(xi) for xi in x_plot]
+            label = func_label if func_label else "Actual Function"
+            ax.plot(x_plot, y_actual, '--', linewidth=1.5, label=label,
+                    color='#4CAF50', alpha=0.8)
+
+        ax.set_title(title, fontsize=14, fontweight='bold')
+        ax.set_xlabel("x", fontsize=12)
+        ax.set_ylabel("y", fontsize=12)
+        ax.legend(fontsize=10)
+        ax.grid(True, alpha=0.3)
+        fig.tight_layout()
+
+        if save_path:
+            fig.savefig(save_path, dpi=150, bbox_inches='tight')
+            print(f"  Plot saved to {save_path}")
+
+        plt.show()
+

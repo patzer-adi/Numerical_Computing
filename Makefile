@@ -79,6 +79,7 @@ MATRIX_SRCS = matrix_class/src/Matrix.cpp \
               matrix_class/src/GaussSeidel.cpp \
               matrix_class/src/Interpolation.cpp \
               matrix_class/src/Lagrange.cpp \
+              matrix_class/src/NewtonDividedDifference.cpp \
               matrix_class/src/LeastSquareLine.cpp \
               matrix_class/src/LeastSquareParabola.cpp \
               matrix_class/src/Differentiation.cpp \

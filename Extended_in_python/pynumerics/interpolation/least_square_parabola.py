@@ -84,3 +84,19 @@ class LeastSquareParabola(Interpolation):
         base = self.compute_errors()
         base.coefficients = {"a": self._coeff_a, "b": self._coeff_b, "c": self._coeff_c}
         return base
+
+    def plot(self, num_samples: int = 200, title: str | None = None,
+             show_points: bool = True, save_path: str | None = None,
+             func=None, func_label: str | None = None) -> None:
+        """Plot with equation in the title."""
+        if not self._fitted:
+            self.fit()
+        if title is None:
+            title = (f"Least Squares Parabola: y = {self._coeff_a:.4f} "
+                     f"+ {self._coeff_b:.4f}x + {self._coeff_c:.4f}x²")
+        super().plot(
+            num_samples=num_samples, title=title,
+            show_points=show_points, save_path=save_path,
+            func=func, func_label=func_label,
+        )
+

@@ -26,6 +26,11 @@
 #include "matrix_class/include/BackwardDifference.hpp"
 #include "matrix_class/include/CentralDifference.hpp"
 #include "matrix_class/include/RichardsonExtrapolation.hpp"
+#include "matrix_class/include/Interpolation.hpp"
+#include "matrix_class/include/Lagrange.hpp"
+#include "matrix_class/include/NewtonDividedDifference.hpp"
+#include "matrix_class/include/LeastSquareLine.hpp"
+#include "matrix_class/include/LeastSquareParabola.hpp"
 
 // ── Root-Finding Module ─────────────────────
 #include "root_finding_methods/include/RootHunter.hpp"

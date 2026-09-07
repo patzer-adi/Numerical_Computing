@@ -36,3 +36,16 @@ class Lagrange(Interpolation):
             result += yi * Li
 
         return result
+
+    def plot(self, num_samples: int = 200, title: str | None = None,
+             show_points: bool = True, save_path: str | None = None,
+             func=None, func_label: str | None = None) -> None:
+        """Plot with Lagrange-specific title."""
+        if title is None:
+            title = "Lagrange Interpolation"
+        super().plot(
+            num_samples=num_samples, title=title,
+            show_points=show_points, save_path=save_path,
+            func=func, func_label=func_label,
+        )
+

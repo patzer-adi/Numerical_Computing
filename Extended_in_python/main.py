@@ -8,6 +8,7 @@ Entry point for the menu-driven CLI demo. Links together all modules.
 from pynumerics.cli import run_cli as run_complex_cli
 from pynumerics.cli_solvers import run_solvers_cli
 from pynumerics.cli_roots import run_roots_cli
+from pynumerics.cli_interpolation import run_interpolation_cli
 
 
 def run_main_menu() -> None:
@@ -18,6 +19,7 @@ def run_main_menu() -> None:
         print("║  1. Complex Number Calculator            ║")
         print("║  2. Linear System Solvers & Matrices     ║")
         print("║  3. Root Finding Methods                 ║")
+        print("║  4. Interpolation & Curve Fitting        ║")
         print("║  9. Exit                                 ║")
         print("╚══════════════════════════════════════════╝")
 
@@ -33,6 +35,8 @@ def run_main_menu() -> None:
             run_solvers_cli()
         elif choice == "3":
             run_roots_cli()
+        elif choice == "4":
+            run_interpolation_cli()
         elif choice == "9":
             print("\n  Goodbye!")
             break
@@ -42,3 +46,4 @@ def run_main_menu() -> None:
 
 if __name__ == "__main__":
     run_main_menu()
+
