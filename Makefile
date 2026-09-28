@@ -86,7 +86,11 @@ MATRIX_SRCS = matrix_class/src/Matrix.cpp \
               matrix_class/src/ForwardDifference.cpp \
               matrix_class/src/BackwardDifference.cpp \
               matrix_class/src/CentralDifference.cpp \
-              matrix_class/src/RichardsonExtrapolation.cpp
+              matrix_class/src/RichardsonExtrapolation.cpp \
+              matrix_class/src/Integration.cpp \
+              matrix_class/src/TrapezoidalRule.cpp \
+              matrix_class/src/Simpsons13.cpp \
+              matrix_class/src/Simpsons38.cpp
 
 # --- Matrix utils (2 files) ---
 MATRIX_UTILS_SRCS = matrix_class/utils/Input.cpp \

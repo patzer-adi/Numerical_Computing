@@ -31,6 +31,10 @@
 #include "matrix_class/include/NewtonDividedDifference.hpp"
 #include "matrix_class/include/LeastSquareLine.hpp"
 #include "matrix_class/include/LeastSquareParabola.hpp"
+#include "matrix_class/include/Integration.hpp"
+#include "matrix_class/include/TrapezoidalRule.hpp"
+#include "matrix_class/include/Simpsons13.hpp"
+#include "matrix_class/include/Simpsons38.hpp"
 
 // ── Root-Finding Module ─────────────────────
 #include "root_finding_methods/include/RootHunter.hpp"

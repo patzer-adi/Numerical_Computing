@@ -1,6 +1,6 @@
 # PyNumerics - Comprehensive Documentation & README
 
-PyNumerics is a comprehensive, interactive mathematical sandbox written in Python. Ported from a C++ codebase, it provides a robust suite of tools for numerical computing, including complex number arithmetic, matrix operations, root-finding algorithms, and solving systems of linear equations.
+PyNumerics is a comprehensive, interactive mathematical sandbox written in Python. Ported from a C++ codebase, it provides a robust suite of tools for numerical computing, including complex number arithmetic, matrix operations, root-finding algorithms, numerical differentiation, numerical integration, interpolation, and solving systems of linear equations.
 
 ---
 
@@ -46,6 +46,11 @@ Numerical_Computing_codes/NC_in_python/
     │   ├── backward.py    # Backward difference — O(h)
     │   ├── central.py     # Central difference — O(h²)
     │   └── richardson.py  # Richardson extrapolation — O(h⁴)
+    ├── integration/       # Numerical integration methods
+    │   ├── base.py        # Abstract base class `Integration` + 8 built-in functions
+    │   ├── trapezoidal.py # Trapezoidal Rule — O(h²)
+    │   ├── simpsons13.py  # Simpson's 1/3 Rule — O(h⁴), n must be even
+    │   └── simpsons38.py  # Simpson's 3/8 Rule — O(h⁴), n must be ×3
     ├── interpolation/     # Interpolation and curve fitting algorithms
     │   ├── base.py
     │   ├── lagrange.py
@@ -81,6 +86,12 @@ The code is written using strong Object-Oriented design patterns. Mathematical e
   - **Specific Finders**: Subclasses like `BisectionMethod` and `NewtonRaphson` implement the actual logic in their `solve()` methods.
 
 - **Interpolation (`interpolation/`) & Eigen (`eigen/`)**: Follow the same pattern—a base class defining the interface and specific algorithm classes implementing the logic.
+
+- **Integration (`integration/`)**: Contains classes for numerical integration (∫ f(x)dx).
+  - **`Integration` (`integration/base.py`)**: An abstract base class using composition (holds registered integrands and sub-interval counts). Defines an abstract `integrate()` method. Ships with 8 built-in functions: e^x, sin(x), x², x³−2x+1, e^(-x²), 1/(1+x²), ln(x), 1/x.
+  - **`TrapezoidalRule`**: Composite trapezoidal rule — O(h²).
+  - **`Simpsons13`**: Simpson's 1/3 rule — O(h⁴), requires even n.
+  - **`Simpsons38`**: Simpson's 3/8 rule — O(h⁴), requires n divisible by 3.
 
 ### User Interface (CLI)
 The program provides an interactive terminal UI. `main.py` presents a master console loop that routes user choices to sub-menus implemented in `cli.py` (Complex numbers), `cli_solvers.py` (Linear systems), and `cli_roots.py` (Root finding).

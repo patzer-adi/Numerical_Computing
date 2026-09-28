@@ -1,6 +1,6 @@
 # Numerical Computing
 
-A modular C++ library for numerical methods — matrix algebra, linear system solvers, root-finding algorithms, and complex number arithmetic. Built with clean OOP design, optional CUDA GPU acceleration, and a menu-driven interactive interface.
+A modular C++ library for numerical methods — matrix algebra, linear system solvers, root-finding algorithms, numerical differentiation, numerical integration, and complex number arithmetic. Built with clean OOP design, optional CUDA GPU acceleration, and a menu-driven interactive interface.
 
 ---
 
@@ -12,6 +12,7 @@ A modular C++ library for numerical methods — matrix algebra, linear system so
 - [Matrix Operations Library](#matrix-operations-library)
 - [Linear System Solvers](#linear-system-solvers)
 - [Root-Finding Methods](#root-finding-methods)
+- [Numerical Integration](#numerical-integration)
 - [Complex Number Class](#complex-number-class)
 - [Class Hierarchy](#class-hierarchy)
 - [API Reference](#api-reference)
@@ -36,6 +37,9 @@ A modular C++ library for numerical methods — matrix algebra, linear system so
 
 **Root Finding**
 > Bisection, Newton-Raphson, and Fixed-Point Iteration with configurable tolerance.
+
+**Numerical Integration**
+> Trapezoidal Rule, Simpson's 1/3 Rule, and Simpson's 3/8 Rule with 8 built-in test functions including e^x, sin(x), x², e^(-x²), 1/(1+x²), ln(x), and 1/x.
 
 **Complex Arithmetic**
 > Full complex number class with +, -, *, /, conjugate, norm, and operator overloading.
@@ -63,7 +67,12 @@ Numerical_Computing/
 │   │   ├── SystemOfLinearEquationSolver.hpp
 │   │   ├── GaussianElimination.hpp
 │   │   ├── LUDecomposition.hpp
-│   │   └── GaussJacobi.hpp
+│   │   ├── GaussJacobi.hpp
+│   │   ├── Differentiation.hpp    # Numerical differentiation base
+│   │   ├── Integration.hpp        # Numerical integration base
+│   │   ├── TrapezoidalRule.hpp
+│   │   ├── Simpsons13.hpp
+│   │   └── Simpsons38.hpp
 │   ├── src/                       # Implementations
 │   │   ├── Matrix.cpp
 │   │   ├── MatrixOperations.cpp
@@ -71,7 +80,11 @@ Numerical_Computing/
 │   │   ├── Doolittle.cpp
 │   │   ├── Crout.cpp
 │   │   ├── Cholesky.cpp
-│   │   └── GaussJacobi.cpp
+│   │   ├── GaussJacobi.cpp
+│   │   ├── Integration.cpp
+│   │   ├── TrapezoidalRule.cpp
+│   │   ├── Simpsons13.cpp
+│   │   └── Simpsons38.cpp
 │   ├── utils/                     # Shared I/O utilities
 │   │   ├── Input.hpp / Input.cpp
 │   │   └── Display.hpp / Display.cpp
@@ -80,6 +93,10 @@ Numerical_Computing/
 │   ├── test_cases/                # Pre-built test matrices
 │   ├── Makefile
 │   └── main.cpp
+│
+├── examples/                      # Standalone example programs
+│   ├── differentiation_example.cpp
+│   └── integration_example.cpp
 │
 ├── root_finding_methods/          # Root-finding algorithms
 │   ├── include/
@@ -96,10 +113,21 @@ Numerical_Computing/
 │   ├── complexClass.cpp
 │   └── main.cpp
 │
+├── Extended_in_python/            # Python port (PyNumerics)
+│   ├── pynumerics/
+│   │   ├── differentiation/
+│   │   ├── integration/           # Numerical integration package
+│   │   ├── interpolation/
+│   │   ├── roots/
+│   │   └── solvers/
+│   └── tests/
+│
 ├── Miscellaneous/                 # Numerical explorations
 │   ├── factorial_limits.cpp
 │   └── geometric_series_sum.cpp
 │
+├── numcomp.hpp                    # Unified header (includes all modules)
+├── Makefile                       # Unified build system
 ├── LICENSE
 └── README.md
 ```
@@ -242,6 +270,67 @@ cout << "Iterations: " << b.getIterations() << endl;
 
 ---
 
+## Numerical Integration
+
+All methods inherit from `Integration` (which inherits `Matrix`) and implement `integrate()`:
+
+```cpp
+#include "numcomp.hpp"
+#include <cmath>
+
+// define integrand and its exact integral
+double f_exp(double x)              { return exp(x); }
+double F_exp(double a, double b)    { return exp(b) - exp(a); }
+
+double f_gauss(double x)            { return exp(-x * x); }
+double F_gauss(double a, double b)  { return sqrt(M_PI)/2.0 * (erf(b) - erf(a)); }
+
+// create method objects
+TrapezoidalRule trap;
+Simpsons13 s13;
+Simpsons38 s38;
+
+// register functions
+trap.addFunction("e^x",      f_exp,   F_exp);
+trap.addFunction("e^(-x^2)", f_gauss, F_gauss);
+
+// set sub-interval counts
+int n[] = {6, 12, 24, 48, 96};
+trap.setSubIntervals(n, 5);
+
+// compute over [0, 1]
+trap.computeAll(0.0, 1.0);
+trap.display();
+trap.saveResults("output_trapezoidal.txt");
+
+// or use a single call:
+double result = s13.integrate(f_exp, 0.0, 1.0, 100);
+// result ≈ 1.71828 (e − 1)
+```
+
+| Method | Formula | Order | Constraint |
+|:--|:--|:--|:--|
+| `TrapezoidalRule` | (h/2)[f(x₀) + 2Σf(xᵢ) + f(xₙ)] | O(h²) | n ≥ 1 |
+| `Simpsons13` | (h/3)[f(x₀) + 4f(x₁) + 2f(x₂) + …] | O(h⁴) | n must be even |
+| `Simpsons38` | (3h/8)[f(x₀) + 3f(x₁) + 3f(x₂) + 2f(x₃) + …] | O(h⁴) | n must be multiple of 3 |
+
+### Built-in Functions
+
+The module ships with 8 hardcoded test functions:
+
+| Function | f(x) | Exact ∫ₐᵇ f(x)dx |
+|:---------|:------|:------------------|
+| e^x | `exp(x)` | e^b − e^a |
+| sin(x) | `sin(x)` | −cos(b) + cos(a) |
+| x² | `x*x` | b³/3 − a³/3 |
+| x³−2x+1 | `x³−2x+1` | x⁴/4 − x² + x |
+| e^(-x²) | `exp(-x*x)` | √π/2 · (erf(b) − erf(a)) |
+| 1/(1+x²) | `1/(1+x*x)` | atan(b) − atan(a) |
+| ln(x) | `log(x)` | b·ln(b) − b − (a·ln(a) − a) |
+| 1/x | `1/x` | ln(b) − ln(a) |
+
+---
+
 ## Complex Number Class
 
 ```cpp
@@ -269,19 +358,30 @@ Matrix
 ├── Arithmetic: +, -, *, scalar *, transpose
 ├── Properties: determinant, inverse, adjoint, cofactor, minorMatrix, isSymmetric
 │
-└── SystemOfLinearEquationSolver   [abstract — solve() = 0]
-      │
-      ├── GaussianElimination
-      │     ├── solve
-      │     ├── solveWithPivoting
-      │     └── solveWithoutPivoting
-      │
-      ├── LUDecomposition            [abstract — solve() = 0]
-      │     ├── Doolittle
-      │     ├── Crout
-      │     └── Cholesky
-      │
-      └── GaussJacobi
+├── SystemOfLinearEquationSolver   [abstract — solve() = 0]
+│     │
+│     ├── GaussianElimination
+│     │     ├── solve
+│     │     ├── solveWithPivoting
+│     │     └── solveWithoutPivoting
+│     │
+│     ├── LUDecomposition            [abstract — solve() = 0]
+│     │     ├── Doolittle
+│     │     ├── Crout
+│     │     └── Cholesky
+│     │
+│     └── GaussJacobi
+│
+├── Differentiation                  [abstract — computeDerivative() = 0]
+│     ├── ForwardDifference
+│     ├── BackwardDifference
+│     ├── CentralDifference
+│     └── RichardsonExtrapolation
+│
+└── Integration                      [abstract — integrate() = 0]
+      ├── TrapezoidalRule
+      ├── Simpsons13
+      └── Simpsons38
 
 
 RootHunter   [abstract — input() = 0, solve() = 0]
@@ -323,6 +423,23 @@ RootHunter   [abstract — input() = 0, solve() = 0]
 | Method | Description |
 |:--|:--|
 | `solve(double *b, int n)` | Solve Ax = b, return solution vector x |
+
+### Integration
+
+| Method | Description |
+|:--|:--|
+| `Integration()` | Default constructor |
+| `addFunction(name, f, F)` | Register an integrand with its exact integral |
+| `setSubIntervals(n[], count)` | Set sub-interval counts to evaluate at |
+| `integrate(f, a, b, n)` | **Pure virtual** — compute ∫ₐᵇ f(x)dx with n sub-intervals |
+| `getMethodName()` | **Pure virtual** — return method name |
+| `computeAll(a, b)` | Compute all registered functions × all n values |
+| `display()` | Print formatted results table |
+| `saveResults(filename)` | Save results to file |
+| `getNumFunctions()` | Number of registered functions |
+| `getNumN()` | Number of sub-interval counts |
+| `getFunction(i)` | Get i-th registered function entry |
+| `getN(i)` | Get i-th sub-interval count |
 
 ### RootHunter
 
