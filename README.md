@@ -1,23 +1,36 @@
 # Numerical Computing
 
-A modular C++ library for numerical methods — matrix algebra, linear system solvers, root-finding algorithms, numerical differentiation, numerical integration, and complex number arithmetic. Built with clean OOP design, optional CUDA GPU acceleration, and a menu-driven interactive interface.
+A modular C++ library for numerical methods — matrix algebra, linear system solvers, root-finding, interpolation, numerical differentiation and integration, eigenvalue analysis, random number generation, and complex arithmetic. The repository also includes a Python port, optional CUDA support, and menu-driven interfaces.
 
 ---
 
 ## Table of Contents
 
-- [Features](#features)
-- [Project Structure](#project-structure)
-- [Getting Started](#getting-started)
-- [Matrix Operations Library](#matrix-operations-library)
-- [Linear System Solvers](#linear-system-solvers)
-- [Root-Finding Methods](#root-finding-methods)
-- [Numerical Integration](#numerical-integration)
-- [Complex Number Class](#complex-number-class)
-- [Class Hierarchy](#class-hierarchy)
-- [API Reference](#api-reference)
-- [GPU Acceleration](#gpu-acceleration)
-- [License](#license)
+- [Numerical Computing](#numerical-computing)
+  - [Table of Contents](#table-of-contents)
+  - [Features](#features)
+  - [Project Structure](#project-structure)
+  - [Getting Started](#getting-started)
+    - [Prerequisites](#prerequisites)
+    - [Build and Run](#build-and-run)
+  - [Matrix Operations Library](#matrix-operations-library)
+    - [Programmatic Usage](#programmatic-usage)
+  - [Linear System Solvers](#linear-system-solvers)
+  - [Root-Finding Methods](#root-finding-methods)
+  - [Numerical Integration](#numerical-integration)
+    - [Built-in Functions](#built-in-functions)
+  - [Random Number Generation](#random-number-generation)
+  - [Complex Number Class](#complex-number-class)
+  - [Class Hierarchy](#class-hierarchy)
+  - [API Reference](#api-reference)
+    - [Matrix](#matrix)
+    - [SystemOfLinearEquationSolver](#systemoflinearequationsolver)
+    - [Integration](#integration)
+    - [RootHunter](#roothunter)
+    - [RandomNumberGenerator and LCG](#randomnumbergenerator-and-lcg)
+  - [GPU Acceleration](#gpu-acceleration)
+  - [Testing](#testing)
+  - [License](#license)
 
 ---
 
@@ -33,13 +46,25 @@ A modular C++ library for numerical methods — matrix algebra, linear system so
 > Three variants — Doolittle (unit lower), Crout (unit upper), and Cholesky (symmetric positive-definite).
 
 **Iterative Solvers**
-> Gauss-Jacobi method for diagonally dominant systems.
+> Gauss-Jacobi and Gauss-Seidel methods for diagonally dominant systems.
+
+**Interpolation and Curve Fitting**
+> Lagrange interpolation, Newton divided differences, least-squares line fitting, and least-squares parabola fitting.
+
+**Numerical Differentiation**
+> Forward, backward, central, and Richardson-extrapolated finite differences.
+
+**Eigenvalue Analysis**
+> Gershgorin disk analysis for estimating eigenvalue regions.
 
 **Root Finding**
 > Bisection, Newton-Raphson, and Fixed-Point Iteration with configurable tolerance.
 
 **Numerical Integration**
 > Trapezoidal Rule, Simpson's 1/3 Rule, and Simpson's 3/8 Rule with 8 built-in test functions including e^x, sin(x), x², e^(-x²), 1/(1+x²), ln(x), and 1/x.
+
+**Random Number Generation**
+> Linear Congruential Generator (LCG) with configurable seed and parameters, batch generation of normalized or raw values, formatted output, and reproducible sequences.
 
 **Complex Arithmetic**
 > Full complex number class with +, -, *, /, conjugate, norm, and operator overloading.
@@ -67,7 +92,12 @@ Numerical_Computing/
 │   │   ├── SystemOfLinearEquationSolver.hpp
 │   │   ├── GaussianElimination.hpp
 │   │   ├── LUDecomposition.hpp
-│   │   ├── GaussJacobi.hpp
+│   │   ├── GaussJacobi.hpp / GaussSeidel.hpp
+│   │   ├── SolverResult.hpp
+│   │   ├── EigenSolver.hpp / GershgorinAnalyzer.hpp
+│   │   ├── Interpolation.hpp / Lagrange.hpp
+│   │   ├── NewtonDividedDifference.hpp
+│   │   ├── LeastSquareLine.hpp / LeastSquareParabola.hpp
 │   │   ├── Differentiation.hpp    # Numerical differentiation base
 │   │   ├── Integration.hpp        # Numerical integration base
 │   │   ├── TrapezoidalRule.hpp
@@ -89,12 +119,14 @@ Numerical_Computing/
 │   │   ├── Input.hpp / Input.cpp
 │   │   └── Display.hpp / Display.cpp
 │   ├── cuda/                      # CUDA GPU kernels (optional)
+│   ├── app/                       # Interactive menu implementation
 │   ├── examples/                  # Example programs
 │   ├── test_cases/                # Pre-built test matrices
 │   ├── Makefile
 │   └── main.cpp
 │
 ├── examples/                      # Standalone example programs
+│   ├── example_usage.cpp
 │   ├── differentiation_example.cpp
 │   └── integration_example.cpp
 │
@@ -108,29 +140,55 @@ Numerical_Computing/
 │   ├── utils/
 │   └── main.cpp
 │
+├── random_number_generation/      # Standalone C++ RNG module
+│   ├── include/
+│   │   ├── RandomNumberGenerator.hpp
+│   │   └── LCG.hpp
+│   ├── src/
+│   │   ├── RandomNumberGenerator.cpp
+│   │   └── LCG.cpp
+│   ├── tests/
+│   │   └── test_rng.cpp
+│   └── Makefile
+│
 ├── Complex_class_assignment/      # Complex number class
 │   ├── complexClass_header.hpp
 │   ├── complexClass.cpp
 │   └── main.cpp
 │
 ├── Extended_in_python/            # Python port (PyNumerics)
+│   ├── main.py                    # Interactive CLI entry point
+│   ├── pyproject.toml
 │   ├── pynumerics/
+│   │   ├── cli_*.py              # Interactive feature menus
 │   │   ├── differentiation/
 │   │   ├── integration/           # Numerical integration package
 │   │   ├── interpolation/
+│   │   ├── rng/                   # RandomNumberGenerator and LCG
 │   │   ├── roots/
 │   │   └── solvers/
-│   └── tests/
+│   ├── tests/                    # Python test suite
+│   └── README.md
 │
 ├── Miscellaneous/                 # Numerical explorations
 │   ├── factorial_limits.cpp
 │   └── geometric_series_sum.cpp
 │
-├── numcomp.hpp                    # Unified header (includes all modules)
+├── Assigment_1/ / assignment1_graphs/ # Coursework and plots
+├── books_followed/                # Reference material
+├── sem_3_notebooks/               # Coursework notebooks and data
+├── Using_octave_results/          # Reference outputs
+│
+├── numcomp.hpp                    # Unified header for core C++ modules
 ├── Makefile                       # Unified build system
 ├── LICENSE
 └── README.md
 ```
+
+The Python package also includes `pynumerics/rng/` for the LCG implementation and
+`pynumerics/cli_rng.py` for its interactive interface. The C++ equivalent is in
+`matrix_class/include/{RandomNumberGenerator.hpp,LCG.hpp}` and
+`matrix_class/src/{RandomNumberGenerator.cpp,LCG.cpp}`.
 
 ---
 
@@ -148,9 +206,13 @@ Numerical_Computing/
 
 ```bash
 cd matrix_class
-make cpu                  # CPU-only build (default)
-./matrix_program          # launch interactive menu
+make cpu
+./matrix_program
 ```
+
+The matrix menu includes matrix operations, direct and iterative solvers,
+property checks, Gershgorin analysis, interpolation, differentiation, and LCG
+random-number generation.
 
 **Root-Finding Methods**
 
@@ -168,6 +230,16 @@ g++ -std=c++11 -o complex_op main.cpp complexClass.cpp
 ./complex_op
 ```
 
+**Build the reusable C++ library and example**
+
+From the repository root:
+
+```bash
+make all
+make example
+./examples/example_usage
+```
+
 **Clean build artifacts**
 
 ```bash
@@ -179,18 +251,25 @@ make clean
 
 ## Matrix Operations Library
 
-The interactive program offers a full menu of 17 operations:
+The interactive program offers 31 operations plus exit:
 
 ```
- 1.  Add (A + B)               10. Gauss-Jacobi (iterative)
- 2.  Subtract (A - B)          11. Transpose
- 3.  Multiply (A * B)          12. Scalar Multiply
- 4.  Determinant               13. Inverse
- 5.  Gauss Elim. (pivoting)    14. Minor Matrix
- 6.  Gauss Elim. (no pivot)    15. Cofactor
- 7.  LU — Doolittle            16. Adjoint
- 8.  LU — Crout                17. Exit
- 9.  LU — Cholesky
+ 1. Add (A + B)                    17. Adjoint
+ 2. Subtract (A - B)               18. Check if Square
+ 3. Multiply (A * B)               19. Check if Symmetric
+ 4. Determinant                    20. Check if Identity
+ 5. Gaussian elimination (pivot)   21. Check if Null
+ 6. Gaussian elimination           22. Check if Diagonal
+ 7. LU — Doolittle                 23. Check diagonal dominance
+ 8. LU — Crout                     24. Make diagonally dominant
+ 9. LU — Cholesky                  25. Check equality (A == B)
+10. Gauss-Jacobi                   26. Gershgorin eigenvalue analysis
+11. Gauss-Seidel                   27. Lagrange interpolation
+12. Transpose                      28. Least-squares line fit
+13. Scalar multiply                29. Least-squares parabola fit
+14. Inverse                        30. Numerical differentiation
+15. Minor matrix                   31. Random number generation (LCG)
+16. Cofactor                       32. Exit
 ```
 
 Matrices can be entered manually via console or loaded from a space-separated text file.
@@ -226,7 +305,9 @@ double *x = ge.solveWithPivoting(b, 3);
 
 // Cholesky for symmetric positive-definite systems
 Cholesky ch(3, 3);
-double *x2 = ch.solve(b, 3);
+SolverResult result = ch.solve(b, 3);
+double *x2 = result.x;       // caller owns the solution vector
+delete[] x2;
 ```
 
 ---
@@ -236,7 +317,8 @@ double *x2 = ch.solve(b, 3);
 All solvers inherit from `SystemOfLinearEquationSolver` and expose a uniform interface:
 
 ```cpp
-double* solve(double *b, int n);
+SolverResult solve(double *b, int n, int maxIter = 10000,
+                   double tol = 1e-10);
 ```
 
 | Solver | Algorithm | When to Use |
@@ -246,6 +328,7 @@ double* solve(double *b, int n);
 | `Crout` | LU decomposition, U has unit diagonal | Multiple right-hand sides |
 | `Cholesky` | LL^T decomposition | Symmetric positive-definite matrices |
 | `GaussJacobi` | Jacobi iterative method | Diagonally dominant / sparse systems |
+| `GaussSeidel` | Gauss-Seidel iterative method | Diagonally dominant / sparse systems |
 
 ---
 
@@ -331,6 +414,44 @@ The module ships with 8 hardcoded test functions:
 
 ---
 
+## Random Number Generation
+
+The C++ and Python implementations provide the same linear congruential recurrence:
+
+$$X_{n+1} = (aX_n + c) \bmod m, \qquad U_n = X_n / m$$
+
+The default parameters are `a = 1103515245`, `c = 12345`, and `m = 2^31`.
+Both implementations support configurable seeds, generation of normalized values
+or raw integer states, reset-to-seed behavior, and saving samples to a text file.
+
+The Python implementation additionally provides sequence and histogram plots:
+
+```python
+from pynumerics.rng.lcg import LCG
+
+rng = LCG(seed=42)
+samples = rng.generate(1000)
+rng.save_results("random_samples.txt", samples)
+# rng.plot_sequence(samples)
+# rng.plot_histogram(samples)
+```
+
+For the C++ version, the reusable classes are `RandomNumberGenerator` and `LCG`.
+The C++ implementation is in `random_number_generation/`; its menu integration
+is kept in `matrix_class/app/Menu.cpp` without making RNG a matrix subclass or
+matrix module component.
+
+Both implementations reset to their initial seed, so the same seed and
+parameters reproduce the same sequence. The class relationship is independent
+of `Matrix`:
+
+```
+RandomNumberGenerator
+└── LCG
+```
+
+---
+
 ## Complex Number Class
 
 ```cpp
@@ -359,35 +480,40 @@ Matrix
 ├── Properties: determinant, inverse, adjoint, cofactor, minorMatrix, isSymmetric
 │
 ├── SystemOfLinearEquationSolver   [abstract — solve() = 0]
-│     │
-│     ├── GaussianElimination
-│     │     ├── solve
-│     │     ├── solveWithPivoting
-│     │     └── solveWithoutPivoting
-│     │
-│     ├── LUDecomposition            [abstract — solve() = 0]
-│     │     ├── Doolittle
-│     │     ├── Crout
-│     │     └── Cholesky
-│     │
-│     └── GaussJacobi
-│
-├── Differentiation                  [abstract — computeDerivative() = 0]
-│     ├── ForwardDifference
-│     ├── BackwardDifference
-│     ├── CentralDifference
-│     └── RichardsonExtrapolation
-│
-└── Integration                      [abstract — integrate() = 0]
-      ├── TrapezoidalRule
-      ├── Simpsons13
-      └── Simpsons38
+│   ├── GaussianElimination
+│   ├── Doolittle
+│   ├── Crout
+│   ├── Cholesky
+│   ├── GaussJacobi
+│   └── GaussSeidel
+├── Differentiation                [abstract — computeDerivative() = 0]
+│   ├── ForwardDifference
+│   ├── BackwardDifference
+│   ├── CentralDifference
+│   └── RichardsonExtrapolation
+└── Integration                    [abstract — integrate() = 0]
+    ├── TrapezoidalRule
+    ├── Simpsons13
+    └── Simpsons38
+
+Interpolation                    [independent; composes Matrix]
+├── Lagrange
+├── NewtonDividedDifference
+├── LeastSquareLine
+└── LeastSquareParabola
 
 
 RootHunter   [abstract — input() = 0, solve() = 0]
 ├── Bisection
 ├── NewtonRaphson
 └── FixedPoint
+
+EigenSolver / GershgorinAnalyzer [independent eigenvalue analysis]
+
+RandomNumberGenerator             [abstract — nextInt() = 0]
+└── LCG
+
+Complex                           [independent complex arithmetic class]
 ```
 
 ---
@@ -422,7 +548,7 @@ RootHunter   [abstract — input() = 0, solve() = 0]
 
 | Method | Description |
 |:--|:--|
-| `solve(double *b, int n)` | Solve Ax = b, return solution vector x |
+| `solve(double *b, int n, int maxIter = 10000, double tol = 1e-10)` | Solve Ax = b and return a `SolverResult` |
 
 ### Integration
 
@@ -451,6 +577,20 @@ RootHunter   [abstract — input() = 0, solve() = 0]
 | `getRoot()` | Retrieve computed root |
 | `getIterations()` | Retrieve iteration count |
 
+### RandomNumberGenerator and LCG
+
+| Method | Description |
+|:--|:--|
+| `nextInt()` | Generate the next raw integer state; implemented by `LCG` |
+| `nextUniform()` | Return the next state normalized to `[0, 1)` |
+| `generate(int n)` | Generate `n` normalized values |
+| `generateInts(int n)` | Generate `n` raw integer states |
+| `reset()` | Restore the initial seed state |
+| `display(samples)` | Print generated values in a formatted table |
+| `saveResults(filename, samples)` | Save generated values to a file |
+| `LCG(seed, a, c, m)` | Construct an LCG with optional parameters |
+| `getState()`, `getA()`, `getC()`, `getM()` | Read LCG state and parameters |
+
 ---
 
 ## GPU Acceleration
@@ -458,8 +598,9 @@ RootHunter   [abstract — input() = 0, solve() = 0]
 The matrix library supports an optional CUDA backend for GPU-accelerated operations.
 
 ```bash
+cd matrix_class
 make gpu                      # compile with CUDA support
-./matrix_program_gpu          # run GPU-enabled binary
+./matrix_program_gpu
 ```
 
 This compiles with `-DUSE_CUDA` and links the kernels in `cuda/src/`. GPU code paths are selected automatically for operations that benefit from parallelism.
@@ -467,6 +608,29 @@ This compiles with `-DUSE_CUDA` and links the kernels in `cuda/src/`. GPU code p
 **Requirements:** NVIDIA GPU with compute capability >= 5.0 and the CUDA Toolkit.
 
 ---
+
+## Testing
+
+The C++ modules provide separate verification targets:
+
+```bash
+cd matrix_class
+make verify       # build the iterative-solver verification program
+make cpu          # build the matrix menu, including its RNG integration
+
+cd ../random_number_generation
+make run          # build and run the standalone C++ RNG tests
+```
+
+The Python package uses `pytest`:
+
+```bash
+cd Extended_in_python
+python3 -m pytest -q
+```
+
+The current Python suite contains 336 passing tests. Plot smoke tests may emit
+non-fatal warnings in headless environments because no interactive display is available.
 
 ## License
 
