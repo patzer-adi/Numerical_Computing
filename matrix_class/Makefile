@@ -36,8 +36,8 @@ SRCS = main.cpp \
        src/BackwardDifference.cpp \
        src/CentralDifference.cpp \
        src/RichardsonExtrapolation.cpp \
-       src/RandomNumberGenerator.cpp \
-       src/LCG.cpp \
+       ../random_number_generation/src/RandomNumberGenerator.cpp \
+       ../random_number_generation/src/LCG.cpp \
        utils/Input.cpp \
        utils/Display.cpp \
        app/Menu.cpp
@@ -96,22 +96,9 @@ $(VERIFY_TARGET): $(VERIFY_SRCS)
 	$(CXX) $(CXXFLAGS) -o $@ $(VERIFY_SRCS)
 
 # ============================================
-# RNG test suite
-# ============================================
-TEST_RNG_TARGET = test_rng_program
-TEST_RNG_SRCS = test_cases/test_rng.cpp \
-       src/RandomNumberGenerator.cpp \
-       src/LCG.cpp
-
-test_rng: $(TEST_RNG_TARGET)
-
-$(TEST_RNG_TARGET): $(TEST_RNG_SRCS)
-	$(CXX) $(CXXFLAGS) -o $@ $(TEST_RNG_SRCS)
-
-# ============================================
 # Cleanup
 # ============================================
 clean:
-	rm -f $(OBJS) $(CUDA_OBJS) $(TARGET) $(GPU_TARGET) $(VERIFY_TARGET) $(TEST_RNG_TARGET)
+	rm -f $(OBJS) $(CUDA_OBJS) $(TARGET) $(GPU_TARGET) $(VERIFY_TARGET)
 
-.PHONY: cpu gpu verify test_rng clean
+.PHONY: cpu gpu verify clean

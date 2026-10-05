@@ -14,7 +14,7 @@
 #include "../include/Matrix.hpp"
 #include "../utils/Display.hpp"
 #include "../utils/Input.hpp"
-#include "../include/LCG.hpp"
+#include "../../random_number_generation/include/LCG.hpp"
 #include <cmath>
 #include <iostream>
 
