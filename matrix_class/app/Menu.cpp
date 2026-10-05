@@ -14,6 +14,7 @@
 #include "../include/Matrix.hpp"
 #include "../utils/Display.hpp"
 #include "../utils/Input.hpp"
+#include "../include/LCG.hpp"
 #include <cmath>
 #include <iostream>
 
@@ -358,6 +359,39 @@ static void handleDifferentiation() {
   delete[] h;
 }
 
+static void handleRNG() {
+  cout << "\n--- Random Number Generation (LCG) ---" << endl;
+
+  unsigned long seed;
+  cout << "Enter seed (default 42): ";
+  string seedStr;
+  cin >> seedStr;
+  if (seedStr.empty() || seedStr == "d")
+    seed = 42;
+  else
+    seed = stoul(seedStr);
+
+  int n;
+  cout << "How many samples? ";
+  cin >> n;
+
+  LCG lcg(seed);
+
+  vector<double> samples = lcg.generate(n);
+
+  lcg.display(samples);
+
+  int saveChoice;
+  cout << "Save results to file? (1=yes, 0=no): ";
+  cin >> saveChoice;
+  if (saveChoice == 1) {
+    string filename;
+    cout << "Enter filename: ";
+    cin >> filename;
+    lcg.saveResults(filename, samples);
+  }
+}
+
 // === Main menu loop ===
 
 void runMenu() {
@@ -406,7 +440,8 @@ void runMenu() {
     cout << "28. Least Squares Line Fit" << endl;
     cout << "29. Least Squares Parabola Fit" << endl;
     cout << "30. Numerical Differentiation" << endl;
-    cout << "31. Exit" << endl;
+    cout << "31. Random Number Generation (LCG)" << endl;
+    cout << "32. Exit" << endl;
     cout << "Enter choice: ";
     cin >> choice;
 
@@ -442,7 +477,8 @@ void runMenu() {
       case 28: handleLeastSquareLine(); break;
       case 29: handleLeastSquareParabola(); break;
       case 30: handleDifferentiation(); break;
-      case 31:
+      case 31: handleRNG(); break;
+      case 32:
         cout << "\nbye bye!" << endl;
         running = false;
         break;
