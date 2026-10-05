@@ -1,2 +1,5 @@
 *.o
+*.pyc
+__pycache__/
 matrix_program
+matrix_class/test_rng_program
