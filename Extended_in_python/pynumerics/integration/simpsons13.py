@@ -37,3 +37,26 @@ class Simpsons13(Integration):
 
     def get_method_name(self) -> str:
         return "Simpson's 1/3 Rule"
+
+    def _draw_approximation(self, ax, f, a, b, n, x_grid, y_grid) -> None:
+        """Draw quadratic (parabolic) approximation for each pair of sub-intervals.
+
+        Simpson's 1/3 fits a quadratic through 3 consecutive points
+        (x_{2k}, x_{2k+1}, x_{2k+2}) for each panel.
+        """
+        import numpy as np
+
+        for k in range(0, n, 2):
+            # three points for this panel
+            x0, x1, x2 = x_grid[k], x_grid[k + 1], x_grid[k + 2]
+            y0, y1, y2 = y_grid[k], y_grid[k + 1], y_grid[k + 2]
+
+            # fit quadratic through (x0,y0), (x1,y1), (x2,y2) via Lagrange
+            xs = np.linspace(x0, x2, 50)
+            ys = (y0 * (xs - x1) * (xs - x2) / ((x0 - x1) * (x0 - x2))
+                + y1 * (xs - x0) * (xs - x2) / ((x1 - x0) * (x1 - x2))
+                + y2 * (xs - x0) * (xs - x1) / ((x2 - x0) * (x2 - x1)))
+
+            ax.fill_between(xs, ys, alpha=0.2, color='#FF9800')
+            label = "Simpson's 1/3 approx." if k == 0 else None
+            ax.plot(xs, ys, '-', linewidth=1.5, color='#FF9800', label=label)

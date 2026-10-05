@@ -9,6 +9,8 @@ from pynumerics.cli import run_cli as run_complex_cli
 from pynumerics.cli_solvers import run_solvers_cli
 from pynumerics.cli_roots import run_roots_cli
 from pynumerics.cli_interpolation import run_interpolation_cli
+from pynumerics.cli_integration import run_integration_cli
+from pynumerics.cli_rng import run_rng_cli
 
 
 def run_main_menu() -> None:
@@ -20,6 +22,8 @@ def run_main_menu() -> None:
         print("║  2. Linear System Solvers & Matrices     ║")
         print("║  3. Root Finding Methods                 ║")
         print("║  4. Interpolation & Curve Fitting        ║")
+        print("║  5. Numerical Integration                ║")
+        print("║  6. Random Number Generation             ║")
         print("║  9. Exit                                 ║")
         print("╚══════════════════════════════════════════╝")
 
@@ -37,6 +41,10 @@ def run_main_menu() -> None:
             run_roots_cli()
         elif choice == "4":
             run_interpolation_cli()
+        elif choice == "5":
+            run_integration_cli()
+        elif choice == "6":
+            run_rng_cli()
         elif choice == "9":
             print("\n  Goodbye!")
             break

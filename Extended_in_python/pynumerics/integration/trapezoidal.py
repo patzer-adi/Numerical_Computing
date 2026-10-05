@@ -34,3 +34,16 @@ class TrapezoidalRule(Integration):
 
     def get_method_name(self) -> str:
         return "Trapezoidal Rule"
+
+    def _draw_approximation(self, ax, f, a, b, n, x_grid, y_grid) -> None:
+        """Draw trapezoids between consecutive grid points."""
+        for i in range(n):
+            # each trapezoid is a polygon: bottom-left, top-left, top-right, bottom-right
+            xs = [x_grid[i], x_grid[i], x_grid[i + 1], x_grid[i + 1]]
+            ys = [0, y_grid[i], y_grid[i + 1], 0]
+            ax.fill(xs, ys, alpha=0.2, color='#FF9800', edgecolor='#FF9800',
+                    linewidth=1)
+
+        # piecewise-linear approximation line
+        ax.plot(x_grid, y_grid, '-', linewidth=1.5, color='#FF9800',
+                label='Trapezoidal approx.')
