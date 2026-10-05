@@ -296,10 +296,14 @@ class TestComputeAll:
         for r in results:
             assert hasattr(r, "function_name")
             assert hasattr(r, "n")
+            assert hasattr(r, "h")
             assert hasattr(r, "exact")
             assert hasattr(r, "approx")
             assert hasattr(r, "error")
+            assert hasattr(r, "relative_error")
             assert r.error >= 0
+            assert r.relative_error >= 0
+            assert r.h > 0
 
     def test_no_functions_raises(self):
         trap = TrapezoidalRule()
@@ -364,3 +368,88 @@ class TestBuiltinFunctions:
 
         _, _, F = BUILTIN_FUNCTIONS[5]  # 1/(1+x^2)
         assert F(0, 1) == pytest.approx(math.pi / 4)
+
+
+# ── Matrix inheritance ───────────────────────────────────────────
+
+class TestMatrixInheritance:
+    """Verify that Integration properly inherits from Matrix."""
+
+    def test_is_matrix(self):
+        from pynumerics.matrix import Matrix
+        trap = TrapezoidalRule()
+        assert isinstance(trap, Matrix)
+
+    def test_matrix_dimensions_after_compute(self):
+        trap = TrapezoidalRule()
+        trap.add_function("e^x", f_exp, F_exp)
+        trap.add_function("sin(x)", f_sin, F_sin)
+        trap.set_sub_intervals([6, 12])
+        trap.compute_all(0.0, 1.0)
+        # 2 functions × 2 n values = 4 rows, 7 columns
+        assert trap.rows == 4
+        assert trap.cols == 7
+
+    def test_matrix_data_accessible(self):
+        trap = TrapezoidalRule()
+        trap.add_function("x^2", f_x2, F_x2)
+        trap.set_sub_intervals([10])
+        trap.compute_all(0.0, 3.0)
+        # data[0][1] is n, data[0][3] is exact
+        assert trap[0, 1] == 10.0
+        assert trap[0, 3] == pytest.approx(9.0)
+
+    def test_h_and_relative_error(self):
+        s13 = Simpsons13()
+        s13.add_function("e^x", f_exp, F_exp)
+        s13.set_sub_intervals([10])
+        results = s13.compute_all(0.0, 1.0)
+        r = results[0]
+        assert r.h == pytest.approx(0.1)
+        assert r.relative_error >= 0
+        # relative_error = |error| / |exact|
+        expected_rel = r.error / abs(r.exact)
+        assert r.relative_error == pytest.approx(expected_rel)
+
+
+# ── Plot smoke tests ─────────────────────────────────────────────
+
+class TestPlotSmoke:
+    """Verify plotting methods don't crash (save to file, don't show)."""
+
+    def test_plot_function(self, tmp_path):
+        import matplotlib
+        matplotlib.use('Agg')  # non-interactive backend
+        trap = TrapezoidalRule()
+        trap.add_function("x^2", f_x2, F_x2)
+        trap.plot_function(0, 0.0, 3.0, n=6, save_path=str(tmp_path / "func.png"))
+
+    def test_plot_approximation_trapezoidal(self, tmp_path):
+        import matplotlib
+        matplotlib.use('Agg')
+        trap = TrapezoidalRule()
+        trap.add_function("e^x", f_exp, F_exp)
+        trap.plot_approximation(0, 0.0, 1.0, n=6, save_path=str(tmp_path / "trap_approx.png"))
+
+    def test_plot_approximation_simpsons13(self, tmp_path):
+        import matplotlib
+        matplotlib.use('Agg')
+        s13 = Simpsons13()
+        s13.add_function("sin(x)", f_sin, F_sin)
+        s13.plot_approximation(0, 0.0, math.pi, n=6, save_path=str(tmp_path / "s13_approx.png"))
+
+    def test_plot_approximation_simpsons38(self, tmp_path):
+        import matplotlib
+        matplotlib.use('Agg')
+        s38 = Simpsons38()
+        s38.add_function("e^x", f_exp, F_exp)
+        s38.plot_approximation(0, 0.0, 1.0, n=6, save_path=str(tmp_path / "s38_approx.png"))
+
+    def test_plot_convergence(self, tmp_path):
+        import matplotlib
+        matplotlib.use('Agg')
+        trap = TrapezoidalRule()
+        trap.add_function("e^x", f_exp, F_exp)
+        trap.set_sub_intervals([6, 12, 24, 48, 96])
+        trap.compute_all(0.0, 1.0)
+        trap.plot_convergence(0, 0.0, 1.0, save_path=str(tmp_path / "conv.png"))
